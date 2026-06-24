@@ -14,14 +14,6 @@ The detailed original spec for each build batch is archived at `archive/backlog-
 
 ### Build
 
-**Later cards open showing the first ~3 tasks — SPEC edit** **[later-peek-spec-edit]**
-Blocks: [later-card-peek]
-
-The Later Project cards currently open collapsed to their header — the collapsed-by-default decision (folded into SPEC §Schedule view 2026-06-16, kept through the Later-by-Project rewrite c70616b). Alex wants Later to show some tasks at a glance, not just Project headers (decided 2026-06-22 during the [later-by-project-screen] device test). This reverses collapsed-by-default to a peek: each card opens with its first ~3 tasks visible, the rest behind the expand/collapse control. The number is 3, not the 7 first floated — ~7 per card across several Projects rebuilds the "wall of tasks" collapsed-by-default existed to prevent, whereas ~3 is a glanceable peek that keeps Later a calm overview. SPEC only here; the LaterPage build follows in [later-card-peek]. Kept separate from [polish-spec-edits] (which also edits §Schedule view) so the reversal carries its own clean LOG trail.
-
-Spec-edit:
-- SPEC §Schedule view: replace the sentence "A card is **collapsed by default**; expanding it is an opt-in act, so Later opens as a calm overview of the user's areas of life rather than a wall of tasks." with the peek behaviour — each card opens showing its first ~3 tasks, the rest revealed by the expand/collapse control — keeping the calm-overview-not-a-wall-of-tasks rationale.
-
 **Drop the date label from Tomorrow** **[tomorrow-no-date-label]**
 
 Tomorrow rows currently show their DD/MM date (SPEC §Schedule view), same as Soon and Later. But a Tomorrow task always carries exactly tomorrow's date — the slot is derived from the date, so nothing else can land there — which makes the label fully redundant with the page title. Tomorrow also has no past-date case the way Today does: a past-dated task falls onto Today, never Tomorrow, so dropping the label loses no stale-date signal. The date earns its place only on Soon (2–7 days) and Later (8+ days), where the page name doesn't tell you the actual day. Today keeps its existing rule unchanged — no label except when the date has slipped into the past. This is a design change, not a bug; the current Tomorrow labels follow the spec as written. Raised during the [add-flow-create-path-fixes] device check on 2026-06-19.
@@ -52,7 +44,6 @@ Test:
 - **0006 — side-scrolling-date-picker** — Horizontal date strip replacing read-only date display in edit dialogue.
 - **0007 — recurring-tasks** — Recurrence rules and 30-day-capped instance rendering.
 **Later cards open showing the first ~3 tasks — build** **[later-card-peek]**
-Depends on: [later-peek-spec-edit]
 
 Builds the peek behaviour [later-peek-spec-edit] writes into SPEC: each Later Project card opens with its first ~3 tasks visible instead of collapsed to its header, the rest behind the expand/collapse control. Shares LaterPage.kt with [task-reorder-within-list] (drag-reorder), so whichever builds second integrates with the first's card-task-list rendering.
 
