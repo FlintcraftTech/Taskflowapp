@@ -1,4 +1,4 @@
-# [HASH] — SPEC §Schedule view + §Side menu: drop Tomorrow's date label and reframe the side-menu opener to the ☰ button (swipe-to-open disabled)
+# 988a9fa — SPEC §Schedule view + §Side menu: drop Tomorrow's date label and reframe the side-menu opener to the ☰ button (swipe-to-open disabled)
 
 Two one-sentence SPEC changes were each folded into a feature build below; the method keeps SPEC edits out of feature builds, so both were pulled into this single spec-edit batch — combined rather than split per-feature to keep the ceremony to one session.
 
