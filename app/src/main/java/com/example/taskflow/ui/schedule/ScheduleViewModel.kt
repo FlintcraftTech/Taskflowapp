@@ -172,15 +172,17 @@ class ScheduleViewModel(
         )
 
     /**
-     * Tomorrow/Soon/Later rows show their date when they have one. Today rows show a date only
-     * when it has slipped into the past — the only signal that a task is "still there" from a past
-     * day, with no overdue label or colour (UX principle 4). On Later cards, undated tasks carry no
-     * date (null) and far-future dated tasks show their DD/MM date.
+     * Soon/Later rows show their date when they have one. Tomorrow rows show no date: a Tomorrow
+     * task always carries exactly tomorrow's date, so the label is redundant with the page title.
+     * Today rows show a date only when it has slipped into the past — the only signal that a task is
+     * "still there" from a past day, with no overdue label or colour (UX principle 4). On Later
+     * cards, undated tasks carry no date (null) and far-future dated tasks show their DD/MM date.
      */
     private fun dateLabelFor(task: Task, slot: ScheduleSlot, now: Long): String? {
         val date = task.date ?: return null
         val show = when (slot) {
             ScheduleSlot.TODAY -> SlotDeriver.isBeforeToday(date, now, zone)
+            ScheduleSlot.TOMORROW -> false
             else -> true
         }
         if (!show) return null
