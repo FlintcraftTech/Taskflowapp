@@ -185,6 +185,10 @@ Paid tier — reordering and deleting a Project go through discussion with Claud
 > Processed) or drop it. Each is filed as its own `#### ` heading, so the list shows
 > up in an editor's outline.
 
+#### Last session advises processing [claude-md-stale-vocabulary] next [forward-advisory]
+
+The setup migration left CLAUDE.md describing a queue shape the project no longer has. CLAUDE.md is read at the start of every session, so while that stands, every session begins from a wrong picture of how this project's work is organised — a cost that repeats each session rather than waiting on a build. It is also small and self-contained: the only open question is what wording the user wants, not what to build, so it can be settled in the planning conversation itself. Nothing in the cleared region depends on it, so processing it first holds no build back.
+
 #### Multi-device resume merge after a paused subscription [subscription-pause-resume-merge]
 
 The policy is decided: paused → revert to local-only. What's open is what happens when a paused multi-device user resumes — which device's local state wins, and how the two are merged. Entangled with the cloud-sync design, so it can't be settled independently of [0018-cloud-sync-paid-tier]; that's a design dependency rather than a build order, which is why this sits here rather than being held against it.
@@ -254,4 +258,8 @@ Privacy note to carry into any revival: if the personal strategy and real tasks 
 `CLAUDE.md` describes the queue as Red flags / Batches with Build-Test-Audit subheadings / Deferred tests / Captures, mentions `Parked:` headers and a `--- Plan session here ---` marker, and describes /next as executing "the top batch". None of that exists after this session's conversion — work items are now single entries with a flavor tag, deferred checks are `[user]` items, and holding is done by `Blocked by:` or a date. The same file also still lists `REGISTRY.md` as a project doc, which was deleted this session. SPEC.md's opening paragraph carries one instance too, pointing implementation detail at "each batch's spec".
 
 This matters because `CLAUDE.md` is read at the start of every session, so a stale description is read as current — one earlier session went looking for a section that no longer existed. Left unfixed during the setup run deliberately: the file is the user's own wording, and reconciling it against the current template would clobber what they wrote, so the new wording needs their agreement rather than a silent rewrite.
+
+#### Hand a multi-part [user] work item off to Taskflow as tasks [method-user-item-to-taskflow-handoff]
+
+Raised by the user through a consumer project running this method, which reported the case and asked that Taskflow take the design up with the method project directly. A method queue item tagged `[user]` carries a walkthrough and is walked through live. That holds for a handful of steps in one sitting; it broke on a real item whose step 1 turned out to contain an extraction, a re-sort and a per-pile filing decision of unknown length, spread over days, partly belonging elsewhere. Written as one queue line such work hides its size; split into many it floods a queue meant to track a venture rather than a person's errands. The user's conclusion: those parts belong on their to-do list — which is this app. So Taskflow needs to say what a handed-off task looks like, whether items travel one way or round-trip, and what the queue keeps once every part is done. The consumer project's one further observation: the handoff most likely fires mid-walkthrough, exactly when the item's true size becomes visible and the user is least able to stop and reorganise a queue. Several planning sessions' worth of work, on the user's estimate.
 
