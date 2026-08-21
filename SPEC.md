@@ -1,6 +1,6 @@
 # SPEC.md — Taskflow User Experience
 
-This document describes what each feature is, how the user experiences it, and why the user needs it — the product's truth. It is not a catalogue of every UI element: exhaustive UI and implementation mechanics are build decisions, recorded in each batch's spec, not here. Every entry must correspond to something that actually exists in the current build. If an entry cannot be traced to an existing feature, it is not a current user experience — it is a plan, and it belongs in `QUEUE.md`.
+This document describes what each feature is, how the user experiences it, and why the user needs it — the product's truth. It is not a catalogue of every UI element: exhaustive UI and implementation mechanics are build decisions, recorded in the session's LOG entry, not here. Every entry describes decided product truth rather than speculation. An entry may be written ahead of the build that implements it — a queue item whose whole job is a SPEC edit does exactly that, so the build has a settled description to work against — but only once the design is agreed. What does not belong here is anything still undecided, or a feature nobody has committed to: that is a plan, and it belongs in `QUEUE.md`.
 
 `SPEC.md` only describes what has been decided. Open questions and undecided details do NOT live here as placeholders, and do NOT live here as sentences that gesture at the doc's own undecidedness (e.g. "currently undecided", "pending decision"). Open questions live in `QUEUE.md` as captures.
 

@@ -1,4 +1,4 @@
-# [HASH] — Mail triage: a consumer project's report on multi-part `[user]` work became the capture [method-user-item-to-taskflow-handoff]
+# f2d1fc2 — Mail triage: a consumer project's report on multi-part `[user]` work became the capture [method-user-item-to-taskflow-handoff]
 
 The chat opened with one message waiting in the mailbox and closed on it; no queue was processed and nothing was built.
 

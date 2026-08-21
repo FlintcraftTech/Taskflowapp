@@ -10,6 +10,18 @@
 > item carrying a `Red flag · State: cleared/uncleared` marker. The line below marks
 > how far down is cleared to build; anything below it is decided but not ready yet.
 
+#### CLAUDE.md's plugin-managed block still describes the retired workflow vocabulary [claude-md-stale-vocabulary]
+
+`CLAUDE.md` describes the queue as Red flags / Batches with Build-Test-Audit subheadings / Deferred tests / Captures, mentions `Parked:` headers and a `--- Plan session here ---` marker, lists the deleted `REGISTRY.md` as a project doc, and describes /next as executing "the top batch". None of that survived the migration: work is now two sections of single entries with a flavor tag, deferred checks are `[user]` items, and holding is by `Blocked by:` or a date. It matters because `CLAUDE.md` is read at the start of every session, so the stale text is read as current — one earlier session went looking for a section that no longer exists.
+
+The capture's premise was corrected in planning on 2026-08-20: this is **not** the user's own wording. The stale passage sits inside the `<!-- PLUGIN-MANAGED -->` markers, which the plugin owns and refreshes on /setup and reinstall; the user's Project rules sit outside them. The installed plugin's `templates/CLAUDE-TEMPLATE.md` was read and is current, so there is no wording to negotiate.
+
+Change `CLAUDE.md` — replace everything between the two `PLUGIN-MANAGED` marker comments with the corresponding block from the installed plugin's `templates/CLAUDE-TEMPLATE.md`, verbatim, keeping `Language: English`. That swaps the Project docs list to the Processed/Unprocessed description, drops the REGISTRY.md line, adds the INBOX line, restates /next and adds /rescan, and replaces the five Rules-for-Claude bullets with the template's single SPEC-is-a-normal-doc rule. Then, in the user-owned Project rules section below the markers, fix two stale references left by the migration: the archived-backlog-specs paragraph pointing at "QUEUE.md's Batches", and the migration note still naming `REGISTRY.md` as a live doc.
+
+SPEC.md's one instance ("each batch's spec") was fixed directly in that planning session. This item is a build only because the planning scope-lock refuses `CLAUDE.md`.
+
+Verify by reading `CLAUDE.md` back: no occurrence of "Batches", "Deferred tests", "Parked:", "Plan session here" or "REGISTRY.md" anywhere in the file, and the Project rules section otherwise unchanged.
+
 #### Open the side menu by ☰ only — disable drawer swipe-to-open [disable-drawer-swipe-open]
 
 The navigation drawer's default left-edge swipe-to-open collides with Taskflow's signature gesture: horizontal swipe is how the whole spine moves (Today ↔ Tomorrow ↔ Soon ↔ Later and onward). On Today — the leftmost, default page — a right-swipe has no previous spine page, so the drawer quietly claims it, and the same horizontal gesture means "open menu" near the edge but "change day" in the content area. That region-dependent meaning is the confusion. Resolution: the menu opens only by tapping the ☰ button; swipe-to-open is disabled. The Android edge-swipe-to-open convention was weighed and set aside — it carries less weight in an app that repurposes horizontal swipe as its core navigation, and the ☰ remains a standard, discoverable opener, so no affordance is truly lost. Verified in AppRoot.kt: the ☰ opens the drawer programmatically (`drawerState.open()`), unaffected by the gesture flag, and the spine's `HorizontalPager` is a separate gesture, also unaffected. One known side effect: disabling drawer gestures also removes swipe-to-close, but tapping the scrim or any menu item still closes it. Noticed on device 2026-06-20.
@@ -110,6 +122,21 @@ Initial and ongoing Strategy doc reconciliation via Claude. Full original spec: 
 
 Bottom-of-drawer screen content including help and custom instructions. Full original spec: `archive/backlog-specs/0022-help-thanks-report-a-bug-content.md`. The words that go in these screens are still being worked out — see [help-thanks-report-content].
 
+#### SPEC sections for the spine's left half — completed history, Yesterday, day cards, share-a-day [nav-left-spine-spec-edit]
+
+Writes the four SPEC sections the left-half navigation work needs before any of it can be built. Split out of [nav-completed-history] in planning on 2026-08-21, once two of that item's three open questions were settled with the user — which is what makes these sections writable now.
+
+Change `SPEC.md` — add four sections after §Completed task tray on Today:
+
+- **§Search and completed history.** The leftmost spine page, unified across active and completed tasks. Settled 2026-08-21, the user's call: one search surface rather than two, because someone hunting a task usually doesn't know or care whether they already finished it, and two boxes means guessing which to open. Completed tasks list in completion order, most recent first, with date headers between days; typing narrows what shows below, and the relevant date headers still display above each day's results. This supersedes [search-feature]'s framing of a separate search surface, so that item is reconciled here rather than built alongside.
+- **§Yesterday page.** A spine page immediately left of Today, not a card. Its content is essentially what was completed yesterday, since past-due tasks stay on Today (UX principle 4).
+- **§Day-detail card layer.** A foreground card opening on a tapped result, group or date header, on a deliberately different left-right axis from the spine and signalled by the card visual. Swipe right brings the older day in from the left, swipe left the newer from the right; swiping left past the newest card carries the card layer and the search page off together in one motion, landing the user on Yesterday. Editing or un-completing a single task happens only from a day card.
+- **§Share a day.** A share button on a day screen shares that day's completed tasks, offered in two formats: PNG and Markdown. Settled 2026-08-21 — the user asked for Markdown alongside PNG on the view that Markdown will only become more widely read. Cites `resources/research/android-share-format-png-vs-pdf.md` for both halves: PNG because it renders inline in a chat thread rather than arriving as an attachment to open, and Markdown carried under the `text/plain` MIME type rather than `text/markdown`, which almost no Android app declares and which would produce a near-empty share sheet. Reconcile the wording with the existing Strategy-doc share button, which already uses the Android share sheet.
+
+Also extend §Schedule view's spine sentence leftward, so the spine reads Search · Yesterday · Today · Tomorrow · Soon · Later · Strategy.
+
+Not in scope: building any of these screens, and the swipe and card-layer interaction detail [nav-completed-history] deliberately holds open until there is a real screen to finalise it against.
+
 #### [user] Verify the blank New-task form fix on a device [verify-blank-new-task-form]
 
 The [add-flow-create-path-fixes] build fixed the stale New-task title by giving the add dialogue a fresh view-model store per open. This is the device check that confirms it on the installed build — it couldn't run in the build's own session, so it waited.
@@ -185,10 +212,6 @@ Paid tier — reordering and deleting a Project go through discussion with Claud
 > Processed) or drop it. Each is filed as its own `#### ` heading, so the list shows
 > up in an editor's outline.
 
-#### Last session advises processing [claude-md-stale-vocabulary] next [forward-advisory]
-
-The setup migration left CLAUDE.md describing a queue shape the project no longer has. CLAUDE.md is read at the start of every session, so while that stands, every session begins from a wrong picture of how this project's work is organised — a cost that repeats each session rather than waiting on a build. It is also small and self-contained: the only open question is what wording the user wants, not what to build, so it can be settled in the planning conversation itself. Nothing in the cleared region depends on it, so processing it first holds no build back.
-
 #### Multi-device resume merge after a paused subscription [subscription-pause-resume-merge]
 
 The policy is decided: paused → revert to local-only. What's open is what happens when a paused multi-device user resumes — which device's local state wins, and how the two are merged. Entangled with the cloud-sync design, so it can't be settled independently of [0018-cloud-sync-paid-tier]; that's a design dependency rather than a build order, which is why this sits here rather than being held against it.
@@ -211,7 +234,9 @@ The words for the three bottom-of-drawer screens that [0022-help-thanks-report-a
 
 #### Search [search-feature]
 
-A confirmed feature, deferred. There IS a search box — finding tasks gets overwhelming at volume. Design decided: search results display like the in-Project/category listing — task details are visible but a task CANNOT be marked complete from the results list, so the results are read-only. Tapping a result navigates to where the task actually lives, so the user can complete or edit it there. Still to pin down at build time: search scope — current screen, current Project, or the whole database including tasks, Projects and the Strategy doc. Keeping it here rather than in the ready list because it needs a SPEC edit (adding §Search) before there's anything to build. Reconcile with [nav-completed-history], which proposes a search page of its own.
+A confirmed feature, deferred. There IS a search box — finding tasks gets overwhelming at volume. Design decided: search results display like the in-Project/category listing — task details are visible but a task CANNOT be marked complete from the results list, so the results are read-only. Tapping a result navigates to where the task actually lives, so the user can complete or edit it there. Still to pin down at build time: search scope — current screen, current Project, or the whole database including tasks, Projects and the Strategy doc. Keeping it here rather than in the ready list because it needs a SPEC edit before there's anything to build.
+
+**Reconciled in planning on 2026-08-21, and this item no longer stands alone.** The user settled that the spine's leftmost page is one unified search covering active *and* completed tasks, rather than a completed-history page with a separate active-task search later. So the §Search section this item was waiting on is written by [nav-left-spine-spec-edit] instead, and the surface itself is built as part of [nav-completed-history]'s remainder. What survives here that those items don't yet carry: the read-only-results decision (a task cannot be completed from the results list; tapping a result navigates to where it lives), and the still-open scope question — current screen, current Project, or the whole database including tasks, Projects and the Strategy doc. Fold both into [nav-left-spine-spec-edit] when it runs, and delete this item at that point rather than building it.
 
 #### Completed-history sub-system — the left half of the navigation spine [nav-completed-history]
 
@@ -227,7 +252,9 @@ The pages left of Today on the spine: a **Search / completed-history page** (lef
 
 **SPEC consequences when developed.** Adds new sections for the completed-history page, the Yesterday page, the day-card layer, and share-a-day, and extends the spine described by [nav-spine-spec-edit] leftward (Search · Yesterday, left of Today). The right-half SPEC rewrite is handled by [nav-spine-spec-edit], which also absorbs the held spec-trim findings F3/F4/F18 — they live in the Schedule-view and side-menu sections it rewrites. This left-half item adds only the new completed-history sections; it does not touch those findings.
 
-**Open sub-questions, to resolve before this can move up:** (1) reconcile with [search-feature] — find *active* tasks, read-only results, tap to jump to where the task lives; is the leftmost page completed-history only, with active-task search separate and later, or one unified search covering both? (2) share format — PNG / PDF / plain text / app-sensitive — worth researching before deciding. (3) swipe and card-layer interaction detail, best finalised against a real screen. No concrete trigger; revisit when taking up post-core work.
+**Sub-questions, two settled in planning on 2026-08-21.** (1) *Settled — unified.* The leftmost page searches active and completed tasks together, the user's call: someone hunting a task usually doesn't know or care whether they already finished it. Accepted against it: the page does two jobs, and [search-feature]'s read-only rule sits oddly beside a completed list you tap into — the day-card layer resolves that, since editing happens only from a card. [search-feature] is reconciled by this rather than built separately. (2) *Settled — PNG and Markdown, both offered*, per `resources/research/android-share-format-png-vs-pdf.md`. (3) *Still open — swipe and card-layer interaction detail*, deliberately left until there is a real screen to finalise it against.
+
+**What this item still needs before it can be kept.** It bundles four sub-features and none of their screens exist, so what changes inside which files can't be stated — the bar for Processed. The SPEC half was split out on 2026-08-21 as [nav-left-spine-spec-edit], which carries the two settled decisions above and must land before any of this is buildable. This item is the build remainder and stays here until that spec edit ships and there are real screens to design the interaction against.
 
 #### Onboarding video content [onboarding-video-content]
 
@@ -253,13 +280,19 @@ Why it was shelved, decided 2026-06-24: the method is one-spec-per-project. Two 
 
 Privacy note to carry into any revival: if the personal strategy and real tasks get committed into this product repo and it's ever shared or made public, that's Alex's private life data exposed. Decide the home with that in mind when this revives.
 
-#### CLAUDE.md and SPEC.md still describe the retired workflow vocabulary [claude-md-stale-vocabulary]
-
-`CLAUDE.md` describes the queue as Red flags / Batches with Build-Test-Audit subheadings / Deferred tests / Captures, mentions `Parked:` headers and a `--- Plan session here ---` marker, and describes /next as executing "the top batch". None of that exists after this session's conversion — work items are now single entries with a flavor tag, deferred checks are `[user]` items, and holding is done by `Blocked by:` or a date. The same file also still lists `REGISTRY.md` as a project doc, which was deleted this session. SPEC.md's opening paragraph carries one instance too, pointing implementation detail at "each batch's spec".
-
-This matters because `CLAUDE.md` is read at the start of every session, so a stale description is read as current — one earlier session went looking for a section that no longer existed. Left unfixed during the setup run deliberately: the file is the user's own wording, and reconciling it against the current template would clobber what they wrote, so the new wording needs their agreement rather than a silent rewrite.
-
 #### Hand a multi-part [user] work item off to Taskflow as tasks [method-user-item-to-taskflow-handoff]
 
 Raised by the user through a consumer project running this method, which reported the case and asked that Taskflow take the design up with the method project directly. A method queue item tagged `[user]` carries a walkthrough and is walked through live. That holds for a handful of steps in one sitting; it broke on a real item whose step 1 turned out to contain an extraction, a re-sort and a per-pile filing decision of unknown length, spread over days, partly belonging elsewhere. Written as one queue line such work hides its size; split into many it floods a queue meant to track a venture rather than a person's errands. The user's conclusion: those parts belong on their to-do list — which is this app. So Taskflow needs to say what a handed-off task looks like, whether items travel one way or round-trip, and what the queue keeps once every part is done. The consumer project's one further observation: the handoff most likely fires mid-walkthrough, exactly when the item's true size becomes visible and the user is least able to stop and reorganise a queue. Several planning sessions' worth of work, on the user's estimate.
+
+#### Answer three asks about a Claude-to-Taskflow work bridge [bridge-asks-from-method-project]
+
+Arrived by mailbox on 2026-08-20 from the project that develops this method, one folder over, and read at this session's close. It is designing a bridge that would let Claude put work into Taskflow on the user's behalf, and says it cannot state what it would build until Taskflow answers three questions. Its own framing: these are asks, not proposals, and each is Taskflow's to decide. Nothing is expected by return date, and its bridge item sits held until the answers come.
+
+**Ask one — does this breach the local-first principle?** SPEC §Project context says Taskflow "does not import from, sync to, or export to any external task app". The sending project's reading is that a bridge is not an external task app syncing: it is Claude acting on the user's own instruction, which the paid tier already sanctions through the remote MCP server. That reading is explicitly left to Taskflow. This is the gating question — a no here ends the whole thing and the other two never need answering. Note that answering yes-it-is-allowed probably wants a SPEC sentence distinguishing "no external task app" from "Claude acting on the user's instruction", since the current wording reads absolutely and a future session would hit the same doubt.
+
+**Ask two — is an additive import possible?** One that adds a named set of tasks and leaves the rest of the database untouched. Distinct from the whole-database restore in [0014-json-export-and-import], which replaces — and a replace is not something a bridge could safely call against a live database. If additive import does not exist today, the ask is what it would take. Bears directly on [0014-json-export-and-import]'s design, so the two are worth settling together.
+
+**Ask three — can completions be read out of an export?** So a parent task's roll-up state is visible from outside Taskflow. Without it a bridge can write work in but never learn what happened to it, making it one-way. Touches the completion roll-up described in SPEC §Parent tasks expand/collapse and the export shape in [0014-json-export-and-import].
+
+A reply is owed once these are decided. The sending project supplied a return path, so the reply goes back through its own mailbox — drafted and shown before anything is sent, as every outbound message is.
 
