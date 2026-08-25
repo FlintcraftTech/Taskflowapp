@@ -20,10 +20,12 @@ Change `CLAUDE.md` — replace everything between the two `PLUGIN-MANAGED` marke
 
 SPEC.md's one instance ("each batch's spec") was fixed directly in that planning session. This item is a build only because the planning scope-lock refuses `CLAUDE.md`.
 
+**Half of this landed already, on 2026-08-25.** The /setup run on plugin 1.20.0-test18 refreshes the plugin-managed block as part of its migration, so the marker-to-marker swap described above is done and `CLAUDE.md` now carries the template's current text. What remains is the second half only: the two stale references in the user-owned Project rules below the end marker — the archived-backlog-specs paragraph pointing at "QUEUE.md's Batches", and the migration note still naming `REGISTRY.md` as a live doc. See [claude-md-project-rules-stale-vocabulary] for further stale wording in that same section, which this item does not cover.
+
 Verify by reading `CLAUDE.md` back: no occurrence of "Batches", "Deferred tests", "Parked:", "Plan session here" or "REGISTRY.md" anywhere in the file, and the Project rules section otherwise unchanged.
 
 --- Build block ---
-Changes: `CLAUDE.md` — replace everything between the two `PLUGIN-MANAGED` marker comments with the corresponding block from the installed plugin's `templates/CLAUDE-TEMPLATE.md`, verbatim, keeping `Language: English`. Then, in the user-owned Project rules below the markers, fix the archived-backlog-specs paragraph pointing at "QUEUE.md's Batches" and the migration note still naming `REGISTRY.md` as a live doc.
+Changes: `CLAUDE.md` — the marker-to-marker swap landed on 2026-08-25 in the /setup run; check it is still in place and leave it alone if so. The remaining work is in the user-owned Project rules below the end marker: fix the archived-backlog-specs paragraph pointing at "QUEUE.md's Batches" and the migration note still naming `REGISTRY.md` as a live doc.
 Acceptance: reading `CLAUDE.md` back shows no occurrence of "Batches", "Deferred tests", "Parked:", "Plan session here" or "REGISTRY.md", and the Project rules section is otherwise unchanged.
 --- End build block ---
 
@@ -332,9 +334,9 @@ Paid tier — reordering and deleting a Project go through discussion with Claud
 
 #### Last session advises processing mcp-server-auth-model next [forward-advisory]
 
-The format migration on 2026-08-21 filed [mcp-server-auth-model] and it is the one capture in this queue carrying an uncleared red flag, which means it cannot move into Processed until the risk is designed out or knowingly accepted. Everything else waiting here is ordinary unprocessed work.
+[mcp-server-auth-model] is still the one capture in this queue carrying an uncleared red flag, so it cannot move into Processed until the risk is designed out or knowingly accepted, and it is surfaced first at every session opening until then. The decision it asks for — how the remote MCP server ties a request to a user — reaches into [0018-cloud-sync-paid-tier], which fixes where identity lives in the cloud store, and [0019-ai-choice-flow-and-mcp-setup], which owns the path a credential would travel. All three are cleared to run, so a decision made after any of them ships is a decision made against work already built. This repeats advice filed on 2026-08-21 and read by a planning session that cleared it without processing the item.
 
-The advice is to take it early rather than when the server is built. The decision it asks for — how the remote MCP server ties a request to a user — reaches into [0018-cloud-sync-paid-tier], which fixes where identity lives in the cloud store, and [0019-ai-choice-flow-and-mcp-setup], which owns the path a credential would travel. All three are cleared to run today, so a decision made after any of them ships is a decision made against work already built.
+The overlap scan run at the close: [claude-md-project-rules-stale-vocabulary], filed on 2026-08-25, edits the same section of `CLAUDE.md` as the top processed item [claude-md-stale-vocabulary] — the user-owned Project rules below the plugin-managed end marker. Sorting it first would let one pass fix all the retired wording in that section instead of two passes touching the same paragraphs. Nothing else waiting overlaps the top of Processed.
 
 Advice only, and transient — read and cleared at the next planning session's opening, not work in its own right.
 
@@ -431,4 +433,12 @@ The concern is that this is the one piece of Taskflow that leaves the device and
 Red flag · State: uncleared
 
 Scope when this is processed: name the credential and its lifecycle, say what the server does on an unauthenticated or mismatched request, and decide whether the answer needs a SPEC sentence or only a build block. Related work: [0018-cloud-sync-paid-tier] owns the cloud store this authenticates against, [0019-ai-choice-flow-and-mcp-setup] owns the setup path the credential would travel, and [0017-tier-model-and-subscription-handling] owns what happens when paid access ends. Ordering is not settled here — that is for the planning session that keeps this.
+
+#### More retired vocabulary in CLAUDE.md's own Project rules than the existing item names [claude-md-project-rules-stale-vocabulary]
+
+The /setup run on 2026-08-25 read `CLAUDE.md` for retired terms and found stale wording in the user-owned Project rules section, below the plugin-managed end marker, beyond the two references [claude-md-stale-vocabulary] already names. The `TEST-LOG.md` rule describes the table as one row "per shipped build batch" and says results are recorded "when a build or test batch runs tests". The `SYSTEM-PROMPT.md` rule ends with "Build batches that change its domain carry a `Serves SYSTEM-PROMPT.md: ...` line".
+
+Batches are retired: a piece of work is a single `#### ` heading with a flavor tag, and there are no Build/Test/Audit sub-headings inside one. The test flavor is retired too — a check Claude can run is part of building, and a check only the user can run is a `[user]` item. So both rules describe machinery that no longer exists, in a file read at the start of every session.
+
+This is the user's own text, not the plugin's, so /setup reported it and edited nothing. What the rules should say instead is a wording decision rather than a mechanical swap — the `Serves SYSTEM-PROMPT.md:` convention in particular may still be wanted, just attached to a work item rather than a batch.
 

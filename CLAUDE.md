@@ -1,31 +1,28 @@
 # CLAUDE.md
 
-<!-- ▼ PLUGIN-MANAGED — do not edit between these markers. Updated on /setup and plugin reinstall. ▼ -->
+<!-- ▼ PLUGIN-MANAGED — do not edit between these markers. Refreshed by /setup's migration, which reports what it replaces. Your own rules belong below the end marker. ▼ -->
 
-This project uses the Sovereign Implementer method.
+This project uses the Throughliner method.
 
 ## Project docs
 
 - **SPEC.md** — product truth. What it is, who it's for, how it works.
-- **QUEUE.md** — work queue, top-to-bottom. Red flags (security, privacy, and breach risks Claude surfaced, kept at the top so they're seen first — each carries an open, resolved, or accepted state), Batches (Build/Test/Audit subheadings), Deferred tests (one line per planned test that couldn't run in its own session — source batch slug, what to verify, what confirms it with a runnability tail; /done writes entries here, /plan rolls the runnable ones into test batches, /done's close-out removes any line this session's activity already confirmed), Captures (split by `---` — processed above with slugs, raw appended below). Items removed from active flow carry `Blocked by:` (trigger-based) or `Parked:` (indefinite) headers. A `--- Plan session here: <reason> ---` marker between batches means /next halts there until a /plan session addresses the named reason.
-- **REGISTRY.md** — components list. Updated after each build.
+- **QUEUE.md** — your work, in two sections. **Processed** work is vetted and ready to build, worked top-to-bottom; a `--- Cleared to run above this line ---` line marks how far down is greenlit (below it is decided but not ready yet). **Unprocessed** work is captured ideas and tasks not yet fully processed. Each piece of work is one line: a `#### ` heading naming the work, with a `[slug]` at the end of that heading line and a short rationale beneath it, plus a `captured by you` credit on items you personally raised (anything else is unmarked — Claude is the default author). A work item can carry a leading flavor tag: none means a build (Claude edits files), `[audit]` a review pass (Claude reads and reports), `[user]` a step only you can run. A security or privacy risk Claude surfaces becomes a work item carrying a `Red flag · State: cleared/uncleared` marker — surfaced first each session while uncleared, until it's cleared (either designed out, or you're told the risk plainly and choose to accept it).
 - **LOG/** — session records: what was built, tested, decided. One file per session entry, plus index.md one-line summaries naming each entry file.
 - **FAQ/** — workflow FAQ. Index loaded at session start; details in FAQ/faq.md.
+- **INBOX/** — messages from other projects you run. Anything waiting is mentioned at session start; handled messages move to `INBOX/archive/`. A message going out to another project is always shown to you for approval first.
 
 ## Workflow
 
 - `/setup` — scaffold project docs (done if you're reading this).
 - `/plan` — queue management, captures, design questions.
-- `/next` — execute the top batch (build, test, or audit). `/next freeform` does loosely-scoped work that isn't any of those — an ad-hoc change or a discussion of edits already made.
+- `/next` — execute the top piece of ready work (a build or an audit, by its flavor tag). It can work several cleared pieces of work back-to-back, top-down, stopping at the readiness line or when something genuinely needs you.
+- `/rescan` — read back over the conversation and file anything decided or noticed but never written down. Run it whenever, as often as you like; it only looks back as far as the last time you ran it. It files things and leaves the deciding to /plan.
 - `/done` — record, update docs, commit.
 
 ## Rules for Claude
 
-- SPEC.md is read-only during builds. Edit it only during /plan.
-- Only touch files listed in the active build scope. Halt and ask if you need more.
-- One build at a time. Never start a second build while _build.md exists — finish and /done before starting another. (A planning session in a separate chat alongside a build is allowed.)
-- State problems plainly. Don't hide them or silently fix unrelated things.
-- Route discoveries to QUEUE.md rather than acting on them immediately.
+- SPEC.md is a normal doc, and there's no separate spec-edit step — but **it changes during planning, not during a build**. When a planning decision changes what SPEC says, Claude writes that sentence in the /plan session, with you there. A build never writes product truth: if a build discovers SPEC is missing a sentence, it writes the sentence down as a new queue item and carries on, so SPEC is behind by at most that one sentence until your next planning session — and it's behind visibly, as an item you can see, rather than quietly. The reason is that the session which made a choice shouldn't be the one that certifies it as product truth. A large SPEC rework is ordinary build work that lists SPEC.md among its files, and the safety check still blocks a build from editing SPEC unless it does. Note spec issues for /plan as they come up.
 
 ## Language
 
