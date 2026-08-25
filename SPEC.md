@@ -6,7 +6,7 @@ This document describes what each feature is, how the user experiences it, and w
 
 ## Project context
 
-Taskflow is a native Android task manager (Kotlin / Jetpack Compose, MVVM with Room) designed around executive dysfunction. It separates two thinking modes most task apps conflate: a Schedule view for committed, time-bounded execution, and Projects for divergent, no-time-pressure planning. A Strategy doc sits above Projects to organise the medium- and long-term picture. Taskflow's data lives locally on the device by default; cloud sync is the bundle that unlocks Claude integration on the paid tier, where the user talks to Claude in their normal Claude client (web, desktop, or mobile) and Claude reaches Taskflow through a remote MCP server. Taskflow does not import from, sync to, or export to any external task app.
+Taskflow is a native Android task manager (Kotlin / Jetpack Compose, MVVM with Room) designed around executive dysfunction. It separates two thinking modes most task apps conflate: a Schedule view for committed, time-bounded execution, and Projects for divergent, no-time-pressure planning. A Strategy doc sits above Projects to organise the medium- and long-term picture. Taskflow's data lives locally on the device by default; cloud sync is the bundle that unlocks Claude integration on the paid tier, where the user talks to Claude in their normal Claude client (web, desktop, or mobile) and Claude reaches Taskflow through a remote MCP server. Taskflow does not import from, sync to, or export to any external task app. That rule is about data living in two places with neither being the truth; it is not a rule about who may put work in. Claude, acting on the user's own instruction, may create tasks in Taskflow — that is what the paid tier's MCP integration already is — and work arriving that way is ordinary Taskflow data from the moment it lands, with the device's database still the single source of truth. A task that arrived this way carries no mark of having done so: there is no second class of task, because a list built to be trusted at a glance cannot afford a badge inviting the user to second-guess half of it.
 
 ## UX principles for Taskflow
 
@@ -61,6 +61,16 @@ Each card holds that Project's **far-future (8-or-more-days-out) dated tasks** �
 **At the day-begins-at boundary** (see *Settings → Day begins at*), Tomorrow's tasks roll into Today with no label, no reordering, and no shame. Today's tasks that did not get completed simply remain on Today in the order the user placed them — they do not move to the top, they do not gain a label, they do not change appearance. They are just still there.
 
 The user needs this because execution lives in a single time continuum. While executing, the user wants to see what they have committed for now, next, this week, and beyond — sliced by attention horizon, not by category. The "still there from before" behaviour is deliberate (UX principle 4): a task that slips past its date should not become a daily reminder of failure.
+
+### Focus on one Project temporarily
+
+Sometimes the motivation is only there for one area of life. Tapping a Project card's **header** on Later — not its expand/collapse control — enters **focus** on that Project: Today, Tomorrow and Soon then show only that Project's tasks. The spine itself is unchanged, and Later is unchanged, since Later is already organised by area.
+
+Focus announces itself and is easy to leave. While it is on, the top bar changes colour and carries the Project's name with an **X**, so the user can always see they are focused and leave in one tap. Focus does not survive closing the app: motivation for one area is a this-afternoon thing, not a setting, and a new launch always starts unfocused.
+
+While focused, adding a task from a Schedule slot files it into the focused Project rather than the system Unassigned Project — the focused Project is the context the user is capturing in (UX principle 5). The Completed tray on Today shows that Project's completions while focus is on.
+
+The user needs this because attention does not always arrive spread evenly across their life, and when it arrives for one area only, the flat horizon-sliced lists make the user do the filtering in their own head. This does not conflict with UX principle 3: it does not restructure the slots or let the user live in a category-sliced app. The flat time-horizon list stays the real shape, and focus is a temporary lens over it that is always visible and expires on its own — something that cannot survive a relaunch cannot become how the user lives in the app.
 
 ### Recurring tasks
 
@@ -193,7 +203,7 @@ Two tiers, presented openly during onboarding and re-accessible from the side me
 - **Free tier.** Local-only. No cloud sync. No Claude integration. The user gets the full Schedule, full Projects, and the full Strategy doc editor (with its mechanically-generated structure — see *Strategy doc*), plus manual JSON export/import. Free is "hard mode" by design — the user writes everything themselves. Free is not hidden, not punished, and not a time-limited trial. It is a complete product.
 - **Paid tier.** Cloud sync plus Claude integration via remote MCP, bundled. Cloud sync is the infrastructure precondition for the MCP server to be reachable from Anthropic's servers; the two cannot meaningfully be separated.
 - **Trial.** 30 days of paid tier, handled through Google Play.
-- **Paused subscription.** While a paid subscription is paused, Taskflow reverts to **local-only** operation — no cloud sync, the same as the free tier (a non-paying user is never the case where data lives only in the cloud). The device's Room database stays the source of truth throughout, and re-syncs to the cloud when the subscription resumes.
+- **Paused subscription.** While a paid subscription is paused, Taskflow reverts to **local-only** operation — no cloud sync, the same as the free tier (a non-paying user is never the case where data lives only in the cloud). The device's Room database stays the source of truth throughout, and re-syncs to the cloud when the subscription resumes. Where the user has several devices, resuming keeps the work done on all of them: the cloud takes every task from every device rather than letting one device's state win, a task edited on two devices keeps the later edit, and a task deleted on one device while paused stays if another device still holds it. A deleted task may therefore reappear on resume — deliberately, because deleting it again is one gesture while a task lost to a merge is gone.
 
 The side menu always shows a "turn on AI for the full experience" entry that re-triggers the AI choice flow.
 
@@ -202,6 +212,8 @@ The user needs this because the value Taskflow offers on the paid tier — Claud
 ### Claude integration via remote MCP
 
 On the paid tier, the user talks to Claude in their **normal Claude client** (claude.ai web, desktop app, or mobile app — there is no chat UI inside Taskflow). Taskflow exposes its data via a remote MCP server reachable on the public internet. The user adds the MCP connector once via claude.ai on the web; from there, it syncs to every Claude client on the user's account.
+
+**How the connector proves who is asking.** Adding the connector asks the user for one thing: Taskflow's server URL. Claude then discovers the sign-in path from the server itself and sends the user to a Taskflow-hosted sign-in page, where they log in to their own Taskflow account and see what Claude is asking to reach before approving it. Claude holds an access credential issued to that one account, sent in the request rather than carried in the URL, and every tool call is answered against that account's cloud data and no other's. A request the server cannot tie to an authenticated account is refused rather than guessed at. The user can revoke the connector's access from Taskflow at any time without redoing setup, and access ends the same way when paid access ends (see *Tier model — free and paid*).
 
 Claude's behaviour through MCP is governed by `SYSTEM-PROMPT.md` (the system prompt the MCP server hands Claude on connection) — covering life-area exploration, project-suggestion etiquette, Strategy doc reconciliation, proactive Taskflow checks, and tone.
 
@@ -232,7 +244,7 @@ The user needs this because long-range planning is real work the user does, and 
 
 ### JSON export and import
 
-A screen in Settings exports the user's full database — tasks, Projects, Strategy doc, ordering — to a JSON file. The same screen imports a JSON file produced by an export. Export and import are explicit, user-driven actions; nothing happens automatically. Android's Auto Backup is also active by default for all users (this is the OS-level feature that backs up app data to the user's own Google Drive and restores on reinstall) — Taskflow does not disable it.
+A screen in Settings exports the user's full database — tasks, Projects, Strategy doc, ordering — to a JSON file. The same screen imports a JSON file produced by an export, replacing the existing database, with a warning first. A second, separately named action adds tasks from a file instead of replacing: every task in the file is added and filed into its named Project, that Project created if it is missing, and everything already in the database is left alone. The two are kept visibly apart rather than offered as one action with a setting, because one of them destroys data and the other cannot. Every exported task carries its completion state and the date it was completed, a parent's written as the value rolled up from its children, so anything reading an export can tell what happened to the work. Export and import are explicit, user-driven actions; nothing happens automatically. Android's Auto Backup is also active by default for all users (this is the OS-level feature that backs up app data to the user's own Google Drive and restores on reinstall) — Taskflow does not disable it.
 
 The user needs this because portability matters even with no external integrations. JSON export/import gives every user explicit control over their data, including free-tier users who never get cloud sync, and provides a recovery path beyond Auto Backup for people who want it.
 
