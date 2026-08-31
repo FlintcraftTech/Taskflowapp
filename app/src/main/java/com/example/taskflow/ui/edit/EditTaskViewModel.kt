@@ -37,9 +37,10 @@ sealed interface EditTarget {
 }
 
 /**
- * The edit dialogue's rendered state. Editable fields are [title], [notes], [projectId]; [dateLabel]
- * is read-only this batch (date editing is the side-scrolling picker, batch 0006). [projects] backs
- * the Project picker, always including an "unassigned" choice in the UI.
+ * The edit dialogue's rendered state. Editable fields are [title], [notes], [projectId] and the
+ * date — [selectedDate] is the tile the strip highlights (null = the "No date" tile), and [today]
+ * is the strip's visual anchor. [dateLabel] is the same date as text, kept for callers that want a
+ * one-line rendering. [projects] backs the Project picker, always including an "unassigned" choice.
  */
 data class EditUiState(
     val loading: Boolean = false,
@@ -48,6 +49,8 @@ data class EditUiState(
     val notes: String = "",
     val projectId: Long? = null,
     val dateLabel: String = NO_DATE,
+    val selectedDate: LocalDate? = null,
+    val today: LocalDate = LocalDate.now(),
     val projects: List<Project> = emptyList(),
 ) {
     /** Save is allowed only with a non-blank title — the lightest guard against empty captures. */
@@ -104,6 +107,8 @@ class EditTaskViewModel(
                 dateLabel = f.date?.let {
                     Instant.ofEpochMilli(it).atZone(zone).toLocalDate().format(dateFormatter)
                 } ?: EditUiState.NO_DATE,
+                selectedDate = f.date?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() },
+                today = SlotDeriver.logicalDate(clock(), zone),
                 projects = projects,
             )
         }.stateIn(
@@ -165,6 +170,25 @@ class EditTaskViewModel(
     }
 
     /**
+     * Tapping a tile in the date strip. The stored `slot` is cleared to null because a dated task
+     * derives its slot from its date (SPEC §Data model) — leaving a parked slot behind would keep
+     * the task pinned to Soon or Later while its date said otherwise. Noon anchors the date safely
+     * inside the logical day, clear of the day-begins-at edge, matching the new-task path above.
+     */
+    fun onDateSelected(date: LocalDate) {
+        form.value = form.value.copy(date = noonEpoch(date), slot = null)
+    }
+
+    /**
+     * Tapping the strip's "No date" tile. The task drops out of the day and Soon lists and into its
+     * Project's card on Later (SPEC §Move between Schedule and Project), which is what parking it on
+     * LATER expresses — an undated task not parked on Soon renders inside its Project's card.
+     */
+    fun onDateCleared() {
+        form.value = form.value.copy(date = null, slot = ScheduleSlot.LATER)
+    }
+
+    /**
      * Creates a Project from a typed name and selects it for the task being edited, so the task files
      * into the new Project on save (SPEC §Create or delete a Project). A name is all creation asks for;
      * a blank name is ignored. The Project is appended to the end of the order (max + 1) so it appears
@@ -216,7 +240,15 @@ class EditTaskViewModel(
                     notes = f.notes,
                     // No Project picked → Unassigned (projectId is non-null; see the insert path above).
                     projectId = f.projectId ?: Project.UNASSIGNED_PROJECT_ID,
+                    date = f.date,
+                    slot = f.slot,
                 )
+                // A date change moves the task across Schedule surfaces (SPEC §Move between Schedule
+                // and Project), so it lands at the bottom of wherever it arrives rather than keeping
+                // a position that belonged to the slot it left.
+                if (f.date != o.date || f.slot != o.slot) {
+                    updated = updated.copy(slotSortOrder = nextSlotSortOrder(f.date, f.slot))
+                }
                 // Refiling an undated task to a different Project appends it to that Project's
                 // below-card list (SPEC §Move between Schedule and Project). Dated tasks keep their
                 // order — they show in the card by Schedule position, not project_sort_order.

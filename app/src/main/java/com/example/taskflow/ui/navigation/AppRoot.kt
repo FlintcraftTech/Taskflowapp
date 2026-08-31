@@ -49,6 +49,14 @@ fun AppRoot(modifier: Modifier = Modifier) {
 
     ModalNavigationDrawer(
         drawerState = drawerState,
+        // Swipe-to-open is off deliberately (SPEC §Side menu): the ☰ is the one opener, so the
+        // left-edge drag cannot collide with the spine's horizontal-swipe navigation.
+        //
+        // Gated on isOpen rather than set flat false, because Material3 hangs BOTH the drag anchor
+        // and the scrim's tap-to-close off this one flag — a flat false would silently take the
+        // scrim tap with it and trap the user in an open drawer. Closed: gestures off, so no drag
+        // can open it. Open: gestures on, so the scrim tap and drag-to-close behave normally.
+        gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             AppDrawer(
                 onSlot = { page ->

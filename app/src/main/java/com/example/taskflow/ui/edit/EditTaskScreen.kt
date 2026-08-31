@@ -38,6 +38,8 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.taskflow.TaskflowApplication
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 /**
  * The task edit dialogue (SPEC §Edit a task), shown full-screen over the spine or a Project view.
@@ -116,7 +118,12 @@ fun EditTaskScreen(
                 onProjectChange = viewModel::onProjectChange,
                 onCreateProject = viewModel::createProjectAndSelect,
             )
-            DateField(dateLabel = state.dateLabel)
+            DateField(
+                selectedDate = state.selectedDate,
+                today = state.today,
+                onSelectDate = viewModel::onDateSelected,
+                onClearDate = viewModel::onDateCleared,
+            )
         }
     }
 }
@@ -260,28 +267,37 @@ private fun NewProjectCard(
 }
 
 /**
- * The date, shown read-only this batch. The side-scrolling date strip that makes it editable is
- * batch 0006; until then the dialogue shows the date the task already carries (or "No date").
+ * The date field: the side-scrolling date strip, embedded directly in the dialogue rather than
+ * opened as a popup calendar (SPEC §Date picker — side-scrolling date strip), so the editing flow
+ * stays continuous. Selecting or clearing writes straight to the form; nothing lands in the
+ * database until Save.
  */
 @Composable
-private fun DateField(dateLabel: String) {
+private fun DateField(
+    selectedDate: LocalDate?,
+    today: LocalDate,
+    onSelectDate: (LocalDate) -> Unit,
+    onClearDate: () -> Unit,
+) {
     Column {
         Text(
             text = "Date",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = dateLabel, style = MaterialTheme.typography.bodyLarge)
-            Spacer(Modifier.width(12.dp))
-            Text(
-                text = "(set in a later update)",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        DateStrip(
+            selectedDate = selectedDate,
+            today = today,
+            dateFormatter = DATE_TILE_FORMATTER,
+            onSelectDate = onSelectDate,
+            onClearDate = onClearDate,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
+
+// DD/MM, the SPEC default. The MM/DD alternative is the Settings → Date format item.
+private val DATE_TILE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM")
 
 private const val UNASSIGNED = "Unassigned"
 private const val NEW_PROJECT = "New Project"

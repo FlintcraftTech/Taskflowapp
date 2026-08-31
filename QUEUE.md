@@ -10,44 +10,6 @@
 > item carrying a `Red flag · State: cleared/uncleared` marker. The line below marks
 > how far down is cleared to build; anything below it is decided but not ready yet.
 
-#### CLAUDE.md's plugin-managed block still describes the retired workflow vocabulary [claude-md-stale-vocabulary]
-
-`CLAUDE.md` describes the queue as Red flags / Batches with Build-Test-Audit subheadings / Deferred tests / Captures, mentions `Parked:` headers and a `--- Plan session here ---` marker, lists the deleted `REGISTRY.md` as a project doc, and describes /next as executing "the top batch". None of that survived the migration: work is now two sections of single entries with a flavor tag, deferred checks are `[user]` items, and holding is by `Blocked by:` or a date. It matters because `CLAUDE.md` is read at the start of every session, so the stale text is read as current — one earlier session went looking for a section that no longer exists.
-
-The capture's premise was corrected in planning on 2026-08-20: this is **not** the user's own wording. The stale passage sits inside the `<!-- PLUGIN-MANAGED -->` markers, which the plugin owns and refreshes on /setup and reinstall; the user's Project rules sit outside them. The installed plugin's `templates/CLAUDE-TEMPLATE.md` was read and is current, so there is no wording to negotiate.
-
-Change `CLAUDE.md` — replace everything between the two `PLUGIN-MANAGED` marker comments with the corresponding block from the installed plugin's `templates/CLAUDE-TEMPLATE.md`, verbatim, keeping `Language: English`. That swaps the Project docs list to the Processed/Unprocessed description, drops the REGISTRY.md line, adds the INBOX line, restates /next and adds /rescan, and replaces the five Rules-for-Claude bullets with the template's single SPEC-is-a-normal-doc rule. Then, in the user-owned Project rules section below the markers, fix two stale references left by the migration: the archived-backlog-specs paragraph pointing at "QUEUE.md's Batches", and the migration note still naming `REGISTRY.md` as a live doc.
-
-SPEC.md's one instance ("each batch's spec") was fixed directly in that planning session. This item is a build only because the planning scope-lock refuses `CLAUDE.md`.
-
-**Half of this landed already, on 2026-08-25.** The /setup run on plugin 1.20.0-test18 refreshes the plugin-managed block as part of its migration, so the marker-to-marker swap described above is done and `CLAUDE.md` now carries the template's current text. What remains is the second half only: the two stale references in the user-owned Project rules below the end marker — the archived-backlog-specs paragraph pointing at "QUEUE.md's Batches", and the migration note still naming `REGISTRY.md` as a live doc. **[claude-md-project-rules-stale-vocabulary] was merged in here on 2026-08-25 and deleted**, since it was the same job on the same paragraphs — splitting it would have meant two passes over one section. It found two further stale rules below the end marker, and the wording for both was settled with the user in that session:
-
-- The `TEST-LOG.md` rule describes the table as one row "per shipped build batch" and says results are recorded "when a build or test batch runs tests". It becomes one row per test, per shipped **work item**, recorded when a build runs tests. The "test batch" half goes entirely: a check Claude can run is part of building, and a check only the user can run is a `[user]` item, so there is no test batch to name.
-- The `SYSTEM-PROMPT.md` rule ends "Build batches that change its domain carry a `Serves SYSTEM-PROMPT.md: ...` line". The convention itself is **kept** — three queue items carry that line today and it is how a build knows it is touching the system prompt's territory — and reworded to attach to a **work item** rather than a batch.
-
-Neither change alters what actually happens; both describe current practice in current vocabulary. The alternative considered and refused: dropping the `Serves SYSTEM-PROMPT.md:` convention along with the batch wording, which would have thrown away a live signal to fix a stale noun.
-
-Verify by reading `CLAUDE.md` back: no occurrence of "Batches", "Deferred tests", "Parked:", "Plan session here" or "REGISTRY.md" anywhere in the file, and the Project rules section otherwise unchanged.
-
---- Build block ---
-Changes: `CLAUDE.md` — the marker-to-marker swap landed on 2026-08-25 in the /setup run; check it is still in place and leave it alone if so. The remaining work is four stale references in the user-owned Project rules below the end marker. (1) The archived-backlog-specs paragraph pointing at "QUEUE.md's Batches" — point it at the work item's summary in QUEUE.md instead. (2) The migration note still naming `REGISTRY.md` as a live doc — it was deleted, so the note says so rather than listing it. (3) The `TEST-LOG.md` rule: one row per test, per shipped work item, recorded when a build runs tests; the "test batch" wording goes entirely. (4) The `SYSTEM-PROMPT.md` rule's closing sentence: keep the `Serves SYSTEM-PROMPT.md: ...` convention and attach it to a work item rather than to a build batch. Change nothing else in that section.
-Acceptance: reading `CLAUDE.md` back shows no occurrence of "Batches", "batch", "Deferred tests", "Parked:", "Plan session here" or "REGISTRY.md" as a live doc; the `Serves SYSTEM-PROMPT.md:` convention is still described, now on a work item; and the Project rules section is otherwise unchanged.
---- End build block ---
-
-#### Open the side menu by ☰ only — disable drawer swipe-to-open [disable-drawer-swipe-open]
-
-The navigation drawer's default left-edge swipe-to-open collides with Taskflow's signature gesture: horizontal swipe is how the whole spine moves (Today ↔ Tomorrow ↔ Soon ↔ Later and onward). On Today — the leftmost, default page — a right-swipe has no previous spine page, so the drawer quietly claims it, and the same horizontal gesture means "open menu" near the edge but "change day" in the content area. That region-dependent meaning is the confusion. Resolution: the menu opens only by tapping the ☰ button; swipe-to-open is disabled. The Android edge-swipe-to-open convention was weighed and set aside — it carries less weight in an app that repurposes horizontal swipe as its core navigation, and the ☰ remains a standard, discoverable opener, so no affordance is truly lost. Verified in AppRoot.kt: the ☰ opens the drawer programmatically (`drawerState.open()`), unaffected by the gesture flag, and the spine's `HorizontalPager` is a separate gesture, also unaffected. One known side effect: disabling drawer gestures also removes swipe-to-close, but tapping the scrim or any menu item still closes it. Noticed on device 2026-06-20.
-
-Change `app/src/main/java/com/example/taskflow/ui/navigation/AppRoot.kt` — add `gesturesEnabled = false` to the `ModalNavigationDrawer`. The ☰ (`onMenuClick` → `drawerState.open()`) and scrim/item taps to close are unaffected; the `HorizontalPager` day-swipe is unaffected.
-
-Verify on a device: a left-edge right-swipe no longer opens the menu; the ☰ button still opens it; horizontal swipe in the content area still changes the day and the chevrons still work; tapping the scrim or a menu item still closes the drawer.
-
---- Build block ---
-Changes: `app/src/main/java/com/example/taskflow/ui/navigation/AppRoot.kt` — add `gesturesEnabled = false` to the `ModalNavigationDrawer`. The ☰ (`onMenuClick` → `drawerState.open()`), scrim/item taps to close, and the spine's `HorizontalPager` are all unaffected.
-Acceptance: on a device — a left-edge right-swipe no longer opens the menu; the ☰ still opens it; horizontal swipe in the content area still changes the day and the chevrons still work; tapping the scrim or a menu item still closes the drawer.
-Refused: Android's edge-swipe-to-open convention — it carries less weight in an app that repurposes horizontal swipe as its core navigation, and the ☰ remains a standard, discoverable opener.
---- End build block ---
-
 #### Side-scrolling date picker [0006-side-scrolling-date-picker]
 
 Horizontal date strip replacing the read-only date display in the edit dialogue. Full original spec: `archive/backlog-specs/0006-side-scrolling-date-picker.md`. Several held items wait on this one, because it is the only path to setting a date at all — see [verify-schedule-date-matrix] and [verify-far-future-project-card].
@@ -452,6 +414,10 @@ Flavored `[audit]` because it reads and reports rather than editing: it takes th
 > Processed) or drop it. Each is filed as its own `#### ` heading, so the list shows
 > up in an editor's outline.
 
+#### Last session advises processing 0006-side-scrolling-date-picker next [forward-advisory]
+
+Advice, not work: the top cleared item, [0006-side-scrolling-date-picker], already has partial code in the tree from a build session that crashed before recording it — a new `DateStrip.kt` plus edits to `EditTaskScreen.kt` and `EditTaskViewModel.kt`, committed at this close as unfinished, unreviewed work. A /next run that builds the item without knowing this would build on top of (or duplicate) code nobody has checked. Look at that partial work first — keep it, finish it, or discard it — before the item is built. Note also that none of the crashed run's Kotlin compiled (Gradle's daemon connection fails on this machine for Claude), so the next compile in Android Studio is the first real check of all of it.
+
 #### Help, Thanks and Report-a-bug content [help-thanks-report-content]
 
 The words for the three bottom-of-drawer screens that [0022-help-thanks-report-a-bug-content] builds. Help should cover MCP setup, the production custom-instruction text, and the "tasks dated before today" behaviour described without naming the category — the SPEC §Tasks dated before today wording is ready. **This item also drafts the custom-instruction text itself**, folded in on 2026-08-25 from [custom-instruction-production-text]: that text is one of Help's three topics, so the words belong with the rest of Help's words rather than in an item of their own. What stayed behind there is only the live test, which reads the draft this item produces and reports back the wording changes that follow. Two of its inputs aren't ready: the live-tested wording of that custom-instruction text ([custom-instruction-production-text]) and the MCP setup design ([0019-ai-choice-flow-and-mcp-setup], [0020-remote-mcp-server]). Write the content when those have landed.
@@ -490,4 +456,8 @@ Why it was shelved, decided 2026-06-24: the method is one-spec-per-project. Two 
 Privacy note to carry into any revival: if the personal strategy and real tasks get committed into this product repo and it's ever shared or made public, that's the user's private life data exposed. Decide the home with that in mind when this revives — it is the first question when this comes back, not an afterthought.
 
 **Dated in planning on 2026-08-25, with the user's approval.** It waits on multi-spec support in the method, which no item in this queue can deliver and which belongs to the No code method project. It cannot be held below the readiness line either, because held work has to be specific enough to build and this is not. Left as a plain capture it returned to the top every session and was set aside again, which is what had been happening. Three months was chosen as long enough not to re-read it every session and short enough that it comes back while still fresh if multi-spec support lands sooner. It is not offered again before that date.
+
+#### [user] Verify the drawer swipe-off on your device [verify-drawer-swipe-off-on-device]
+
+The [disable-drawer-swipe-open] build shipped its code change (AppRoot.kt gates `gesturesEnabled` on `drawerState.isOpen`), but the session that built it could not compile or deploy — Gradle's daemon connection fails on this machine — so its acceptance checks were never run. They need your eyes on the device. Walkthrough: (1) Install or run the current app build on your phone or emulator — the next successful build from Android Studio covers compiling this change; open the app to Today. (2) From the left edge of the screen, swipe right — look for: the side menu does NOT open. (3) Tap the ☰ button top-left — look for: the menu opens. (4) With the menu open, tap the dimmed area to its right — look for: the menu closes. (5) In the middle of the screen, swipe left — look for: the day changes to Tomorrow (and the chevrons still work). This verifies the shipped item's acceptance criteria and nothing else; if any step fails, say so and it becomes a fix item.
 
