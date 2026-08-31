@@ -1,4 +1,4 @@
-# [HASH] — build [disable-drawer-swipe-open]: drawer swipe-to-open disabled by gating gestures on the drawer being open
+# baacb0b — build [disable-drawer-swipe-open]: drawer swipe-to-open disabled by gating gestures on the drawer being open
 
 The item asked for a flat `gesturesEnabled = false` on the ModalNavigationDrawer. The building session read Material3 1.4.0's NavigationDrawer.kt from the Gradle cache rather than guessing, and found the scrim's tap-to-close hangs off the same flag (line 375: `if (gesturesEnabled && ...)`) — so a flat false would have broken the item's own acceptance criterion that a scrim tap still closes the drawer. It gated on `drawerState.isOpen` instead: closed → no gesture can open it; open → scrim tap and drag-to-close behave normally. An alternative seriously weighed, and why the item's literal instruction lost: the instruction predated reading the library source.
 

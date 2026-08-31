@@ -24,6 +24,13 @@ This project uses the Throughliner method.
 
 - SPEC.md is a normal doc, and there's no separate spec-edit step — but **it changes during planning, not during a build**. When a planning decision changes what SPEC says, Claude writes that sentence in the /plan session, with you there. A build never writes product truth: if a build discovers SPEC is missing a sentence, it writes the sentence down as a new queue item and carries on, so SPEC is behind by at most that one sentence until your next planning session — and it's behind visibly, as an item you can see, rather than quietly. The reason is that the session which made a choice shouldn't be the one that certifies it as product truth. A large SPEC rework is ordinary build work that lists SPEC.md among its files, and the safety check still blocks a build from editing SPEC unless it does. Note spec issues for /plan as they come up.
 
+## Visibility
+
+<!-- Set at setup: which repository holds this project's documents, and whether
+     they are published anywhere. Left blank until that is settled. -->
+
+Visibility:
+
 ## Language
 
 Language: English

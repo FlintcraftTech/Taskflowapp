@@ -1,4 +1,4 @@
-# [HASH] — orphaned-build close: a crashed 20-item run closed with 2 items shipped, partial date-picker code committed as-is, and the format-5 migration still owed
+# baacb0b — orphaned-build close: a crashed 20-item run closed with 2 items shipped, partial date-picker code committed as-is, and the format-5 migration still owed
 
 A build session started a 20-item run and crashed (or was never closed) partway. This fresh session ran /done to close it out, on the way to the /setup migration the installed plugin (format 5 against the project's format 4) is asking for — /setup refuses to run while a build working file exists.
 
