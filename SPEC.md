@@ -48,7 +48,7 @@ The user needs this because Projects answer "where does this belong?" while Sche
 
 ### Schedule view
 
-The four Schedule slots — **Today**, **Tomorrow**, **Soon**, **Later** — are the four leftmost pages on a single horizontal navigation spine that continues rightward into the **Strategy** page (see *Side menu*). The user swipes between adjacent pages; Today is the default open page. Each page shows the tasks placed on that slot. On Today, Tomorrow, and Soon a task's Project is not shown — those pages are flat task lists, and during execution there the only place a task's Project surfaces is inside its edit dialogue. **Later is the exception: it is grouped by Project** (described below) — at the far horizon the area a task belongs to matters more than its exact date.
+The four Schedule slots — **Today**, **Tomorrow**, **Soon**, **Later** — sit in the middle of a single horizontal navigation spine that runs **Search · Yesterday · Today · Tomorrow · Soon · Later · Strategy** (see *Search and completed history*, *Yesterday page*, and *Side menu*). The user swipes between adjacent pages; Today is the default open page. Each page shows the tasks placed on that slot. On Today, Tomorrow, and Soon a task's Project is not shown — those pages are flat task lists, and during execution there the only place a task's Project surfaces is inside its edit dialogue. **Later is the exception: it is grouped by Project** (described below) — at the far horizon the area a task belongs to matters more than its exact date.
 
 Each task on **Soon and Later** shows its date (when the task has one) in **DD/MM** format (or **MM/DD** if the user has selected that in Settings — see *Settings → Date format*). **Tomorrow does not show a date label** — a Tomorrow task always carries tomorrow's date, so the page name is the day signal and a label would only repeat it. Today's tasks do not show a date label except when the date is in the past, where the date communicates how stale the task is.
 
@@ -184,6 +184,42 @@ At the bottom of the Today screen is a greyed-out list of completed tasks. When 
 Completed tasks stay in the tray until the **day-begins-at rollover** (see *Settings → Day begins at*), at which point the tray clears — each new day starts with a fresh, empty tray. Clearing the tray does not delete the tasks: completed tasks are retained and persist in the database; they only leave the tray view.
 
 The user needs this because seeing what they have already done provides a sense of progress, and routing all completions through one tray (rather than letting them disappear from each screen individually) gives the user one place to find and undo a mis-tapped completion.
+
+### Search and completed history
+
+The leftmost page on the navigation spine is a single search surface covering everything: active tasks and completed ones together. There is not a separate search box for each. Someone hunting for a task usually does not know or care whether they already finished it, and two boxes would make them guess which one to open.
+
+Below the search field, completed tasks are listed in completion order, most recent first, with a date header between each day's results. Typing narrows what shows below, and the date headers for the days that still have results stay above them, so a filtered list is still readable as a history rather than as a flat pile.
+
+Search covers **all tasks, active and completed, across every Schedule slot and every Project, plus Project names**. It does not cover the Strategy doc. Scoping search to the current screen or the current Project would put back the "am I looking in the right place?" guess that one unified surface exists to remove; Project names come along because typing a Project's name and getting that Project is the same gesture as typing a task's. The Strategy doc is left out because it is prose rather than items, so its results cannot render as task rows, and it is a single document the user can simply open and read.
+
+**Results are read-only.** A task cannot be completed from the results list, and tapping a result navigates to where that task actually lives. Editing and un-completing happen only from a day card (see *Day-detail card layer*), which is what keeps a tappable list of completed tasks from becoming a second place to change things.
+
+The user needs this because a task they are trying to find is a task they have lost, and the app's own organising principles — horizon, Project — are exactly what they cannot use at that moment. Search is the one surface that ignores the structure.
+
+### Yesterday page
+
+Immediately left of Today on the spine sits **Yesterday**: a page, not a card. Its content is essentially what the user completed yesterday, because tasks that slipped past their date stay on Today rather than falling backwards (UX principle 4), so nothing else is left behind to show.
+
+The user needs this because the day just gone is the one piece of history a person reaches for most often, and reaching it should be one swipe rather than a search.
+
+### Day-detail card layer
+
+Tapping a search result, a group, or a date header opens a **day-detail card** in the foreground: that single day, in full. The card layer moves on a deliberately different left-right axis from the spine, and the card visual is what signals the difference — the user is no longer moving along the spine, they are moving through days.
+
+Swiping right brings the older day in from the left; swiping left brings the newer day in from the right. Swiping left past the newest card carries the card layer and the search page off together in one motion, landing the user on Yesterday.
+
+**Editing or un-completing a single task happens only from a day card** — nowhere else in the history surfaces.
+
+The user needs this because a day is the unit history is actually remembered in, and giving days their own axis keeps "which day am I looking at?" from competing with "which horizon am I looking at?".
+
+### Share a day
+
+A share button on a day screen shares that day's completed tasks, offered in two formats: **PNG** and **Markdown**. Sharing goes through Android's standard share sheet, the same mechanism the Strategy doc's share button already uses.
+
+Both formats are chosen on the evidence in `workshop/resources/research/android-share-format-png-vs-pdf.md`. PNG because it renders inline in a chat thread rather than arriving as an attachment the recipient has to open. Markdown because it will only become more widely read — and it is carried under the `text/plain` MIME type rather than `text/markdown`, which almost no Android app declares and which would produce a near-empty share sheet.
+
+The user needs this because a finished day is the most shareable thing a task app holds, and the people in someone's life are the audience for it.
 
 ### Onboarding — first run
 

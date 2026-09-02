@@ -55,6 +55,12 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE parent_id = :parentId ORDER BY slot_sort_order ASC")
     fun getSubtasks(parentId: Long): Flow<List<Task>>
 
+    // Every subtask in the database, parent and completion state included. The Schedule renders
+    // children nested under their parents on whatever surface the parent lives on, so it needs all
+    // of them at once — one query it can group by parent_id, rather than a Flow per visible parent.
+    @Query("SELECT * FROM tasks WHERE parent_id IS NOT NULL ORDER BY slot_sort_order ASC")
+    fun observeAllSubtasks(): Flow<List<Task>>
+
     @Query("SELECT * FROM tasks WHERE parent_id = :parentId ORDER BY slot_sort_order ASC")
     suspend fun getSubtasksList(parentId: Long): List<Task>
 
@@ -87,9 +93,25 @@ interface TaskDao {
     @Query("UPDATE tasks SET date = :date, slot = :slot WHERE id = :taskId")
     suspend fun updateDateAndSlot(taskId: Long, date: Long?, slot: ScheduleSlot?)
 
-    // Complete/uncomplete a task
-    @Query("UPDATE tasks SET is_completed = :isCompleted WHERE id = :taskId")
-    suspend fun updateCompletion(taskId: Long, isCompleted: Boolean)
+    // Complete/uncomplete a task, stamping (or clearing) when it happened. The two always move
+    // together — a completed_at left behind on a re-opened task would export as a lie.
+    @Query("UPDATE tasks SET is_completed = :isCompleted, completed_at = :completedAt WHERE id = :taskId")
+    suspend fun updateCompletion(taskId: Long, isCompleted: Boolean, completedAt: Long?)
+
+    // Set or clear a task's repeat rule (see Recurrence.serialize; null makes it a one-off again).
+    @Query("UPDATE tasks SET recurrence = :rule WHERE id = :taskId")
+    suspend fun updateRecurrence(taskId: Long, rule: String?)
+
+    // Rewrite a recurring task's completed-instance set. The whole set is written at once because
+    // it is stored as one delimited column — Task.withInstanceCompletion produces the new value.
+    @Query("UPDATE tasks SET completed_instances = :value WHERE id = :taskId")
+    suspend fun updateCompletedInstances(taskId: Long, value: String)
+
+    // Every recurring task, completed or not. A recurring task is never globally completed — its
+    // is_completed stays 0 and each instance is ticked off in completed_instances — so the Schedule
+    // picks these up through the ordinary active query; this exists for export and maintenance.
+    @Query("SELECT * FROM tasks WHERE recurrence IS NOT NULL AND parent_id IS NULL")
+    suspend fun getRecurringTasks(): List<Task>
 
     // Get max slot_sort_order for a slot (for appending new tasks)
     @Query("SELECT COALESCE(MAX(slot_sort_order), -1) FROM tasks WHERE slot = :slot AND parent_id IS NULL")
@@ -102,4 +124,9 @@ interface TaskDao {
     // All tasks (for export)
     @Query("SELECT * FROM tasks")
     suspend fun getAll(): List<Task>
+
+    // Clears every task for a replacing import. Children go with their parents by cascade anyway;
+    // deleting the lot outright avoids depending on the order rows happen to come back in.
+    @Query("DELETE FROM tasks")
+    suspend fun deleteAll()
 }

@@ -29,7 +29,7 @@ This project uses the Throughliner method.
 <!-- Set at setup: which repository holds this project's documents, and whether
      they are published anywhere. Left blank until that is settled. -->
 
-Visibility:
+Visibility: The project's documents (SPEC.md, QUEUE.md, LOG/) live in the public repository FlintCraftTech/Taskflowapp and are world-readable, by the user's informed choice on 2026-08-31. They were told plainly that the planning documents contain personal material, that an ignore rule added later would not untrack or scrub what is already committed, and that this method's checks cannot certify the documents safe to publish; they chose to keep the repository public. Do not raise the visibility again as a risk — changing it is theirs to ask for.
 
 ## Language
 

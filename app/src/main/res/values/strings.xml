@@ -7,6 +7,30 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
 
+    <!--
+      Empty states. All four live together so they read as one voice, and the voice follows UX
+      principle 4: an empty list is a normal state, not a failure. Nothing here chides the user or
+      urges them to add something.
+    -->
+    <string name="empty_today">Nothing on Today.</string>
+    <string name="empty_tomorrow">Nothing on Tomorrow yet.</string>
+    <string name="empty_soon">Nothing coming up in the next week.</string>
+    <!-- A Project the user has, with nothing in it anywhere. -->
+    <string name="empty_card_project">Nothing in here yet.</string>
+    <!-- The pinned Unassigned card, empty. -->
+    <string name="empty_card_unassigned">Nothing unfiled.</string>
+    <!--
+      A card that reads empty but whose Project does have tasks — all of them dated for the next
+      week or so, so they live on the schedule instead. Saying "nothing here yet" would be false,
+      and the count is what makes the difference legible.
+    -->
+    <plurals name="empty_card_on_schedule">
+        <item quantity="one">Nothing here — its one task is on the schedule.</item>
+        <item quantity="other">Nothing here — its %d tasks are on the schedule.</item>
+    </plurals>
+    <!-- Later before the user has made a Project of their own. -->
+    <string name="empty_later_no_projects">Your areas of life show up here as you make Projects. Anything you have not filed sits in Unassigned below.</string>
+
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris
         volutpat, dolor id interdum ullamcorper, risus dolor egestas lectus, sit amet mattis purus

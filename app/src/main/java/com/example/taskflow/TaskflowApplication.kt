@@ -5,6 +5,8 @@ import com.example.taskflow.data.local.TaskflowDatabase
 import com.example.taskflow.data.repository.ProjectRepository
 import com.example.taskflow.data.repository.StrategyRepository
 import com.example.taskflow.data.repository.TaskRepository
+import com.example.taskflow.data.settings.SettingsRepository
+import com.example.taskflow.data.transfer.TransferRepository
 
 class TaskflowApplication : Application() {
 
@@ -23,5 +25,13 @@ class TaskflowApplication : Application() {
 
     val strategyRepository: StrategyRepository by lazy {
         StrategyRepository(database.strategyEntryDao())
+    }
+
+    val settingsRepository: SettingsRepository by lazy {
+        SettingsRepository(this)
+    }
+
+    val transferRepository: TransferRepository by lazy {
+        TransferRepository(database.taskDao(), database.projectDao(), database.strategyEntryDao())
     }
 }

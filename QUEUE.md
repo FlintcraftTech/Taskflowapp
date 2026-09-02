@@ -10,134 +10,6 @@
 > item carrying a `Red flag · State: cleared/uncleared` marker. The line below marks
 > how far down is cleared to build; anything below it is decided but not ready yet.
 
-#### Side-scrolling date picker [0006-side-scrolling-date-picker]
-
-Horizontal date strip replacing the read-only date display in the edit dialogue. Full original spec: `archive/backlog-specs/0006-side-scrolling-date-picker.md`. Several held items wait on this one, because it is the only path to setting a date at all — see [verify-schedule-date-matrix] and [verify-far-future-project-card].
-
---- Build block ---
-Changes: `app/src/main/java/com/example/taskflow/ui/edit/EditTaskScreen.kt` and `EditTaskViewModel.kt` — replace the read-only date display with a horizontal date strip. Tiles labelled DD/MM (or MM/DD per setting), today as the visual anchor, tiles fading linearly with distance from today and capped so far-off tiles stay readable; tap a tile to select it, with a highlight; a visually distinct "no date" tile at the left edge, labelled rather than merely greyed, which clears the date. The strip spans roughly one month back to twelve months forward with a month-jump affordance, shows roughly five to seven tiles at once, and opens centred on the task's own date or on today if undated. Setting a date on a previously undated task moves it into Schedule, and into its Project's card if it has one. Full original spec: `archive/backlog-specs/0006-side-scrolling-date-picker.md`.
-Acceptance: on a device — open a task's edit dialogue and the strip is centred on today; tap a date three days out and save, and the task appears in Soon with that DD/MM label; reopen it, tap "no date" and save, and the task leaves Schedule.
---- End build block ---
-
-#### Recurring tasks [0007-recurring-tasks]
-
-Recurrence rules and 30-day-capped instance rendering. Full original spec: `archive/backlog-specs/0007-recurring-tasks.md`.
-
---- Build block ---
-Changes: recurrence-rule editing (daily / weekly / monthly / custom — shapes confirmed at build time) in `app/src/main/java/com/example/taskflow/ui/edit/EditTaskScreen.kt`, backed by a recurrence field on `data/model/Task.kt` and its DAO and repository. The Schedule pages under `ui/schedule/` render every instance of a recurring task in the visible window, capped at 30 days from today; manually dated one-off tasks are not capped and still appear in Later however far out they are. Completing one instance marks that instance complete and leaves future instances alone. Full original spec: `archive/backlog-specs/0007-recurring-tasks.md`.
-Acceptance: on a device — set a task to repeat daily; its instances appear across Today, Tomorrow and Soon and stop at 30 days out; complete today's instance and tomorrow's is still there; a one-off task dated six months ahead still shows in Later.
---- End build block ---
-
-#### Later cards open showing the first ~3 tasks [later-card-peek]
-
-Builds the peek behaviour [later-peek-spec-edit] wrote into SPEC: each Later Project card opens with its first ~3 tasks visible instead of collapsed to its header, the rest behind the expand/collapse control. Shares LaterPage.kt with [task-reorder-within-list] (drag-reorder), so whichever builds second integrates with the first's card-task-list rendering.
-
-Change `app/src/main/java/com/example/taskflow/ui/schedule/LaterPage.kt` — render each Project card with its first ~3 tasks shown by default; the expand/collapse control reveals/hides the remainder.
-
-Verify on a device: a Later card with more than 3 tasks opens showing its first 3, the rest appearing on expand; a card with 3 or fewer shows all of them; collapse/expand still works.
-
---- Build block ---
-Changes: `app/src/main/java/com/example/taskflow/ui/schedule/LaterPage.kt` — render each Project card with its first ~3 tasks shown by default; the expand/collapse control reveals and hides the remainder.
-Acceptance: on a device — a Later card with more than 3 tasks opens showing its first 3, the rest appearing on expand; a card with 3 or fewer shows all of them; collapse and expand still work.
---- End build block ---
-
-#### Within-list task reorder by drag — Schedule slots + Later cards [task-reorder-within-list]
-
-SPEC §Reorder within a Schedule slot specifies within-list drag-reorder of top-level tasks across two surfaces: the flat Schedule slots (Today/Tomorrow/Soon) and, on Later, within each Project card. Nothing builds either yet; the data layer persists both orders already (`updateSlotSortOrder` for slots, `updateProjectSortOrder` for Later cards — both surfaced on `TaskRepository`, DAO-tested in 0001). What's missing is the drag UI — and there's no drag-reorder pattern anywhere in the app to copy and no library, so it's a from-scratch reorderable list with real design uncertainty (nested scrolling, variable row heights, persistence), sharpest on the nested Later case. The two surfaces share one drag primitive, so this item builds it once across both, designed with the nested card case in hand from the start so flat-list assumptions don't get baked in and force rework. No spec-edit — SPEC §Schedule view and §Reorder within a Schedule slot already describe both. (Merged 2026-06-23: the within-card Later half — split out of [later-by-project-screen] mid-build and set aside as a capture — folds in here so the primitive is written once. Supersedes the earlier rescope note that wrongly assumed [later-by-project-screen] would build Later reorder.) This is also the first drag primitive in the app, which is why [project-delete-later] is held against it.
-
-Change `app/src/main/java/com/example/taskflow/ui/schedule/SlotPage.kt` + `app/src/main/java/com/example/taskflow/ui/schedule/ScheduleViewModel.kt` — drag-to-reorder on the flat slot task lists (Today/Tomorrow/Soon), persisted via `updateSlotSortOrder`. Change `app/src/main/java/com/example/taskflow/ui/schedule/LaterPage.kt` + the same view-model — within-card drag-to-reorder of a Project card's tasks, persisted via `updateProjectSortOrder`; handle the nested-scroll / variable-row-height case inside the expandable card. `TaskRepository` reorder calls already exist, so no data-layer change is expected.
-
-Verify on a device: drag a task within a Schedule slot (Today/Tomorrow/Soon) to a new position and confirm the order persists across navigation and relaunch; then the same within a Later Project card.
-
---- Build block ---
-Changes: `app/src/main/java/com/example/taskflow/ui/schedule/SlotPage.kt` and `ScheduleViewModel.kt` — drag-to-reorder on the flat slot task lists (Today/Tomorrow/Soon), persisted via `updateSlotSortOrder`. `app/src/main/java/com/example/taskflow/ui/schedule/LaterPage.kt` and the same view-model — within-card drag-to-reorder of a Project card's tasks, persisted via `updateProjectSortOrder`, handling nested scrolling and variable row heights inside the expandable card. One drag primitive written across both surfaces, designed with the nested case in hand. `TaskRepository`'s reorder calls already exist, so no data-layer change is expected.
-Acceptance: on a device — drag a task within a Schedule slot to a new position and the order persists across navigation and relaunch; the same holds within a Later Project card.
---- End build block ---
-
-#### Drag a task between Schedule screens [0008-drag-task-between-schedule-screens]
-
-Long-press drag to reschedule across Schedule slots. Full original spec: `archive/backlog-specs/0008-drag-task-between-schedule-screens.md`.
-
---- Build block ---
-Changes: `app/src/main/java/com/example/taskflow/ui/schedule/SlotPage.kt`, `ScheduleScreen.kt` and `ScheduleViewModel.kt` — long-press to pick a task up, then drag to the left or right edge to page through to the adjacent slot. Dropping on Today or Tomorrow sets the date to today or tomorrow; dropping on Soon sets today + 2 and on Later today + 8, except that a task that was undated stays undated and parks in that slot. Reordering within a slot uses the per-slot sort order. Dragging a parent carries its children as a single unit. Full original spec: `archive/backlog-specs/0008-drag-task-between-schedule-screens.md`.
-Acceptance: on a device — drag a dated task from Today to Soon and its date becomes today + 2; drag an undated task to Later and it parks there still undated; drag a parent and its children travel with it.
---- End build block ---
-
-#### Subtasks under a parent, with expand/collapse [0009-subtasks-under-parent-expand-collapse]
-
-Nested subtasks with parent expand/collapse and completion roll-up. Full original spec: `archive/backlog-specs/0009-subtasks-under-parent-expand-collapse.md`.
-
---- Build block ---
-Changes: a parent/child relation on `app/src/main/java/com/example/taskflow/data/model/Task.kt` with its DAO and repository support, and rendering across `ui/schedule/SlotPage.kt` and `LaterPage.kt` — subtasks nested under their parent on the parent's Schedule page and in its Project card. Parent tasks show an expand/collapse control instead of a checkbox, revealing and hiding their children inline. Completion rolls up: completing all subtasks completes the parent, and un-completing a subtask un-completes the parent and brings it back out of the Completed tray. A parent dragged between Schedule slots or refiled to another Project carries its children as one unit. Full original spec: `archive/backlog-specs/0009-subtasks-under-parent-expand-collapse.md`.
-Acceptance: on a device — add two subtasks under a task; the parent shows an expand/collapse control rather than a checkbox; complete both subtasks and the parent completes; un-complete one and the parent returns to the list with its children.
---- End build block ---
-
-#### Outliner typing and drag-target icons [0010-outliner-typing-drag-target-icons]
-
-Outliner editor for subtasks plus bin and promote drag targets. Full original spec: `archive/backlog-specs/0010-outliner-typing-drag-target-icons.md`.
-
---- Build block ---
-Changes: `app/src/main/java/com/example/taskflow/ui/edit/EditTaskScreen.kt` — the text area renders parent and children as an indented outline; Enter at the end of any line creates a new child line below it; Backspace at the start of a line deletes it and merges the remaining text into the line above; child lines carry drag handles and the parent line does not. Across the Schedule pages, the Later page and the dialogue, any task drag reveals a row of drag-target icons fixed at the top right with hover feedback, carrying two targets in this item: **bin**, which deletes, and **promote**, on dialogue subtask drags only, which makes a child a top-level task at the bottom of the parent's slot or Project with the parent's date. A parent left with no children reverts from expand/collapse to a checkbox. Full original spec: `archive/backlog-specs/0010-outliner-typing-drag-target-icons.md`.
-Acceptance: on a device — typing in the dialogue behaves as an outline, with Enter making a child line and Backspace merging one away; dragging a task reveals the icon row; dropping on bin deletes the task; promoting a child makes it a top-level task carrying the parent's date, and the emptied parent shows a checkbox again.
---- End build block ---
-
-#### Cut and paste via the OS clipboard [0011-cut-and-paste-os-clipboard]
-
-Cut drag target and OS-clipboard paste in the edit dialogue. Full original spec: `archive/backlog-specs/0011-cut-and-paste-os-clipboard.md`.
-
---- Build block ---
-Changes: add a **cut** icon to the drag-target icon row, on both screen drags and dialogue drags. Dropping on cut removes the task from Taskflow and writes its content to the device's clipboard as plain text; cutting a parent writes the whole set as indented multi-line text. The outliner editor in `ui/edit/EditTaskScreen.kt` handles pasted multi-line indented text — line breaks become new lines and indentation becomes hierarchy. Pasting itself uses the device's own long-press menu, only inside an edit dialogue text field. Full original spec: `archive/backlog-specs/0011-cut-and-paste-os-clipboard.md`.
-Acceptance: on a device — cut a parent with children, paste into a notes app, and the indented text is all there; paste that text back into an edit dialogue and the hierarchy rebuilds.
-Refused: a recently-cut buffer inside Taskflow — the clipboard-loss risk was consciously accepted in SPEC instead.
---- End build block ---
-
-#### Settings — day begins at [0012-settings-day-begins-at]
-
-Day-boundary time picker wired into rollover and the date anchor. Full original spec: `archive/backlog-specs/0012-settings-day-begins-at.md`. [schedule-day-boundary-tick] is held against this one and should fold into its wiring.
-
---- Build block ---
-Changes: a Settings screen reachable from the side menu's bottom section (`app/src/main/java/com/example/taskflow/ui/navigation/AppDrawer.kt` plus a new settings screen under `ui/`), holding a single time picker labelled "Day begins at", stored locally on the device. Wire that time into the Tomorrow → Today rollover (`domain/SlotDeriver.kt`, `ui/schedule/ScheduleViewModel.kt`) and into the side-scrolling date picker's "today" anchor. Fold in [schedule-day-boundary-tick]: recompute slot placement at that boundary and on lifecycle resume, so a task moves without waiting for an edit. Full original spec: `archive/backlog-specs/0012-settings-day-begins-at.md`.
-Acceptance: on a device — set day-begins-at a few minutes ahead, leave the app in the foreground across it, and a Tomorrow task moves to Today with no edit; the date strip's "today" anchor follows the same boundary; the setting survives relaunch.
---- End build block ---
-
-#### Settings — date format [0013-settings-date-format]
-
-DD/MM or MM/DD setting applied app-wide. Full original spec: `archive/backlog-specs/0013-settings-date-format.md`.
-
---- Build block ---
-Changes: a two-option setting on the Settings screen — DD/MM (default) or MM/DD — applied everywhere a date is shown: Schedule task rows, date-picker tiles, the Strategy doc, and anywhere else a date renders. Full original spec: `archive/backlog-specs/0013-settings-date-format.md`.
-Acceptance: on a device — switch to MM/DD and every date on screen flips format; relaunch and the choice persists.
---- End build block ---
-
-#### JSON export and import [0014-json-export-and-import]
-
-Full database export/import via JSON files. Full original spec: `archive/backlog-specs/0014-json-export-and-import.md`.
-
---- Build block ---
-Changes: a Settings entry "Export to JSON" producing a file containing tasks, Projects, Strategy doc descriptions, ordering metadata and `projectSuggestionDeclined` flags; every exported task carries its completion state and the date it was completed, settled in planning on 2026-08-25 in answer to [bridge-asks-from-method-project] — a parent's state is written as the **derived** roll-up value rather than left for an outside reader to recompute from its children, with the children's own states exported alongside it, since without completion state anything reading an export can put work in but never learn what happened to it; and a Settings entry "Import from JSON" accepting a previously exported file and restoring the database from it, warning the user first that it replaces existing data. Full original spec: `archive/backlog-specs/0014-json-export-and-import.md`. Both questions [bridge-asks-from-method-project] raised — whether an *additive* import is possible alongside this replacing one, and whether completions can be read out of an export — were settled into this item's design in planning on 2026-08-25, answered to the sending project, and that item was deleted at that point.
-Plus a second, separately named Settings entry "Add tasks from a file" — an **additive** import, settled in planning on 2026-08-25 in answer to [bridge-asks-from-method-project]. It reads the same export format but inserts rather than restores: each incoming task is added and filed into its named Project, that Project created if it does not exist, and everything already in the database is left untouched. No warning is needed on this path because nothing is lost. Where an incoming task resembles one already present it is inserted anyway rather than de-duplicated — a duplicate is an annoyance the user can delete, while a wrongly-skipped task is work that silently never arrived. Kept as its own entry rather than a mode on the replacing import: one of the two destroys data and the other does not, and a checkbox beside a destructive action is how people lose their task list.
-Acceptance: on a device — export, then add and delete some tasks, then import the file back, and the database matches the export; the replace warning appears before the import proceeds. Separately, "Add tasks from a file" against a file holding a handful of tasks adds exactly those, creating any missing Project, with every pre-existing task still present and no warning shown.
-Refused: additive import as a checkbox or mode on the replacing import — the two differ in whether they destroy data, so they stay separately named. Also refused: de-duplicating incoming tasks against existing ones, since a silently dropped task is worse than a visible duplicate.
---- End build block ---
-
-#### Strategy doc and life-area context [0015-strategy-doc-and-life-area-context]
-
-Strategy doc editor, mechanical structure, life-area Room schema. Full original spec: `archive/backlog-specs/0015-strategy-doc-and-life-area-context.md`. [project-reorder-strategy] is held against this one.
-
---- Build block ---
-Changes: a Strategy doc reachable from the side menu, with an in-app markdown editor, building on `data/model/StrategyEntry.kt` and `data/repository/StrategyRepository.kt`. Mechanical structure: Project headings are generated from Project names in side-menu order and the user edits only the description paragraphs beneath them, so reordering Projects reorders the heading-and-paragraph pairs. A share button surfaces Android's standard share sheet for the doc or a portion of it. Plus a Room schema for Claude's life-area picture, with no user-facing surface — reached only by Claude through MCP tools. This is the free-tier surface: editor and structure, no AI reconciliation, which is [0021-strategy-doc-reconciliation-paid-tier]. Full original spec: `archive/backlog-specs/0015-strategy-doc-and-life-area-context.md`.
-Acceptance: on a device — edit a description paragraph and it persists across relaunch; rename or reorder a Project and the headings follow; headings cannot be edited directly; the share button opens Android's share sheet.
---- End build block ---
-
-#### Onboarding flow [0016-onboarding-flow]
-
-First-run cards, AI-value video, free/paid choice. Full original spec: `archive/backlog-specs/0016-onboarding-flow.md`. Sequenced ahead of the Claude/MCP work, so it may ship with a placeholder video — see [onboarding-video-content].
-
---- Build block ---
-Changes: a first-run flow — two cards explaining Schedule versus Projects, then the multi-page video, then the AI choice ("Skip AI for now" / "How do I set up Claude?"), with the X-in-corner escape hatch wired in throughout. Plus a side-menu entry "Turn on AI for the full experience" that re-triggers the AI choice later. The video content itself comes from [onboarding-video-content] and may be a placeholder at ship. Full original spec: `archive/backlog-specs/0016-onboarding-flow.md`.
-Acceptance: on a device — a fresh install walks the two cards, the video and the AI choice in order; the X exits from any point and does not re-trigger on next launch; the side-menu entry brings the AI choice back.
---- End build block ---
-
 #### Tier model and subscription handling [0017-tier-model-and-subscription-handling]
 
 Google Play subscription, trial, local tier enforcement. Full original spec: `archive/backlog-specs/0017-tier-model-and-subscription-handling.md`. [subscription-pause-play-billing] is held against this one.
@@ -181,19 +53,6 @@ Red flag: cleared
 Refused: a per-user secret pasted into the connector URL or a header — the URL form leaks through logs, history and screenshots on Anthropic's own guidance, and there is no consumer-facing field for pasting a key at all.
 --- End build block ---
 
-#### SYSTEM-PROMPT.md — pending-suggestion supersession [sysprompt-reconciliation-supersession]
-
-Serves SYSTEM-PROMPT.md.
-
-`SYSTEM-PROMPT.md` describes Strategy-doc reconciliation but doesn't say what happens when the user submits a new Strategy edit while a prior reconciliation's suggestions are still unanswered. Decided in planning 2026-06-16: the new edit wins. This writes that rule into the doc so the reconciliation feature ([0021-strategy-doc-reconciliation-paid-tier]) is built against a complete description.
-
-Edit `SYSTEM-PROMPT.md` → §Strategy doc reconciliation → *Ongoing reconciliation*: add that a new Strategy doc edit submitted while prior suggestions are still pending triggers fresh reconciliation against the latest version, superseding (folding in) the prior pass's unanswered suggestions rather than stacking them. Keep one line of rationale in the doc: stale suggestions against a superseded version confuse; newest text is the source of truth.
-
---- Build block ---
-Changes: `SYSTEM-PROMPT.md` → §Strategy doc reconciliation → *Ongoing reconciliation* — add that a new Strategy doc edit submitted while prior suggestions are still pending triggers fresh reconciliation against the latest version, folding in the prior pass's unanswered suggestions rather than stacking them, with one line of rationale kept in the doc: stale suggestions against a superseded version confuse, and the newest text is the source of truth.
-Acceptance: `SYSTEM-PROMPT.md`'s Ongoing reconciliation passage states the supersession rule and the reason for it.
---- End build block ---
-
 #### Strategy doc reconciliation, paid tier [0021-strategy-doc-reconciliation-paid-tier]
 
 Initial and ongoing Strategy doc reconciliation via Claude. Full original spec: `archive/backlog-specs/0021-strategy-doc-reconciliation-paid-tier.md`. [project-lifecycle-paid] is held against this one.
@@ -212,93 +71,6 @@ Changes: fill the three remaining bottom-of-drawer screens — Help, Thanks and 
 Acceptance: on a device — each of the three screens opens with real content rather than a placeholder, and Help covers all three topics.
 --- End build block ---
 
-#### SPEC sections for the spine's left half — completed history, Yesterday, day cards, share-a-day [nav-left-spine-spec-edit]
-
-Writes the four SPEC sections the left-half navigation work needs before any of it can be built. Split out of [nav-completed-history] in planning on 2026-08-21, once two of that item's three open questions were settled with the user — which is what makes these sections writable now.
-
-Change `SPEC.md` — add four sections after §Completed task tray on Today:
-
-- **§Search and completed history.** The leftmost spine page, unified across active and completed tasks. Settled 2026-08-21, the user's call: one search surface rather than two, because someone hunting a task usually doesn't know or care whether they already finished it, and two boxes means guessing which to open. Completed tasks list in completion order, most recent first, with date headers between days; typing narrows what shows below, and the relevant date headers still display above each day's results. This supersedes [search-feature]'s framing of a separate search surface, so that item is reconciled here rather than built alongside. That item's two surviving decisions were folded in on 2026-08-25 and it was deleted at that point: **results are read-only** — a task cannot be completed from the results list, and tapping a result navigates to where the task lives, which is also what keeps the read-only rule sitting comfortably beside a tappable completed list, since editing and un-completing happen only from a day card; and **scope is all tasks, active and completed, across every slot and every Project, plus Project names, with the Strategy doc excluded**. Settled 2026-08-25, the user's call on the recommendation: scoping to the current screen or Project would reintroduce the "am I looking in the right place?" guess that unified search exists to remove, and Project names come along because typing a Project's name and getting the Project is the same gesture. The Strategy doc is out because it is prose rather than items, so its results cannot render as task rows, and it is a single document the user can simply open and read. The current-screen and current-Project scopes were the other two candidates and lost for that reason.
-- **§Yesterday page.** A spine page immediately left of Today, not a card. Its content is essentially what was completed yesterday, since past-due tasks stay on Today (UX principle 4).
-- **§Day-detail card layer.** A foreground card opening on a tapped result, group or date header, on a deliberately different left-right axis from the spine and signalled by the card visual. Swipe right brings the older day in from the left, swipe left the newer from the right; swiping left past the newest card carries the card layer and the search page off together in one motion, landing the user on Yesterday. Editing or un-completing a single task happens only from a day card.
-- **§Share a day.** A share button on a day screen shares that day's completed tasks, offered in two formats: PNG and Markdown. Settled 2026-08-21 — the user asked for Markdown alongside PNG on the view that Markdown will only become more widely read. Cites `workshop/resources/research/android-share-format-png-vs-pdf.md` for both halves: PNG because it renders inline in a chat thread rather than arriving as an attachment to open, and Markdown carried under the `text/plain` MIME type rather than `text/markdown`, which almost no Android app declares and which would produce a near-empty share sheet. Reconcile the wording with the existing Strategy-doc share button, which already uses the Android share sheet.
-
-Also extend §Schedule view's spine sentence leftward, so the spine reads Search · Yesterday · Today · Tomorrow · Soon · Later · Strategy.
-
-Not in scope: building any of these screens, and the swipe and card-layer interaction detail [nav-completed-history] deliberately holds open until there is a real screen to finalise it against.
-
---- Build block ---
-Changes: `SPEC.md` — add four sections after §Completed task tray on Today: §Search and completed history (the leftmost spine page, one unified search over active and completed tasks, completed listed most-recent-first with date headers between days, typing narrowing what shows below); §Yesterday page (a spine page immediately left of Today, its content essentially what was completed yesterday, since past-due tasks stay on Today); §Day-detail card layer (a foreground card on a deliberately different left-right axis from the spine, older days entering from the left and newer from the right, swiping left past the newest carrying the card layer and the search page off together and landing on Yesterday, with editing or un-completing a single task happening only from a day card); and §Share a day (a share button offering PNG and Markdown, citing `workshop/resources/research/android-share-format-png-vs-pdf.md`, Markdown carried as `text/plain`, reconciled with the existing Strategy-doc share button). Also extend §Schedule view's spine sentence leftward to read Search · Yesterday · Today · Tomorrow · Soon · Later · Strategy. §Search and completed history also states that results are read-only — a task cannot be completed from the results list, and tapping a result navigates to where the task lives — and that search covers all tasks, active and completed, across every slot and every Project, plus Project names, with the Strategy doc excluded. Both settled in planning on 2026-08-25, when [search-feature] was folded in here and deleted. Not in scope: building any of these screens.
-Acceptance: `SPEC.md` carries the four new sections and the extended spine sentence, [search-feature]'s surviving decisions appear inside them, and no app code changes.
-Refused: a separate completed-history page with an active-task search added later — the user settled on one unified search surface on 2026-08-21, since someone hunting a task usually doesn't know or care whether they already finished it, and two boxes means guessing which to open.
---- End build block ---
-
-#### Write the onboarding video script and storyboard [onboarding-video-script]
-
-Split out of [onboarding-video-content] in planning on 2026-08-25. That item bundled a design decision with a production job: what the video *says* is designable now, while filming it waits on the Claude integration existing. This is the design half.
-
-The video carries the whole free-versus-paid choice in onboarding, so what it demonstrates is a product decision rather than a production detail. It can be written from what is already settled — SPEC's tier model, §Claude integration via remote MCP, §Strategy doc, and `SYSTEM-PROMPT.md`'s account of how Claude explores life areas, suggests projects and reconciles the Strategy doc. Nothing in it waits on the integration being built.
-
-It is also what [0016-onboarding-flow] needs in order to know what its placeholder video stands in for, and what [onboarding-video-content] then films.
-
---- Build block ---
-Changes: a new `ONBOARDING-VIDEO-SCRIPT.md` at the project root — the multi-page onboarding video, page by page. Each page carries what is on screen (which Taskflow surface or which Claude exchange), the claim that page makes about what Claude adds, and roughly how long it runs. The through-line is the paid tier's actual value as SPEC describes it: the user talks to Claude where they already talk to Claude, and Taskflow is reachable from there — life-area exploration, project suggestions, and Strategy-doc reconciliation, drawn from `SYSTEM-PROMPT.md`. The script states plainly which pages need a live Claude conversation to film and which are plain screen capture, since that is what decides how much of the filming can be automated. No app code changes.
-Acceptance: `ONBOARDING-VIDEO-SCRIPT.md` exists and covers every page of the video, each with its on-screen content, its claim and a rough duration, and marks which pages need a live Claude conversation; someone could film it without asking further design questions.
---- End build block ---
-
-#### Empty state copy and visuals [empty-state-copy-and-visuals]
-
-Write copy and visuals for each empty state in the Later-by-Project world: a Schedule slot (Today / Tomorrow / Soon) with zero tasks; an empty **Later card** — a Project the user has but with nothing in it, since cards always render even when empty; and **Later before the user has made any Project of their own**, where only the pinned Unassigned card shows. The old "empty Project" state is now the empty Later card; the old "Projects list before any Project exists" is gone with the side-menu Projects list — Later is the Projects surface now.
-
-A fourth empty state, folded in from a capture during planning on 2026-06-24: a Later card that reads empty not because the Project has no tasks, but because all its tasks are near-term dated (Today/Tomorrow/Soon) and live on the schedule rather than the card — so "nothing in this project yet" misleads, since the Project does have a task. Noticed on device 2026-06-24 verifying [project-create-picker-ui]: a Project created from a Tomorrow-dated task shows an empty Later card while the task sits correctly on Tomorrow. Two candidate fixes to weigh at the design pass: copy that distinguishes "no tasks" from "no Later tasks — N on the schedule"; or surfacing a Project's near-term task count on its card. The second is broader than empty-state copy — it changes what every card shows, empty or not, so treat it as a card-design question, not a free copy tweak.
-
-Best written in front of the real screens rather than against screens that don't exist yet, which is why it wasn't designed sooner. The zero-task Schedule-slot copy could be written against shipped 0002, and writing all the empty states together against the real Later screen is cleaner.
-
-**Kept in planning on 2026-08-25: that reason has expired.** Three of the four states now have real screens on the device — the zero-task Schedule slot, the empty Later card, and Later before the user has made a Project of their own. The fourth state's open question was settled at the same time, the user's call on the recommendation: **distinguishing copy, not counters on cards.** An empty card whose Project does have near-term tasks says so in its own sentence, naming how many are on the schedule; a card that is empty because the Project has nothing says the plain thing. The rejected alternative was surfacing a near-term task count on every card, empty or not: it changes what every card shows, and SPEC §Schedule view is explicit that the small peek is what keeps Later a calm overview rather than a wall of tasks. The copy fix costs nothing when a card is not in that state, because the sentence only appears when the card is empty.
-
-No SPEC edit: SPEC already says every Project appears on Later even with nothing in it, and the wording of a message is not product truth.
-
---- Build block ---
-Changes: `app/src/main/java/com/example/taskflow/ui/schedule/SlotPage.kt` — an empty-state message and visual for a Schedule slot (Today / Tomorrow / Soon) holding no tasks. `app/src/main/java/com/example/taskflow/ui/schedule/LaterPage.kt` — three more: an empty Project card whose Project has no tasks at all; an empty Project card whose Project does have tasks, all of them near-term dated and living on the schedule, which says so and names how many are there; and Later before the user has created any Project of their own, where only the pinned Unassigned card shows. Copy stays in the app's string resources rather than inline, so all four read as one voice. Tone follows UX principle 4 — an empty list is a normal state, not a failure, so no chiding and no exhortation to add something.
-Acceptance: on a device — an empty Today shows the slot empty-state rather than a blank page; a Project with nothing in it shows the plain empty-card message; a Project whose only tasks are dated for today or tomorrow shows the card message naming how many are on the schedule rather than claiming the Project is empty; and a fresh install with no user Projects shows the Later message with only the Unassigned card present.
-Refused: surfacing a near-term task count on every Later card, empty or not — it changes what every card shows, against SPEC §Schedule view's statement that the small peek keeps Later a calm overview rather than a wall of tasks.
---- End build block ---
-
-#### Execute by task area across the spine — focus on one area's tasks temporarily [execute-by-task-area]
-
-Raised by Alex during the [project-create] device test on 2026-06-21, sharpened in planning on 2026-06-22, and looked at again against the real Project-grouped Later on 2026-06-23. The need: a way to *temporarily* focus on a single area (Project) and see all its tasks across the spine — including Today, Tomorrow and Soon — for when motivation is only there for one area.
-
-The tension: the near-term slots are deliberately flat, horizon-sliced lists (UX principle 3 — execution structured by time, not category), so serving area-focus there cuts against the one view built to refuse category-slicing. A transient focus/filter-mode approach was floated on 2026-06-22 and set aside because of UI concerns the user couldn't accept; their own read that day was that there might be no good answer yet and leaving it open was acceptable.
-
-**Designed out in planning on 2026-08-25, and SPEC §Focus on one Project temporarily now describes it.** The item had no blocker and no trigger, so it returned to the top every session and was set aside again — the reason for taking it up rather than dating it. The design that broke the tension: focus is entered from a Later card's header, makes itself continuously visible in a recoloured top bar carrying the Project's name and an X, and does not survive closing the app. That last property is what answers the principle-3 objection — the flat time-horizon list stays the app's real shape, and a lens that cannot survive a relaunch cannot become how the user lives in the app. The rejected alternative remains a general, persistent filter over the slots: it restructures the slots into a category-sliced app, which is the thing principle 3 exists to refuse.
-
---- Build block ---
-Changes: `app/src/main/java/com/example/taskflow/ui/schedule/LaterPage.kt` — tapping a Project card's header (distinct from its expand/collapse control, and distinct from the long-press used for card drag) enters focus on that Project. `app/src/main/java/com/example/taskflow/ui/schedule/ScheduleViewModel.kt` — a transient focused-Project state, held in memory only and never persisted, that filters the Today, Tomorrow and Soon task flows to that Project; Later is not filtered, since it is already organised by area. `app/src/main/java/com/example/taskflow/ui/schedule/ScheduleScreen.kt` and `SlotPage.kt` — while focused, the top bar takes a distinct colour and shows the Project's name with an X that exits focus; a focused slot with no tasks shows the ordinary slot empty state. Task capture while focused files the new task into the focused Project instead of the system Unassigned Project. The Completed tray on Today shows that Project's completions while focus is on. Focus is cleared on app start, so a fresh launch is always unfocused. Serves SPEC §Focus on one Project temporarily.
-Acceptance: on a device — tap a Later card's header and Today, Tomorrow and Soon show only that Project's tasks, with the top bar recoloured and naming the Project; tap the X and every task returns; add a task from Today while focused and it belongs to the focused Project; kill and relaunch the app and it opens unfocused; tapping a card's expand control still expands the card rather than entering focus.
-Refused: a general persistent filter over the Schedule slots — it restructures the slots into a category-sliced app, which UX principle 3 exists to refuse; the transience and the always-visible banner are what make this lens acceptable where a filter was not.
---- End build block ---
-
-#### Record the visibility decision in CLAUDE.md's Visibility line [record-visibility-line]
-
-Red flag · State: cleared
-
-Fills the blank Visibility slot the 2026-08-31 migration added to CLAUDE.md's plugin-managed block. The decision it records was made in planning on 2026-08-31, the user's informed choice: the repository FlintCraftTech/Taskflowapp is public and the project's documents (SPEC.md, QUEUE.md, LOG/) are in it and world-readable. The user was told plainly that the planning documents contain personal material, that an ignore rule added later would not untrack or scrub what is already committed, and that the method's checks cannot certify the documents safe to publish; they chose to keep the repository public. The flag is cleared by that informed consent, recorded here and in this session's LOG entry. Making the repository private was the offered alternative and lost because the user never wanted it private.
-
-Changes: `CLAUDE.md` — the `Visibility:` line in the plugin-managed block gains one sentence recording the above: documents live in the public repository FlintCraftTech/Taskflowapp by the user's informed choice (2026-08-31), and the visibility is not to be re-raised as a risk — a change to it is the user's to ask for.
-Acceptance: CLAUDE.md's Visibility line is no longer blank and states the public-by-choice decision with its date.
-Rule gate: passes — the Visibility line is the slot the plugin-managed block itself carries for exactly this decision, the added text is one standing line approved by the user in planning on 2026-08-31, and nothing is evicted or reworded elsewhere.
-
-#### [user] Verify the blank New-task form fix on a device [verify-blank-new-task-form]
-
-The [add-flow-create-path-fixes] build fixed the stale New-task title by giving the add dialogue a fresh view-model store per open. This is the device check that confirms it on the installed build — it couldn't run in the build's own session, so it waited.
-
-Walkthrough, on a device with the current build installed:
-1. Open Taskflow and go to any Schedule slot (Today is fine).
-2. Tap the **+** button (the round FAB, bottom-right). The New-task form opens.
-3. Type a title and save it. The task appears in the list.
-4. Tap the **+** button again on the same slot.
-5. Look at the Title field. It should be **empty**. If it still shows the title you just saved, the fix hasn't landed.
-
 #### [user] First end-to-end test of Taskflow on a device [first-end-to-end-test]
 
 Filed in planning on 2026-08-25, doing what [post-first-test-polish-review] asked for: that item waits on a real-world event rather than on a build, so the event becomes its own line and the review is held against it.
@@ -316,10 +88,6 @@ Walkthrough:
 4. File at least one task into a Project of your own, and complete at least one task so it reaches the Completed tray on Today.
 5. Note anything that felt slow, confusing, ugly or surprising — one line each, no need to diagnose it. Roughness you would normally push past is exactly what to write down.
 6. Bring the notes to a planning session and say the test has been done.
-
-#### [user] Verify the drawer swipe-off on your device [verify-drawer-swipe-off-on-device]
-
-The [disable-drawer-swipe-open] build shipped its code change (AppRoot.kt gates `gesturesEnabled` on `drawerState.isOpen`), but the session that built it could not compile or deploy — Gradle's daemon connection fails on this machine — so its acceptance checks were never run. They need your eyes on the device. Walkthrough: (1) Install or run the current app build on your phone or emulator — the next successful build from Android Studio covers compiling this change; open the app to Today. (2) From the left edge of the screen, swipe right — look for: the side menu does NOT open. (3) Tap the ☰ button top-left — look for: the menu opens. (4) With the menu open, tap the dimmed area to its right — look for: the menu closes. (5) In the middle of the screen, swipe left — look for: the day changes to Tomorrow (and the chevrons still work). This verifies the shipped item's acceptance criteria and nothing else; if any step fails, say so and it becomes a fix item.
 
 --- Cleared to run above this line ---
 
@@ -428,9 +196,28 @@ Flavored `[audit]` because it reads and reports rather than editing: it takes th
 > Processed) or drop it. Each is filed as its own `#### ` heading, so the list shows
 > up in an editor's outline.
 
-#### Last session advises processing 0006-side-scrolling-date-picker next [forward-advisory]
+#### Last session advises processing durable-local-data next [forward-advisory]
 
-Advice, not work — re-filed at the 2026-08-31 planning close, replacing the spent note that session cleared, because its caution is still live: [0006-side-scrolling-date-picker] carries partial, unreviewed code from a crashed build session (a new `DateStrip.kt` plus edits to `EditTaskScreen.kt` and `EditTaskViewModel.kt`, none of it ever compiled — Gradle's daemon fails for Claude on this machine). A /next run that builds the item without knowing this would build on top of, or duplicate, code nobody has checked: look at that partial work first — keep it, finish it, or discard it. Persist until [0006-side-scrolling-date-picker] is built; a /plan opening that surfaces this while that item is still unbuilt leaves it in place.
+Replaces the spent advisory this close cleared, which pointed at [0006-side-scrolling-date-picker] —
+built and removed in the run just closed.
+
+The reason to take [durable-local-data] first is that it gates what the user actually wants from
+this project. They asked directly whether Taskflow is safe to rely on yet, and the honest answer was
+no: the app throws away every task on the device whenever the database shape changes, and that run
+alone changed it three times. Until that is settled, each build can take their tasks with it.
+
+It also overlaps the top of the cleared region. [0018-cloud-sync-paid-tier] is the same
+data-durability question at a distance, so deciding what survives locally shapes what sync is for
+rather than being decided by it.
+
+Two things about the queue's state that the planning session will meet either way, and that make a
+build run a poor first move. Everything above the cleared-to-run line is work the last run examined
+and could not begin — a /next run would stall on [0017-tier-model-and-subscription-handling]
+immediately; that is written up as [cleared-region-unbuildable]. And most of what the run shipped
+has never been exercised on a device, collected as [verify-run-2026-08-31].
+
+Advice rather than instruction: the user may plan as many times as they like before building, and
+several of the captures now waiting are cheap decisions that would unblock the cleared region.
 
 #### Help, Thanks and Report-a-bug content [help-thanks-report-content]
 
@@ -471,4 +258,350 @@ Why it was shelved, decided 2026-06-24: the method is one-spec-per-project. Two 
 Privacy note to carry into any revival: if the personal strategy and real tasks get committed into this product repo and it's ever shared or made public, that's the user's private life data exposed. Decide the home with that in mind when this revives — it is the first question when this comes back, not an afterthought.
 
 **Dated in planning on 2026-08-25, with the user's approval.** It waits on multi-spec support in the method, which no item in this queue can deliver and which belongs to the No code method project. It cannot be held below the readiness line either, because held work has to be specific enough to build and this is not. Left as a plain capture it returned to the top every session and was set aside again, which is what had been happening. Three months was chosen as long enough not to re-read it every session and short enough that it comes back while still fresh if multi-spec support lands sooner. It is not offered again before that date.
+
+#### SPEC §Side menu still lists only the spine's right half [side-menu-spine-mismatch]
+
+Found while building [nav-left-spine-spec-edit], which extended §Schedule view's spine sentence leftward to Search · Yesterday · Today · Tomorrow · Soon · Later · Strategy. §Side menu still says the menu "mirrors the spine from top to bottom: Today, Tomorrow, Soon, Later, then a single calm row for the Strategy doc" — which was the whole spine when it was written and is now five of its seven pages. The sentence claims to mirror the spine and no longer does.
+
+Two ways it could go, and the choice is a product one rather than a wording fix: the menu gains Search and Yesterday rows so it really does mirror the spine, or the menu deliberately lists only the committed-execution pages and §Side menu says so instead of claiming to mirror. The second is arguable — a menu row for Search is odd when the page is one swipe away and has its own search field — so this is not a typo to correct.
+
+Not written into SPEC by that build: the item's described work named §Schedule view and the four new sections, and the session that makes a choice is not the session that certifies it as product truth.
+
+#### Taskflow has to stop wiping the device before it can hold real tasks [durable-local-data]
+
+captured by you, 2026-09-01, at the moment an install prompt warned it would delete the app's data.
+Your point: the goal is a state where your tasks live in Taskflow stably enough that you can start
+actually using it, and that is a requirement rather than a nice-to-have.
+
+Today the app destroys all local data on every schema change. `TaskflowDatabase` is built with
+`fallbackToDestructiveMigration(dropAllTables = true)`, and the justification written beside it is
+that this is "acceptable while there are no real users". You becoming a real user is exactly the
+event that retires that justification, so the decision needs remaking rather than merely honouring.
+
+It is not theoretical and it is not rare. The 2026-08-31 run alone took the schema from v2 to v5 —
+recurring tasks, subtasks, a completion timestamp, life areas — and each of those bumps would have
+emptied the device. Any run that touches the data model does it again.
+
+What making this safe involves, as far as can be seen from here: pick the version from which real
+data must survive, turn on Room's schema export so migrations can be written and tested against a
+recorded schema, write real migrations from that version forward, and keep destructive fallback only
+for versions below the line. There is also a smaller question underneath it — whether "stably keep my
+tasks" means only surviving upgrades, or also surviving a reinstall and a lost phone, which reaches
+into Android Auto Backup and the paid tier's cloud sync.
+
+Two things that already help and are worth weighing before designing anything bigger: the JSON export
+and import shipped in the 2026-08-31 run, so there is now a manual way to carry data across a wipe;
+and Android Auto Backup is on by default per SPEC §JSON export and import.
+
+Related but not the same: [personal-strategy-preview] mentions keeping your real tasks out of the
+test app so they cannot be lost to a wipe. That is a workaround for the problem while it stands.
+This item is about removing the problem so the workaround is not needed.
+
+#### Dark mode is never followed, and window and content disagree [compose-dark-theme]
+
+Found on 2026-09-02 while driving [verify-blank-new-task-form] on the device: the user reported the
+onboarding screens as "dark against dark background". The immediate cause was fixed in that run —
+the onboarding screen ran before the Scaffold that gives every other screen its background, so it
+painted none and its text fell back to the default near-black. What the fix does not touch is the
+condition underneath it.
+
+`MainActivity` calls `MaterialTheme { AppRoot() }` with no colour scheme argument, so Compose always
+uses its **light** palette whatever the phone is set to. The Android window theme underneath is
+day/night — `res/values/themes.xml` is `Theme.Material.Light.NoActionBar` and `res/values-night/`
+overrides it to the dark parent — so on a phone in dark mode the window is dark while everything
+Compose paints on top of it is light. Anywhere a Surface paints a background the result is merely
+odd; anywhere one does not, text lands on a background of the opposite polarity and becomes
+unreadable, which is exactly what happened.
+
+What deciding this involves, which is why it is not a fix to slip in: whether Taskflow has a dark
+theme at all is a product question, not a defect. A no-shame, calm-surface app arguably wants one,
+and a phone in dark mode at 1 AM is precisely the user this app is designed around (SPEC §Settings →
+Day begins at exists for exactly that person). The options are to honour the system setting with a
+real dark scheme, to commit to light only and make the window theme stop claiming otherwise by
+dropping `values-night`, or to offer it as a setting. Only the second is cheap.
+
+SPEC says nothing about colour, light or dark anywhere, so whichever way this goes it owes SPEC a
+sentence.
+
+#### Left-edge swipe has three claimants once the spine grows leftward [left-edge-swipe-collision]
+
+captured by you, 2026-09-02, while being asked to swipe right from the left edge and expect nothing
+to happen. Your objection: that gesture contradicts the environment — everywhere else a swipe right
+means the screen to the left comes in.
+
+The objection lands, and it exposes a collision nobody has named. Three things want the left edge:
+
+- **Android's system back gesture**, which is an inward swipe from the left edge and belongs to the
+  OS rather than to Taskflow.
+- **The spine's own navigation**, which SPEC §Schedule view now runs as Search · Yesterday · Today ·
+  Tomorrow · Soon · Later · Strategy — so a swipe right on Today is supposed to bring Yesterday in
+  from the left, exactly as you expect.
+- **The drawer's swipe-to-open**, which SPEC §Side menu already disables for precisely this reason,
+  naming the collision with the spine but not the one with system back.
+
+Today the conflict is invisible because Today is the leftmost page built, so a swipe right has
+nowhere to go and does nothing. It becomes real the moment [nav-completed-history] builds Yesterday
+and Search: from then on the user's edge swipe is contested between paging left and going back, and
+which one wins is decided by the OS's gesture-exclusion behaviour rather than by anything Taskflow
+has chosen.
+
+What this needs is a decision before that work is built, not after: whether the spine's leftward
+navigation is reachable from the edge at all, or only from further in, and whether Taskflow claims
+any gesture-exclusion zone. SPEC §Side menu currently explains the disabled drawer swipe by naming
+only the spine, so whichever way this goes, that sentence is owed an update.
+
+Also noted from the same moment: this made the walkthrough step in [verify-drawer-swipe-off-on-device]
+weaker than it reads. "Swipe from the left edge and the menu does not open" is satisfied by the
+drawer being off *and* by Today simply having nowhere to go, so it does not isolate what it means to
+test. Its look-for was sharpened while driving it.
+
+#### Side menu's AI row is long enough to bloat the drawer [drawer-ai-row-copy]
+
+captured by you, 2026-09-02, on seeing the drawer on the device: the menu is too fat, and the bottom
+row should read something like "Turn on AI" instead.
+
+The row currently reads **"Turn on AI for the full experience"**, which is long enough to wrap or to
+force the drawer wider than the rest of its rows need. Every other entry in the menu is one or two
+words — Today, Tomorrow, Soon, Later, Strategy, Settings, Help, Thanks, Report a bug — so this one
+line sets the drawer's width on its own.
+
+This is a SPEC edit rather than a copy tweak a build can make. SPEC names the string twice, in
+§Side menu and in §Tier model — free and paid, both times as *"turn on AI for the full experience"*,
+so the wording is currently product truth and changing it in code alone would put the app and SPEC
+out of step.
+
+Worth settling at the same time, since it is the same sentence: the phrase is doing two jobs, naming
+the row and selling the tier. A short row plus the selling done on the screen it opens may be the
+better split, given that screen is the AI choice flow and exists to make that case properly.
+
+#### Edit dialogue shows a Notes field you never asked for, and hides subtasks entirely [notes-versus-subtasks]
+
+captured by you, 2026-09-02, looking at the edit dialogue on the device: you don't understand why
+there is a Notes field, which you never asked for, and no subtasks.
+
+Both halves check out, and they are separate problems that happen to sit on the same screen.
+
+**Notes.** It is there, and it is currently product truth: SPEC §Edit a task says the dialogue shows
+"its title, notes, Project, and date", and two further SPEC sentences name notes among the things a
+Project move must not destroy. Where it came from is thinner than that suggests — the earliest trace
+in the record is the 0005 build entry, which lists "title, notes, editable Project incl. unassigned,
+read-only date" as what it built, with no decision recorded anywhere about *wanting* notes. So this
+looks like a field that arrived as part of a minimum-viable editor and then got written into SPEC as
+though it had been chosen. Your not recognising it is evidence, not forgetfulness.
+
+The question for planning is whether Taskflow wants free-text notes on a task at all. Against: this
+is an app built to reduce the weight of a task list, and a notes box invites the user to put work
+into describing work. For: a task sometimes genuinely carries a detail — an address, a phone number —
+and the outliner's subtask lines are not the place for it.
+
+**Subtasks.** They shipped in the 2026-08-31 run and they are, as you say, not visibly there. The
+first line of the dialogue is labelled "Task" and pressing Enter at the end of it opens an indented
+subtask line beneath — but nothing on screen says so. An earlier draft of that field carried the hint
+"Press Enter to add a subtask" and it was dropped when the single text box became a line-per-field
+outliner, which is how the only affordance disappeared. So the feature is built and undiscoverable,
+which is close to not being built.
+
+These interact, which is why they are one item: if notes goes, the dialogue is the outliner plus
+Project, date and repeat, and the subtask lines are unmistakable because nothing else on the screen
+looks like them. If notes stays, subtasks need an affordance that distinguishes them from it.
+
+SPEC §Edit a task and §Edit dialogue: outliner-style typing for subtasks both describe this screen,
+so whichever way it goes, they are owed the edit.
+
+#### Date strip reads as a wall of numbers, and jumps by the wrong unit [date-strip-legibility]
+
+captured by you, 2026-09-02, from the date strip on the device. Two changes you proposed, plus one
+thing the screenshot shows on its own.
+
+**Jump by week, not month.** The strip shows about seven tiles at once, so a jump button that moves
+a month skips far past what is on screen and lands the user somewhere they have to re-read. A week
+jump moves the strip by exactly what it displays, which makes the button's effect predictable — press
+it and the next seven days arrive. Your reasoning, and it is the stronger argument: the control's
+unit should match the view's unit. The month jump is not in SPEC; §Date picker — side-scrolling date
+strip asks only for "a fast-forward affordance for crossing longer distances quickly", so months came
+from the build item rather than from product truth, and changing it costs nothing in SPEC. Worth
+weighing at the design pass: crossing to next April by week is many presses, so the answer may be a
+week jump plus something coarser held further out, rather than a straight swap.
+
+**Split the number from the month.** Tiles currently read "24/08 25/08 26/08 27/08" in a row, which
+runs together into a continuous line of digits with nothing for the eye to catch on. Your proposal:
+the date on its own, with the month name beneath it — so 24, then Aug. That gives each tile one large
+glanceable number, and it stops the month being repeated seven times in a form that looks like part
+of the number.
+
+This one does reach SPEC, and in a way worth deciding deliberately. §Date picker — side-scrolling
+date strip says each tile shows its date "in DD/MM format (or MM/DD per the user's setting)", and
+§Settings → Date format says that setting applies "everywhere a date is shown". A tile showing 24
+above Aug has no day/month order left to obey, so either the setting stops reaching the strip — which
+contradicts the word "everywhere" — or the strip keeps a format the user picked and loses the
+legibility. Naming which is what this item settles.
+
+**Also seen, not raised: the seventh tile is clipped.** In the screenshot the last column shows "Su"
+above "30/" with the rest cut off at the screen edge. The tiles are a fixed width chosen so five to
+seven fit a typical phone, and on this device seven do not quite. A tile that renders half a date is
+worse than one fewer tile.
+
+#### Give the end-to-end test's notes a file, so the item has an observable [first-test-notes-observable]
+
+captured by you, 2026-09-02, when [first-end-to-end-test] was presented and you reached for a
+forward advisory to nag you about it at the next planning session — then said that is the opposite
+of what `[user]` items are for and behaviour you worked hard to design out.
+
+You are right on both counts, and the method already refuses the nag. Its `[user]` lifecycle names
+exactly three ways an item is known complete — walked to its end in session, the user says they did
+it, or the walkthrough named an observable and that observable checks out — and then says of the
+remaining gap that it is left open "precisely so nobody later notices the hole and proposes an ask
+to fill it".
+
+What pushes toward the nag here is that this item uses none of the three. It cannot be walked (it
+needs a day to pass), and its last step is "bring the notes to a planning session and say the test
+has been done", which stores both the notes and the fact of completion in your memory alone.
+
+The fix is the third route. Have the walkthrough name where the notes go — a file at a stated path —
+and completion becomes checkable by looking, with nothing asked of you and nothing to remember.
+
+It buys two more things beyond removing the nag. The notes survive, rather than depending on
+recall days later about an app you were deliberately not concentrating on. And
+[post-first-test-polish-review] is held against this item with those notes as its entire input;
+today that audit waits on something that has no location, so it could not read them even once you
+have written them.
+
+Deciding this is a walkthrough edit on an existing item, which is planning work — hence a capture
+rather than a change made while building.
+
+#### [user] Verify the rest of the 2026-08-31 run on a device [verify-run-2026-08-31]
+
+Nineteen work items shipped in that run and three things were checked on the device: the onboarding
+screens' legibility, the blank New-task form, and the drawer's gesture behaviour. Everything else was
+written, compiled once, and never exercised.
+
+Each shipped item's LOG entry ends with an UNCONFIRMED tick naming its own check, so the checks
+exist — but they exist scattered across nineteen files that nothing reads on a schedule. Without one
+queue line collecting them, nothing surfaces them again, and the app accumulates features nobody has
+watched work.
+
+Unchecked, with the shortest observable for each:
+
+- Recurring tasks — set one to repeat daily; instances appear across Today, Tomorrow and Soon and
+  stop at 30 days; completing today's leaves tomorrow's; a one-off dated six months out still shows
+  in Later. Its unit tests have also never been run.
+- Subtasks — add two under a task; the parent shows a chevron rather than a checkbox; completing
+  both completes the parent; un-completing one brings it back with its children.
+- Drag-reorder — drag within a Schedule slot, and within a Later card; the order survives navigation
+  and relaunch.
+- Drag between screens — a dated task moves and takes the new slot's date; an undated one parks
+  still undated.
+- The outliner and the drag targets — Enter makes a subtask, Backspace merges one away, bin deletes,
+  promote lifts a child out.
+- Cut and paste — cut a parent with children, paste it into a notes app, paste it back.
+- Settings, day begins at — set it a few minutes ahead and watch a Tomorrow task move with the app
+  open.
+- Settings, date format — switch to MM/DD and check every surface follows.
+- JSON export and import — and this one matters more than its place in the list suggests: it is the
+  only thing standing between a schema change and losing everything on the phone, and it has never
+  been run once. See [durable-local-data].
+- Strategy doc — edit a paragraph, confirm it survives a relaunch, confirm the share sheet opens.
+- Empty states — an empty slot, an empty Project card, a card whose Project has only near-term
+  tasks, and Later before any Project exists.
+- Focus on a Project — enter from a card header, confirm the near-term slots filter and the top bar
+  says so, add a task while focused, relaunch and confirm it opens unfocused.
+
+Best split into several sittings rather than driven as one walkthrough; whether it becomes several
+items is a question for the planning session that processes it.
+
+#### Google Drive is the likely cause of the recurring build lock [project-out-of-drive]
+
+The project lives inside `My Drive`, so Google Drive syncs everything under it — including
+`app/build`, which Gradle rewrites constantly and expects to be able to delete. On 2026-09-02 an
+Android Studio build failed with "Unable to delete directory ...\app\build\...", reported once per
+Gradle task so that a single file lock read on screen as a dozen errors. Deleting `app\build` cleared
+it and the next build succeeded.
+
+This is not the first time: CLAUDE.md's Project rules already carry a workaround for the same failure
+from 2026-06-16, and TOOLS.md now records this instance. A problem with a standing workaround and a
+second recorded occurrence is a condition rather than an incident.
+
+Moving the project outside Drive would very likely end it, and would also stop ~59 MB of regenerated
+build output being uploaded repeatedly. What it costs is the backup and the cross-machine access that
+having it in Drive currently provides, which is why this is a decision rather than a fix — and there
+are middle options worth weighing: excluding `app/build` from Drive's sync if Drive supports that on
+this setup, or keeping the code outside Drive and letting git remain the backup, given the repository
+is already on GitHub.
+
+Stated as a hypothesis rather than a finding: nobody has moved the project and watched the failure
+stop. What is established is that the lock happens, that it hits Android Studio and not only Claude's
+shell, and that the folder Drive is syncing is the one Gradle cannot delete.
+
+#### Day-boundary recompute already shipped inside the Settings item [boundary-tick-already-shipped]
+
+[schedule-day-boundary-tick] sits below the cleared-to-run line, held against
+[0012-settings-day-begins-at], and reads as outstanding work. It is not: its work shipped inside that
+item during the 2026-08-31 run, exactly as that item's build block instructed it to
+("Fold in [schedule-day-boundary-tick]: recompute slot placement at that boundary and on lifecycle
+resume, so a task moves without waiting for an edit").
+
+What was built: the Settings flow re-emits when the day-begins-at boundary passes, computing the
+delay to the next boundary rather than polling, so Tomorrow's tasks become Today's with the app open
+and nothing in the database changing. Resume is covered separately and for free, because collection
+restarts then and re-reads the clock. The reasoning is in LOG/2026-09-02-0012-settings-day-begins-at.md.
+
+So this is a disposition question rather than work: the item is done and should almost certainly be
+deleted, but deleting a queue item is the user's call, and a build cannot make it. It is filed here so
+the next planning session meets the fact rather than inferring it from a blocker that has vanished
+from the queue — which is what the held item currently looks like from the outside.
+
+Its own remaining acceptance — watching a Tomorrow task move across the boundary on a real device —
+is part of [verify-run-2026-08-31].
+
+#### Cleared region holds six items no build can start [cleared-region-unbuildable]
+
+After the 2026-08-31 run, everything left above the cleared-to-run line is work that run examined and
+could not begin. A /next run would meet [0017-tier-model-and-subscription-handling] first and stall
+there, so the readiness line currently promises buildable work that is not buildable.
+
+Why each stopped, established by reading the items rather than guessing:
+
+- [0018-cloud-sync-paid-tier] — names "the cloud backend", but no backend was ever chosen and no
+  server code exists in this repository. Its archived spec still reads "[To be filled in during the
+  next planning session.]" where its goal should be.
+- [0020-remote-mcp-server] — its authentication design is settled and detailed, but nothing decides
+  where the server lives, what it is written in, or where it is hosted.
+- [0017-tier-model-and-subscription-handling] — the local half (free disables sync and MCP, paid
+  enables them) is buildable; the Google Play subscription wiring needs a Play Console product that
+  does not exist, which is the user's to create.
+- [0019-ai-choice-flow-and-mcp-setup] — the screens are buildable, but its acceptance is that a
+  verification screen reports the connector reachable, and there is no server to reach.
+- [0021-strategy-doc-reconciliation-paid-tier] — runs through Claude via the MCP server.
+- [0022-help-thanks-report-a-bug-content] — its own text says the words come from
+  [help-thanks-report-content], which is still unprocessed.
+
+The shape underneath is one decision, not six: four of them wait on the paid tier having somewhere to
+run. Settling where the backend and the MCP server live would release most of this region at once,
+and [0017]'s local half could be split out and built without waiting for any of it.
+
+What this item asks for is the disposition — move them below the line against named blockers, split
+the buildable halves out, or re-scope them — which is planning work. A build cannot move the
+readiness line.
+
+#### Walk-away steps generated in a session are the integration's clearest case [walkaway-work-integration-case]
+
+captured by you, 2026-09-02, on being handed [first-end-to-end-test] — a task to go away, use the app
+for a day, and come back with notes.
+
+Your observation: this is exactly the kind of work Taskflow's paid-tier integration exists to carry.
+A step that has to happen away from the session, generated inside it, broken down so that stepping
+away does not interrupt the flow it came from — sent from the planning side into Taskflow, where it
+waits with its subtasks until it is done. The irony being that the item was handed over in a
+conversation rather than sent to the app, which is the gap the integration closes.
+
+Why it is worth keeping rather than letting it stay a nice remark. The onboarding video script
+written in the same run argues the paid tier's value on page 3 with a generic case: a thing to do
+comes up in conversation and Claude puts it in Taskflow. This is a sharper version of the same claim —
+the task is not merely mentioned in the conversation, it is *produced by* the work, it has to leave
+the session to be done, and the person doing it needs it in the place they will actually look. That is
+a stronger argument than the script currently makes, and it came from using the thing.
+
+Where it could land, for the planning session to decide: sharpening page 3 of ONBOARDING-VIDEO-SCRIPT.md
+with this case, and a line in SPEC's account of what the integration is for. Neither is written here —
+the script is a shipped deliverable and SPEC is product truth, so both are decisions rather than edits.
 

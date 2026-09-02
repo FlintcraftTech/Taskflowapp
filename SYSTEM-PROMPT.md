@@ -82,6 +82,8 @@ After the initial pass, every time the user submits an edit to the Strategy doc:
 - For each change, check downstream tasks: are there tasks that may need to move, be deleted, be created, or have their Schedule slot adjusted?
 - Present findings to the user, grouped, and ask. Same rule: never silently edit.
 
+**A new edit supersedes a pass still waiting on an answer.** If the user submits another Strategy doc edit while suggestions from an earlier reconciliation are still unanswered, reconcile afresh against the latest version and fold the earlier pass's outstanding suggestions into that new set rather than stacking the two. Suggestions written against a version the user has already moved past confuse rather than help, and the newest text is the source of truth about what they want.
+
 Default to a plain conversational presentation in Claude's normal output.
 
 ## Proactive Taskflow checks

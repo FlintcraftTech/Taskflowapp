@@ -5,16 +5,22 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.taskflow.data.model.LifeArea
 import com.example.taskflow.data.model.Project
 import com.example.taskflow.data.model.StrategyEntry
 import com.example.taskflow.data.model.Task
 
 @Database(
-    entities = [Task::class, Project::class, StrategyEntry::class],
+    entities = [Task::class, Project::class, StrategyEntry::class, LifeArea::class],
     // v2: project_id is now non-null and every task points at a Project. The schema adds the
     // system "Unassigned" Project (projects.is_system) that unassigned tasks default to. Pre-release
     // with no real users, so the bump uses destructive migration rather than a hand-written one.
-    version = 2,
+    // v3: tasks gain `recurrence` (the repeat rule, null on a one-off) and `completed_instances`
+    // (which dates of a repeat the user has ticked off). Same destructive-migration reasoning.
+    // v4: tasks gain `completed_at` — an export has to carry when work was finished, not just that
+    // it was (SPEC §JSON export and import).
+    // v5: the `life_areas` table, which only Claude ever touches through MCP (SPEC §Strategy doc).
+    version = 5,
     exportSchema = false
 )
 abstract class TaskflowDatabase : RoomDatabase() {
@@ -22,6 +28,7 @@ abstract class TaskflowDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
     abstract fun projectDao(): ProjectDao
     abstract fun strategyEntryDao(): StrategyEntryDao
+    abstract fun lifeAreaDao(): LifeAreaDao
 
     companion object {
         @Volatile

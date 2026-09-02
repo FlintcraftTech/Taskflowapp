@@ -56,6 +56,13 @@ data class Task(
     @ColumnInfo(name = "is_completed")
     val isCompleted: Boolean = false,
 
+    // When the task was completed, or null while it is not. Kept because an export has to carry it
+    // (SPEC §JSON export and import) — without it, anything reading an export can tell that work
+    // was finished but never when, which is most of what a completion is worth knowing. Cleared on
+    // un-completion, so it never describes a task that is open again.
+    @ColumnInfo(name = "completed_at")
+    val completedAt: Long? = null,
+
     @ColumnInfo(name = "project_suggestion_declined")
     val projectSuggestionDeclined: Boolean = false,
 
@@ -63,5 +70,31 @@ data class Task(
     val slotSortOrder: Int = 0,
 
     @ColumnInfo(name = "project_sort_order")
-    val projectSortOrder: Int = 0
-)
+    val projectSortOrder: Int = 0,
+
+    // A repeat rule in the form Recurrence.serialize() writes, or null for a one-off task. The
+    // task's own `date` is the anchor the rule counts from, so a recurring task is always dated.
+    // Instances are derived from this rather than stored as rows — see Recurrence's class comment.
+    @ColumnInfo(name = "recurrence")
+    val recurrence: String? = null,
+
+    // Which instance dates of a recurring task the user has already completed, as comma-separated
+    // ISO dates (2026-08-31,2026-09-07). Completing one instance adds one entry here and leaves the
+    // rest of the tail untouched (SPEC §Recurring tasks). Meaningless — and always empty — on a
+    // one-off task, whose completion is the plain `is_completed` flag.
+    @ColumnInfo(name = "completed_instances")
+    val completedInstances: String = ""
+) {
+    /** The completed instance dates, parsed. Empty for a one-off task. */
+    val completedInstanceDates: Set<java.time.LocalDate>
+        get() = completedInstances.split(',')
+            .filter { it.isNotBlank() }
+            .mapNotNull { runCatching { java.time.LocalDate.parse(it.trim()) }.getOrNull() }
+            .toSet()
+
+    /** This task with [date] added to or removed from its completed-instance set. */
+    fun withInstanceCompletion(date: java.time.LocalDate, isCompleted: Boolean): Task {
+        val updated = if (isCompleted) completedInstanceDates + date else completedInstanceDates - date
+        return copy(completedInstances = updated.sorted().joinToString(",") { it.toString() })
+    }
+}

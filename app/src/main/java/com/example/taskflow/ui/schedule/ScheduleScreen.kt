@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,20 +26,30 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.taskflow.TaskflowApplication
 import com.example.taskflow.data.model.ScheduleSlot
+import com.example.taskflow.ui.common.DragTarget
+import com.example.taskflow.ui.common.DragTargetRow
 import com.example.taskflow.ui.navigation.SpinePage
 import kotlinx.coroutines.launch
 
@@ -59,29 +70,66 @@ fun ScheduleScreen(
     onMenuClick: () -> Unit,
     onTaskClick: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    focusedProjectId: Long? = null,
+    onFocusProject: (Long?) -> Unit = {},
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as TaskflowApplication
     val viewModel: ScheduleViewModel =
-        viewModel(factory = ScheduleViewModel.factory(app.taskRepository, app.projectRepository))
+        viewModel(
+            factory = ScheduleViewModel.factory(
+                app.taskRepository,
+                app.projectRepository,
+                app.settingsRepository,
+            ),
+        )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+
+    // Drag-between-screens state (SPEC §Drag a task between Schedule screens). While a task is held,
+    // sideways movement accumulates here; crossing DRAG_PAGE_THRESHOLD turns the page under it, and
+    // releasing on a page other than the one it started on reschedules it to that page's slot.
+    var dragOriginPage by remember { mutableStateOf<Int?>(null) }
+    var dragSideways by remember { mutableFloatStateOf(0f) }
+
+    // Drag-target state (SPEC §Drag-target icons). The row appears whenever a task is held, and the
+    // target under the finger is remembered so the drop can act on it. From a Schedule screen the
+    // target is the bin — promote belongs to subtask drags inside the edit dialogue.
+    var draggedTaskId by remember { mutableStateOf<Long?>(null) }
+    var dragPosition by remember { mutableStateOf<Offset?>(null) }
+    var hoveredTarget by remember { mutableStateOf<DragTarget?>(null) }
+    val clipboard = LocalClipboardManager.current
+
+    // The view-model owns the filtering; the caller owns the value, because capture needs it too.
+    LaunchedEffect(focusedProjectId) { viewModel.setFocusedProject(focusedProjectId) }
+    val focusedProjectName = uiState.laterCards
+        .firstOrNull { it.projectId == focusedProjectId }
+        ?.projectName
 
     Column(modifier = modifier.fillMaxSize()) {
         SpineHeader(
             page = SpinePage.entries[pagerState.currentPage],
             hasPrevious = pagerState.currentPage > 0,
             hasNext = pagerState.currentPage < SpinePage.entries.lastIndex,
+            focusedProjectName = focusedProjectName,
+            onExitFocus = { onFocusProject(null) },
             onMenuClick = onMenuClick,
             onPrevious = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
             onNext = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
         )
         HorizontalDivider()
-        HorizontalPager(
-            state = pagerState,
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
+        ) {
+        HorizontalPager(
+            state = pagerState,
+            // The neighbouring pages stay composed so a task dragged across the boundary keeps the
+            // gesture alive — the row's pointer input lives in the page it started on, and a
+            // disposed page cancels the drag mid-move.
+            beyondViewportPageCount = 1,
+            modifier = Modifier.fillMaxSize(),
         ) { page ->
             val slot = SpinePage.entries[page].slot
             if (slot == ScheduleSlot.LATER) {
@@ -90,6 +138,8 @@ fun ScheduleScreen(
                     cards = uiState.laterCards,
                     onToggleComplete = viewModel::setCompleted,
                     onTaskClick = onTaskClick,
+                    onReorder = viewModel::reorderCard,
+                    onFocusProject = { onFocusProject(it) },
                     modifier = Modifier.fillMaxSize(),
                 )
             } else {
@@ -99,9 +149,62 @@ fun ScheduleScreen(
                     completed = uiState.completed,
                     onToggleComplete = viewModel::setCompleted,
                     onTaskClick = onTaskClick,
+                    onReorder = viewModel::reorderSlot,
                     modifier = Modifier.fillMaxSize(),
+                    onTaskDragStart = { taskId ->
+                        dragOriginPage = page
+                        dragSideways = 0f
+                        draggedTaskId = taskId
+                    },
+                    onTaskDragPosition = { dragPosition = it },
+                    onTaskDragHorizontal = { dx ->
+                        dragSideways += dx
+                        // A push past the threshold turns one page, and the accumulator resets so a
+                        // continued push can turn the next. The spine's ends simply don't move.
+                        if (dragSideways <= -DRAG_PAGE_THRESHOLD &&
+                            pagerState.currentPage < SpinePage.entries.lastIndex
+                        ) {
+                            dragSideways = 0f
+                            scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
+                        } else if (dragSideways >= DRAG_PAGE_THRESHOLD && pagerState.currentPage > 0) {
+                            dragSideways = 0f
+                            scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
+                        }
+                    },
+                    onTaskDragEnd = { taskId ->
+                        // A drop on a target wins over a drop on a page: the user aimed at the bin,
+                        // so rescheduling the task to whichever page happens to be under it would
+                        // be acting on the gesture they didn't make.
+                        when (hoveredTarget) {
+                            DragTarget.BIN -> viewModel.deleteTask(taskId)
+                            DragTarget.CUT -> viewModel.cutTask(taskId) { text ->
+                                clipboard.setText(AnnotatedString(text))
+                            }
+                            else -> {
+                                val origin = dragOriginPage
+                                val landed = pagerState.currentPage
+                                if (origin != null && origin != landed) {
+                                    viewModel.rescheduleToSlot(taskId, SpinePage.entries[landed].slot)
+                                }
+                            }
+                        }
+                        dragOriginPage = null
+                        dragSideways = 0f
+                        draggedTaskId = null
+                        dragPosition = null
+                        hoveredTarget = null
+                    },
                 )
             }
+        }
+            // Pinned to the top-right corner the spine header keeps clear (SPEC §Drag-target icons).
+            DragTargetRow(
+                visible = draggedTaskId != null,
+                targets = listOf(DragTarget.BIN, DragTarget.CUT),
+                dragPosition = dragPosition,
+                onHoverChange = { hoveredTarget = it },
+                modifier = Modifier.align(Alignment.TopEnd),
+            )
         }
     }
 }
@@ -109,18 +212,38 @@ fun ScheduleScreen(
 /** The longest spine label — sizes the title frame so it doesn't resize as the word changes. */
 private val LONGEST_LABEL: String = SpinePage.entries.maxByOrNull { it.title.length }!!.title
 
+/**
+ * How far sideways a held task must be pushed before the page turns under it, in pixels. Set well
+ * above an incidental wobble during a vertical reorder, and well below a deliberate sweep toward
+ * the edge, so the two halves of the same gesture stay distinguishable.
+ */
+private const val DRAG_PAGE_THRESHOLD = 140f
+
 @Composable
 private fun SpineHeader(
     page: SpinePage,
     hasPrevious: Boolean,
     hasNext: Boolean,
+    focusedProjectName: String?,
+    onExitFocus: () -> Unit,
     onMenuClick: () -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
 ) {
+    val focused = focusedProjectName != null
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            // While focused the bar takes a distinct colour, so the user can always see that they
+            // are looking at one area rather than everything (SPEC §Focus on one Project
+            // temporarily). Focus announcing itself is what makes it a lens rather than a mode.
+            .background(
+                if (focused) {
+                    MaterialTheme.colorScheme.tertiaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surface
+                },
+            )
             .padding(vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -153,6 +276,33 @@ private fun SpineHeader(
                 visible = hasNext,
                 onClick = onNext,
             )
+        }
+        // The focused Project's name with an X, so leaving focus is always one tap away.
+        if (focusedProjectName != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 4.dp),
+            ) {
+                Text(
+                    text = focusedProjectName,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                )
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clickable(onClick = onExitFocus),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "✕",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    )
+                }
+            }
         }
     }
 }

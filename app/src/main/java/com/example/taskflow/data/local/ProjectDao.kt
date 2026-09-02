@@ -43,4 +43,14 @@ interface ProjectDao {
 
     @Query("SELECT COALESCE(MAX(sort_order), -1) FROM projects")
     suspend fun getMaxSortOrder(): Int
+
+    // Everything, system Project included. For export and import only: those two need the whole
+    // table rather than the user-facing view of it.
+    @Query("SELECT * FROM projects ORDER BY sort_order ASC")
+    suspend fun getAllIncludingSystem(): List<Project>
+
+    // Clears the user's Projects for a replacing import. The system Unassigned Project is left
+    // alone — it is seeded, not owned by the user, and every task needs it to exist.
+    @Query("DELETE FROM projects WHERE is_system = 0")
+    suspend fun deleteAllUserProjects()
 }
