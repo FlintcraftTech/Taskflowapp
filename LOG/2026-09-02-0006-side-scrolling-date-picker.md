@@ -1,4 +1,4 @@
-# [HASH] — build [0006-side-scrolling-date-picker]: found already shipped by a crashed session; two stale comments corrected
+# 3defa43 — build [0006-side-scrolling-date-picker]: found already shipped by a crashed session; two stale comments corrected
 
 The item was the only path to setting a date at all, which is why two device checks were held against it. The run opened it expecting to build a horizontal date strip and found one already there: `DateStrip.kt` complete — tiles labelled per the date-format setting, today as the visual anchor, a linear fade with a floor so far tiles stay readable, a labelled "no date" tile at the left edge, and a month-jump row — with `EditTaskScreen` wiring it into the date field and `EditTaskViewModel` carrying `onDateSelected` and `onDateCleared`.
 

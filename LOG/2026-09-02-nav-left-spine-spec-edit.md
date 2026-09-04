@@ -1,4 +1,4 @@
-# [HASH] — build [nav-left-spine-spec-edit]: four SPEC sections for the spine's left half, and the spine sentence extended
+# 3defa43 — build [nav-left-spine-spec-edit]: four SPEC sections for the spine's left half, and the spine sentence extended
 
 This item's whole job was a SPEC edit — the four sections the left-half navigation work needs before any of it can be built. It was split out of [nav-completed-history] in planning on 2026-08-21, once two of that item's three open questions were settled with the user, which is what made these sections writable at all.
 

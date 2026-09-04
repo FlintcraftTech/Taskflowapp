@@ -1,4 +1,4 @@
-# [HASH] — build [0016-onboarding-flow]: first run walks the Schedule/Projects split, the video placeholder and a real free-or-paid choice
+# 3defa43 — build [0016-onboarding-flow]: first run walks the Schedule/Projects split, the video placeholder and a real free-or-paid choice
 
 SPEC §Onboarding — first run exists because the Schedule / Projects split is the structural thing a user has to understand before the app makes sense, and because the AI choice is real: the free tier is a complete product, not a hobbled trial, so the user should see what they are choosing between rather than have it hidden.
 

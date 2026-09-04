@@ -1,4 +1,4 @@
-# [HASH] — build [0009-subtasks-under-parent-expand-collapse]: children nest under their parent, and completion rolls up from them
+# 3defa43 — build [0009-subtasks-under-parent-expand-collapse]: children nest under their parent, and completion rolls up from them
 
 SPEC §Subtasks live under their parent treats a subtask as a sub-unit of its parent rather than an independent item: no date of its own, no Project of its own, no Schedule placement of its own. It renders wherever the parent lives and moves when the parent moves. And SPEC §Parent tasks expand/collapse instead of having a checkbox removes the parent's checkbox entirely — manually ticking a parent while its children are still open creates a state mismatch, so the parent's completion is derived from the children rather than entered by anyone.
 

@@ -1,4 +1,4 @@
-# [HASH] — build [0012-settings-day-begins-at]: the user's own day boundary, wired through bucketing, and a ticker so it fires with the app open
+# 3defa43 — build [0012-settings-day-begins-at]: the user's own day boundary, wired through bucketing, and a ticker so it fires with the app open
 
 SPEC §Settings → Day begins at is the only time picker in the app (UX principle 7), and it exists for one person: someone up past midnight does not consider the day to have ended, and a task meant for "today" at 1 AM should still be on Today. It ships defaulting to 4 AM.
 

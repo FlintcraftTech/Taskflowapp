@@ -1,4 +1,4 @@
-# [HASH] — build [0008-drag-task-between-schedule-screens]: the page turns under a held task, and dropping it reschedules
+# 3defa43 — build [0008-drag-task-between-schedule-screens]: the page turns under a held task, and dropping it reschedules
 
 SPEC §Drag a task between Schedule screens makes rescheduling spatial: pick a task up and move it, rather than opening an editor and adjusting a date field. Rescheduling is the most common edit anyone makes to a task list, so the gesture is worth more than the field.
 

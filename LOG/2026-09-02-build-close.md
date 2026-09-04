@@ -1,4 +1,4 @@
-# [HASH] — /next run of 19 items closed: what happened in the chat around the work
+# 3defa43 — /next run of 19 items closed: what happened in the chat around the work
 
 This session ran across 2026-08-31, 2026-09-01 and 2026-09-02. It built nineteen work items, each
 with its own entry beside this one, and this entry carries what belongs to the chat rather than to

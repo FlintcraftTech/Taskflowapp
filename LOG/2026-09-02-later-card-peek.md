@@ -1,4 +1,4 @@
-# [HASH] — build [later-card-peek]: Later cards open showing their first three tasks instead of collapsed
+# 3defa43 — build [later-card-peek]: Later cards open showing their first three tasks instead of collapsed
 
 SPEC §Schedule view says each Later Project card opens showing its first ~3 tasks, with the rest behind the expand/collapse control — the small peek is what keeps Later a calm overview of the user's areas of life rather than a wall of tasks. The cards had been built collapsed to their headers, showing nothing until tapped, so the page opened as a list of names with no sense of what was in them.
 

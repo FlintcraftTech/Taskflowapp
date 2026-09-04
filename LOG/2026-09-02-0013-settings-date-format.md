@@ -1,4 +1,4 @@
-# [HASH] — build [0013-settings-date-format]: DD/MM or MM/DD, applied wherever a date renders
+# 3defa43 — build [0013-settings-date-format]: DD/MM or MM/DD, applied wherever a date renders
 
 SPEC §Settings → Date format is a two-option setting because date conventions vary by region and Taskflow ships with international users in mind — a single central setting beats hard-coding one convention or trying to detect locale automatically. SPEC is explicit that it applies "everywhere a date is shown": Schedule rows, the date-picker tiles, the Strategy doc, anywhere.
 

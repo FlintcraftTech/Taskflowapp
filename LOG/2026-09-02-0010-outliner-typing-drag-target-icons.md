@@ -1,4 +1,4 @@
-# [HASH] — build [0010-outliner-typing-drag-target-icons]: the outliner became a field per line, because the drag handles needed something to hang from
+# 3defa43 — build [0010-outliner-typing-drag-target-icons]: the outliner became a field per line, because the drag handles needed something to hang from
 
 SPEC §Edit dialogue: outliner-style typing for subtasks wants adding and breaking down subtasks to happen through ordinary typing rather than a separate mode — capturing a parent with children as fast as typing a paragraph, since that is the highest-frequency edit anyone makes when capturing work. SPEC §Drag-target icons wants a row of targets whenever a task is picked up, with **promote** offered on dialogue subtask drags only.
 

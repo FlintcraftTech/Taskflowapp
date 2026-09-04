@@ -1,4 +1,4 @@
-# [HASH] — build [task-reorder-within-list]: one drag primitive written across the flat slots and the Later cards
+# 3defa43 — build [task-reorder-within-list]: one drag primitive written across the flat slots and the Later cards
 
 SPEC §Reorder within a Schedule slot asks for within-list drag-reorder on two surfaces — the flat Schedule slots, and the task list inside each Later Project card. The data layer already persisted both orders; what was missing was the drag itself, with no pattern anywhere in the app to copy and no library. The item was explicit that the two surfaces share one primitive, built with the nested case in hand from the start, so flat-list assumptions do not get baked in and force a rewrite.
 

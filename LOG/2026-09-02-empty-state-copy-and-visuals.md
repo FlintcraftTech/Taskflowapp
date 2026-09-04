@@ -1,4 +1,4 @@
-# [HASH] — build [empty-state-copy-and-visuals]: four empty states written together, including the card that is empty for the wrong reason
+# 3defa43 — build [empty-state-copy-and-visuals]: four empty states written together, including the card that is empty for the wrong reason
 
 The item had waited deliberately: empty-state copy is best written in front of the real screens, and three of the four states only got real screens once Later became Project-grouped. That reason was recorded as expired in planning on 2026-08-25, which is what released it.
 

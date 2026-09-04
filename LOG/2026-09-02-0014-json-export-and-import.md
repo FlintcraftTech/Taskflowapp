@@ -1,4 +1,4 @@
-# [HASH] — build [0014-json-export-and-import]: export, a replacing import and a separately-named additive one — and the completion date SPEC required but the schema lacked
+# 3defa43 — build [0014-json-export-and-import]: export, a replacing import and a separately-named additive one — and the completion date SPEC required but the schema lacked
 
 SPEC §JSON export and import exists because portability matters even with no external integrations: free-tier users never get cloud sync, and JSON export gives every user explicit control over their data plus a recovery path beyond Android's Auto Backup.
 

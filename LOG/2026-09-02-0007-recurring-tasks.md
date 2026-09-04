@@ -1,4 +1,4 @@
-# [HASH] — build [0007-recurring-tasks]: repeat rules with instances derived from the rule rather than stored as rows
+# 3defa43 — build [0007-recurring-tasks]: repeat rules with instances derived from the rule rather than stored as rows
 
 Recurring tasks generate an indefinite tail of future instances, and SPEC §Recurring tasks resolves that by showing every instance inside a 30-day window and none beyond it — a yearly birthday reminder stays invisible until you are within a month of it, while a hand-dated one-off is never capped.
 

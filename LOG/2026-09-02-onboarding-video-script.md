@@ -1,4 +1,4 @@
-# [HASH] — build [onboarding-video-script]: the six-page video written, with the three pages needing a live Claude conversation marked
+# 3defa43 — build [onboarding-video-script]: the six-page video written, with the three pages needing a live Claude conversation marked
 
 Split out of [onboarding-video-content] in planning on 2026-08-25, which had bundled a design decision with a production job: what the video *says* is designable now, while filming it waits on the Claude integration existing. This is the design half.
 

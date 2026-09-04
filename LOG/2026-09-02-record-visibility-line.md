@@ -1,4 +1,4 @@
-# [HASH] — build [record-visibility-line]: the repository's public visibility recorded as the user's informed choice
+# 3defa43 — build [record-visibility-line]: the repository's public visibility recorded as the user's informed choice
 
 The 2026-08-31 migration added a `Visibility:` slot to CLAUDE.md's plugin-managed block and left it blank. This item filled it with the decision made in planning that same day.
 

@@ -48,7 +48,7 @@ The user needs this because Projects answer "where does this belong?" while Sche
 
 ### Schedule view
 
-The four Schedule slots — **Today**, **Tomorrow**, **Soon**, **Later** — sit in the middle of a single horizontal navigation spine that runs **Search · Yesterday · Today · Tomorrow · Soon · Later · Strategy** (see *Search and completed history*, *Yesterday page*, and *Side menu*). The user swipes between adjacent pages; Today is the default open page. Each page shows the tasks placed on that slot. On Today, Tomorrow, and Soon a task's Project is not shown — those pages are flat task lists, and during execution there the only place a task's Project surfaces is inside its edit dialogue. **Later is the exception: it is grouped by Project** (described below) — at the far horizon the area a task belongs to matters more than its exact date.
+The four Schedule slots — **Today**, **Tomorrow**, **Soon**, **Later** — sit in the middle of a single horizontal navigation spine that runs **Search · Yesterday · Today · Tomorrow · Soon · Later · Strategy** (see *Search and completed history*, *Yesterday page*, and *Side menu*). The user swipes between adjacent pages; Today is the default open page. The system back gesture returns the user to Today from any other spine page; from Today itself it leaves the app. Each page shows the tasks placed on that slot. On Today, Tomorrow, and Soon a task's Project is not shown — those pages are flat task lists, and during execution there the only place a task's Project surfaces is inside its edit dialogue. **Later is the exception: it is grouped by Project** (described below) — at the far horizon the area a task belongs to matters more than its exact date.
 
 Each task on **Soon and Later** shows its date (when the task has one) in **DD/MM** format (or **MM/DD** if the user has selected that in Settings — see *Settings → Date format*). **Tomorrow does not show a date label** — a Tomorrow task always carries tomorrow's date, so the page name is the day signal and a label would only repeat it. Today's tasks do not show a date label except when the date is in the past, where the date communicates how stale the task is.
 
@@ -100,11 +100,11 @@ A task moves between a near-term Schedule slot and its Project's place on Later 
 
 - **Adding or changing a date** moves the task onto the Schedule slot its date falls in — Today, Tomorrow, Soon, or, for a date 8 or more days out, into its Project's card on Later.
 - **Removing a date** (in the editor) drops the task out of the day and Soon lists and into its Project's card on Later, where it sits among that Project's undated tasks.
-- **Changing the Project**, via the editor's **Project picker**, refiles the task under the new Project — it appears under that Project on Later, and if it is dated it continues on its Schedule slot too. This is the supported way to move a task between Projects, and it works identically on the free and paid tiers: it preserves the task's subtasks, notes, and recurrence, which deleting and re-creating the task would destroy.
+- **Changing the Project**, via the editor's **Project picker**, refiles the task under the new Project — it appears under that Project on Later, and if it is dated it continues on its Schedule slot too. This is the supported way to move a task between Projects, and it works identically on the free and paid tiers: it preserves the task's subtasks and recurrence, which deleting and re-creating the task would destroy.
 
 Drag-to-reschedule between Schedule screens (covered separately) changes the date directly via gesture.
 
-The user needs this because the bright line between Schedule and Project (UX principle 1) is preserved by making transitions explicit. Adjusting a task's date is the only way to push it into the near-term Schedule slots or pull it back to Later; the app never silently changes which side of the line a task lives on. Keeping the Project move on a property edit — rather than a destroy-and-rewrite — is deliberate: free-tier users have no Claude to help them refile, so the manual path must never cost a task its subtasks, notes, or recurrence.
+The user needs this because the bright line between Schedule and Project (UX principle 1) is preserved by making transitions explicit. Adjusting a task's date is the only way to push it into the near-term Schedule slots or pull it back to Later; the app never silently changes which side of the line a task lives on. Keeping the Project move on a property edit — rather than a destroy-and-rewrite — is deliberate: free-tier users have no Claude to help them refile, so the manual path must never cost a task its subtasks or recurrence.
 
 ### Drag a task between Schedule screens to reschedule
 
@@ -134,13 +134,13 @@ The user needs this because the most natural starting point for a new task is th
 
 ### Edit a task
 
-Tapping a task opens an edit dialogue showing its title, notes, Project, and date. The **Project field** is a picker, editable so the user can refile the task into another Project; the picker also offers a **"New Project"** entry that creates one on the spot (see *Create or delete a Project*). The date field is the side-scrolling date strip (see *Date picker — side-scrolling date strip*) — users can set a date, change a date, or clear a date. Setting or clearing the date moves the task into or out of the near-term Schedule slots accordingly (see *Move between Schedule and Project*). There is no time-of-day picker anywhere in this dialogue (UX principle 7).
+Tapping a task opens an edit dialogue showing its title, Project, and date. There is no free-text notes field: detail that belongs to a task is written as a subtask line, and a box inviting the user to describe their work would add weight to the list this app exists to lighten. The **Project field** is a picker, editable so the user can refile the task into another Project; the picker also offers a **"New Project"** entry that creates one on the spot (see *Create or delete a Project*). The date field is the side-scrolling date strip (see *Date picker — side-scrolling date strip*) — users can set a date, change a date, or clear a date. Setting or clearing the date moves the task into or out of the near-term Schedule slots accordingly (see *Move between Schedule and Project*). There is no time-of-day picker anywhere in this dialogue (UX principle 7).
 
 The user needs this because they need a way to change the two things drag-to-reschedule cannot change in a single gesture: which Project the task lives in, and whether it's dated at all.
 
 ### Date picker — side-scrolling date strip
 
-The date field inside the edit dialogue is a horizontal, side-scrollable strip of date tiles, embedded directly in the dialogue (not a popup). Each tile shows a single date in DD/MM format (or MM/DD per the user's setting). The user scrolls left and right to find a date and taps a tile to select it; the selected tile is highlighted. Today is the visual anchor, and tiles fade with distance from today to give the user a sense of how far they have scrolled. When the dialogue opens, the strip is centred on the task's own date if it has one, or on today if the task is undated, and it covers both past and future dates with a fast-forward affordance for crossing longer distances quickly.
+The date field inside the edit dialogue is a horizontal, side-scrollable strip of date tiles, embedded directly in the dialogue (not a popup). Each tile shows its day number, with the month name beneath it — 24 above Aug — so each tile carries one large glanceable number instead of a run of digits. The date-format setting does not reach the tiles: it exists to disambiguate a date written as numbers, and a month name leaves nothing to disambiguate. The user scrolls left and right to find a date and taps a tile to select it; the selected tile is highlighted. Today is the visual anchor, and tiles fade with distance from today to give the user a sense of how far they have scrolled. When the dialogue opens, the strip is centred on the task's own date if it has one, or on today if the task is undated, and it covers both past and future dates with a fast-forward affordance for crossing longer distances quickly.
 
 A **"no date" tile** at the left edge of the strip lets the user clear the date. It is visually distinct from the date tiles, so it reads as a deliberate choice rather than just another faded tile.
 
@@ -207,7 +207,7 @@ The user needs this because the day just gone is the one piece of history a pers
 
 Tapping a search result, a group, or a date header opens a **day-detail card** in the foreground: that single day, in full. The card layer moves on a deliberately different left-right axis from the spine, and the card visual is what signals the difference — the user is no longer moving along the spine, they are moving through days.
 
-Swiping right brings the older day in from the left; swiping left brings the newer day in from the right. Swiping left past the newest card carries the card layer and the search page off together in one motion, landing the user on Yesterday.
+Swiping right brings the older day in from the left; swiping left brings the newer day in from the right. Days with nothing completed are skipped: swiping moves to the next day that holds a completed task, because a dated card with nothing on it reads as a reproach (UX principle 4). Swiping right past the oldest such day does nothing. Swiping left past the newest card carries the card layer and the search page off together in one motion, landing the user on Yesterday. The back gesture closes the card and returns the user to the page it was opened from.
 
 **Editing or un-completing a single task happens only from a day card** — nowhere else in the history surfaces.
 
@@ -241,7 +241,7 @@ Two tiers, presented openly during onboarding and re-accessible from the side me
 - **Trial.** 30 days of paid tier, handled through Google Play.
 - **Paused subscription.** While a paid subscription is paused, Taskflow reverts to **local-only** operation — no cloud sync, the same as the free tier (a non-paying user is never the case where data lives only in the cloud). The device's Room database stays the source of truth throughout, and re-syncs to the cloud when the subscription resumes. Where the user has several devices, resuming keeps the work done on all of them: the cloud takes every task from every device rather than letting one device's state win, a task edited on two devices keeps the later edit, and a task deleted on one device while paused stays if another device still holds it. A deleted task may therefore reappear on resume — deliberately, because deleting it again is one gesture while a task lost to a merge is gone.
 
-The side menu always shows a "turn on AI for the full experience" entry that re-triggers the AI choice flow.
+The side menu always shows a **"Turn on AI"** entry that re-triggers the AI choice flow.
 
 The user needs this because the value Taskflow offers on the paid tier — Claude integration into the user's normal Claude environment — is real, but it requires the user to already use Claude. Forcing every user into that path would mis-position the app. Offering both tiers honestly lets users self-select.
 
@@ -298,15 +298,21 @@ The user needs this because people who stay up past midnight do not consider the
 
 ### Settings → Date format
 
-A two-option setting for how dates are displayed throughout the app: **DD/MM** (default) or **MM/DD**. The setting applies everywhere a date is shown — on Schedule task rows, on date picker tiles, on the Strategy doc, anywhere.
+A two-option setting for how dates are displayed throughout the app: **DD/MM** (default) or **MM/DD**. The setting applies everywhere a date is shown **as numbers** — on Schedule task rows, on the Strategy doc, anywhere a day and a month appear as digits. It does not reach the date picker's tiles, which name the month rather than numbering it (see *Date picker — side-scrolling date strip*).
 
 The user needs this because date conventions vary by region and Taskflow ships with international users in mind. A single, central setting beats hard-coding one convention or trying to detect locale automatically.
 
+### Light and dark
+
+Taskflow follows the phone's system light/dark setting. There is no in-app appearance control: the phone already holds that preference, and Taskflow does not ask the user to state it twice.
+
+The user needs this because a calm surface is only calm if it matches the room the user is in. A full white screen at 1 AM is exactly the jolt this app is built to avoid (UX principle 4), and it would land hardest on the person Settings → Day begins at exists for.
+
 ### Side menu
 
-A side menu opens by **tapping the ☰ button in the top bar**, sliding in from the left as a drawer. Swipe-to-open is intentionally disabled — the ☰ is the one opener — so the gesture does not collide with the spine's horizontal-swipe navigation. The menu is a single navigation list that mirrors the spine from top to bottom: **Today**, **Tomorrow**, **Soon**, **Later**, then a single calm row for the **Strategy doc**. Tapping any entry opens that page. Projects are not listed in the menu — they live inside **Later** (see *Schedule view*), which is how the user reaches any Project.
+A side menu opens by **tapping the ☰ button in the top bar**, sliding in from the left as a drawer. Swipe-to-open is intentionally disabled — the ☰ is the one opener — so the gesture does not collide with the spine's horizontal-swipe navigation. The menu is a single navigation list that mirrors the spine from top to bottom: **Search**, **Yesterday**, **Today**, **Tomorrow**, **Soon**, **Later**, then a single calm row for the **Strategy doc**. Every page on the spine has a row, in spine order — Search most of all, since it is the page the user reaches for when they have lost something and swiping around hunting for it is the opposite of what they need. Tapping any entry opens that page. Projects are not listed in the menu — they live inside **Later** (see *Schedule view*), which is how the user reaches any Project.
 
-Pinned to the bottom of the drawer, separated from the navigation list, are the **app actions**: **Settings**, **Help**, **Thanks**, and **Report a bug**, plus a "turn on AI for the full experience" entry that re-triggers the AI choice flow on the free tier.
+Pinned to the bottom of the drawer, separated from the navigation list, are the **app actions**: **Settings**, **Help**, **Thanks**, and **Report a bug**, plus a **"Turn on AI"** entry that re-triggers the AI choice flow on the free tier. The row names the destination and no more; making the case for the paid tier is the AI choice flow's job, on the screen the row opens.
 
 The user needs this because the menu gives one-tap reach to every page on the spine, in spine order, while the things that are not spine pages — app-level actions — sit apart at the bottom where Android users expect them, off the task surfaces.
 

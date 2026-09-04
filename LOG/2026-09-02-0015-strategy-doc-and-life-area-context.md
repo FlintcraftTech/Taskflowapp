@@ -1,4 +1,4 @@
-# [HASH] — build [0015-strategy-doc-and-life-area-context]: the free-tier Strategy doc, with structure generated and only the paragraphs written
+# 3defa43 — build [0015-strategy-doc-and-life-area-context]: the free-tier Strategy doc, with structure generated and only the paragraphs written
 
 SPEC §Strategy doc makes the doc's structure **mechanically generated** — one heading per Project, from the Project's name, in Project order, with the user writing only the paragraph beneath each. That is what lets a free-tier user have a coherent document without Claude in the loop: there is no document to lay out, only descriptions to write.
 

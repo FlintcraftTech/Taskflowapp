@@ -1,4 +1,4 @@
-# [HASH] — build [execute-by-task-area]: focus on one Project, visible while it lasts and gone when the app closes
+# 3defa43 — build [execute-by-task-area]: focus on one Project, visible while it lasts and gone when the app closes
 
 Raised by Alex during the [project-create] device test on 2026-06-21 and carried unresolved for months: a way to focus temporarily on a single area and see all its tasks across the spine, for when motivation is only there for one part of life.
 

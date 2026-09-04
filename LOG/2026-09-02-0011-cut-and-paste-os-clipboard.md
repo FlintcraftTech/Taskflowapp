@@ -1,4 +1,4 @@
-# [HASH] — build [0011-cut-and-paste-os-clipboard]: cut writes an indented block to the device clipboard, and the outliner reads one back
+# 3defa43 — build [0011-cut-and-paste-os-clipboard]: cut writes an indented block to the device clipboard, and the outliner reads one back
 
 SPEC §Drag-target icons routes cut and paste through the **device's own clipboard** rather than a Taskflow-internal one, so the user's existing muscle memory works. A cut task leaves Taskflow and its content goes out as plain text; a parent and its children go as one indented block, which is the same shape the outliner reads, so a Taskflow-to-Taskflow round trip keeps its structure and text pasted from anywhere else comes in as lines by the same rule.
 

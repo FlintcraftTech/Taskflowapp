@@ -1,4 +1,4 @@
-# [HASH] — build [sysprompt-reconciliation-supersession]: a new Strategy edit supersedes a reconciliation still waiting on an answer
+# 3defa43 — build [sysprompt-reconciliation-supersession]: a new Strategy edit supersedes a reconciliation still waiting on an answer
 
 `SYSTEM-PROMPT.md` described Strategy-doc reconciliation without saying what happens when the user submits a new edit while a previous pass's suggestions are still unanswered. The rule was decided in planning on 2026-06-16 — the new edit wins — and this item existed to write it into the doc so that [0021-strategy-doc-reconciliation-paid-tier] is built against a complete description rather than an implicit one.
 
