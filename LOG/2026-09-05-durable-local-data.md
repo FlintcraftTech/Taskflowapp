@@ -1,4 +1,4 @@
-# [HASH] — Version 5 becomes the floor below which device data may not be destroyed
+# 9b577c4 — Version 5 becomes the floor below which device data may not be destroyed
 
 Date: 2026-09-05 11:06
 

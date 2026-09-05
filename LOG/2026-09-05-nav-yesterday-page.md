@@ -1,4 +1,4 @@
-# [HASH] — Yesterday joins the spine, and SpinePage.slot becomes nullable so history pages can exist
+# 9b577c4 — Yesterday joins the spine, and SpinePage.slot becomes nullable so history pages can exist
 
 Date: 2026-09-05 11:10
 

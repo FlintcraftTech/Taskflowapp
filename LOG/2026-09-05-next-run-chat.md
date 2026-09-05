@@ -1,4 +1,4 @@
-# [HASH] — Chat-level record for the twelve-item run: corrections given, decisions reached in conversation, and work belonging to no item
+# 9b577c4 — Chat-level record for the twelve-item run: corrections given, decisions reached in conversation, and work belonging to no item
 
 Date: 2026-09-05 11:20
 
@@ -97,3 +97,30 @@ September, then a gap, then undated older entries, which is a worse file than th
 Filed as `[log-index-month-rollover-blocked]` with the two routes out.
 
 Advisory: filed — forward-advisory
+
+## After the close
+
+- `[setup-entry-unfilled-hash]` filed. While writing this session's commit hash into its own
+  entries, the close noticed that `LOG/2026-08-21-setup.md` still carries the literal placeholder
+  token in its heading — the only entry that does. The session-start backfill has had many chances
+  at it and passes over it silently, which suggests the /setup session's own commit is not
+  identifiable rather than that anyone forgot. Filed rather than fixed, because choosing which
+  commit it should name is a judgement about the record.
+
+- A method defect report sent to the No code method project, drafted, shown in full and sent on
+  Alex's explicit approval:
+  `No code method/INBOX/2026-09-05-from-taskflow-post-close-turns-have-no-ask.md`, logged in
+  `INBOX/sent.md`. He raised it from a live instance in this very session — after the push, Claude
+  buried "One command fixes it if you want it done" mid-paragraph and ended the message on another
+  subject, and he only found the offer by scrolling back. His proposal is to make the end-of-turn
+  ask a skill-nonspecific rule. The report carries the sharper diagnosis the drafting turned up:
+  the rule already exists in `skill-nonspecific-rules.md`, and `done.md`'s Recommend-next step
+  deliberately overrides it so a close cannot end on a slash command — but the turns *after* the
+  close inherit that suppression without inheriting its reason.
+
+- The push also revealed that this repository's remote URL uses a different capitalisation of the
+  organisation name than GitHub now answers to, so every push prints a moved-repository warning
+  and succeeds by redirect. Not changed: it is a config change to the user's own repository and
+  was offered rather than made.
+
+This section was written after the commit, so it is not in it; it rides into the next close.

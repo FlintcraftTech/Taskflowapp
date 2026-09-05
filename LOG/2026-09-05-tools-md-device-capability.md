@@ -1,4 +1,4 @@
-# [HASH] — TOOLS.md's blanket "cannot compile, test or install" replaced by three accurate lines
+# 9b577c4 — TOOLS.md's blanket "cannot compile, test or install" replaced by three accurate lines
 
 Date: 2026-09-05 11:08
 

@@ -1,4 +1,4 @@
-# [HASH] — The orphaned worktree carrying retired instructions is deleted, and its git registration pruned
+# 9b577c4 — The orphaned worktree carrying retired instructions is deleted, and its git registration pruned
 
 Date: 2026-09-05 11:16
 

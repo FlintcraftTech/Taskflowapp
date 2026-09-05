@@ -1,4 +1,4 @@
-# [HASH] — Search becomes the spine's leftmost page, matching task titles and Project names across active and completed work
+# 9b577c4 — Search becomes the spine's leftmost page, matching task titles and Project names across active and completed work
 
 Date: 2026-09-05 11:11
 

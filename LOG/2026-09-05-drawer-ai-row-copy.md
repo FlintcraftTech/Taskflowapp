@@ -1,4 +1,4 @@
-# [HASH] — The side menu's AI row becomes "Turn on AI", and the drawer is sized to its own contents
+# 9b577c4 — The side menu's AI row becomes "Turn on AI", and the drawer is sized to its own contents
 
 Date: 2026-09-05 11:15
 

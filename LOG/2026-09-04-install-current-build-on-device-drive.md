@@ -1,4 +1,4 @@
-# [HASH] — The run's twelve builds reach the phone, after Android Studio built without deploying
+# 9b577c4 — The run's twelve builds reach the phone, after Android Studio built without deploying
 
 Walk-through drive record, opened live and appended to as it went.
 

@@ -1,4 +1,4 @@
-# [HASH] — Strategy moves from a drawer overlay to the spine's rightmost page
+# 9b577c4 — Strategy moves from a drawer overlay to the spine's rightmost page
 
 Date: 2026-09-05 11:12
 

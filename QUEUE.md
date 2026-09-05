@@ -10,6 +10,429 @@
 > item carrying a `Red flag · State: cleared/uncleared` marker. The line below marks
 > how far down is cleared to build; anything below it is decided but not ready yet.
 
+#### Delete the stale app/build folder left behind by the output move [stale-app-build-folder]
+
+`app/build` is still in the project, dated 2026-09-01, holding roughly 59 MB that Google Drive keeps
+syncing for nothing.
+
+Found on 2026-09-04, immediately after [project-out-of-drive] shipped and its first build ran. That
+item pointed Gradle's output at `C:\builds\taskflow\app`, and the build confirmed it — the new
+location holds the compiled output and the APK. What it does not do is remove what was already
+there: relocating where a tool writes says nothing about the folder it used to write.
+
+The item's own observation expected `app\build` to be "gone or empty" and it is neither, which was
+recorded against its tick rather than quietly passed. This is the other half.
+
+It is git-ignored generated output, so deleting it loses nothing and no build depends on it. The
+reason to bother: it is 59 MB of constantly-rewritten files inside a Drive-synced folder, which is
+half of what [project-out-of-drive] was trying to stop, and it will sit there indefinitely because
+nothing writes to it any more to make its staleness visible.
+
+**Kept standalone in planning on 2026-09-05.** The capture suggested folding it into another piece of
+work. Refused: the candidates are unrelated, and folding a folder deletion into the LOG index script or
+the Strategy header fix makes both harder to read for no gain. It is one deletion a run disposes of in
+seconds, so it is placed first in the cleared region instead.
+
+**Re-checked on 2026-09-05 before clearing a deletion, rather than trusting the capture.** The folder is
+still present, 53 MB — the capture said 59 MB, which is the same fact measured on a different day — and
+last written 2026-09-01. `git check-ignore` confirms it is ignored by `app/.gitignore`, and git reports
+nothing tracked inside it, so nothing is lost that git could not already not restore. The compiled
+output and the APK live at `C:\builds\taskflow\app` since [project-out-of-drive], so no build depends on
+this folder.
+
+Files:
+- `app/build/` — deleted outright. Generated, git-ignored, and no longer written to.
+
+Observation: `app/build` is absent from the project, and `C:\builds\taskflow\app` still holds the
+compiled output. The check reaches the one path named above.
+
+Rests on, each read 2026-09-05: that `app/build` exists at 53 MB, that `app/.gitignore` ignores it, that
+git tracks nothing inside it, and that Gradle's output now goes to `C:\builds\taskflow`. TOOLS.md also
+records that deleting this folder from Claude's shell is what clears the Windows file-lock failure, so
+the deletion is a route already exercised rather than a new one.
+
+Filed 2026-09-04, 22:50, by /rescan at the end of a /next run.
+
+#### Create the cloud schema and its Row Level Security policies [supabase-rls-policies]
+
+Writes the SQL that creates Taskflow's four cloud tables and the Row Level Security policies that make
+each row reachable only by the account it belongs to. It is the security model for everything that ever
+reaches the cloud, written before any sync code exists.
+
+Found on 2026-09-04 while driving [supabase-project-setup], at the create-project form's Security
+block. Settled there with the user, and recorded in that item's LOG record: the Data API is on
+because the app needs it, automatic exposure of new tables is OFF, and **automatic RLS is ON** — so
+a new table arrives with Row Level Security enabled and no policies, which denies everything. That
+is why this is not an uncleared red flag: there is no exposure today, and the default is closed
+rather than open.
+
+**Widened from a policies-only capture in planning on 2026-09-05, on Claude's recommendation.** As
+captured it described policies for tables that nothing had created, so it could not say which files it
+changed — there is no cloud schema in this repository at all. Refused: folding it into
+[0018-cloud-sync-paid-tier] as a constraint that a policy ships with each table. That would leave the
+security model to be decided part-way through a large sync build, which is the item's own argument
+inverted. Owning the schema is what gives it a file list and puts the policies first.
+
+**Why this matters more here than in an ordinary web app.** The publishable key ships inside the Android
+app on every phone, so it is public by construction and cannot be treated as a secret. The policies are
+the only thing standing between one account's key and every other account's tasks. RLS with no policies
+denies the app too, which is why the policy has to be written in the same move as the table.
+
+**Three things the capture left open, all settled on 2026-09-05.** A Taskflow account is a Supabase Auth
+user, per [0020-remote-mcp-server], which already makes Supabase Auth the identity provider. A row is
+tied to that identity by a `user_id` column matched against the authenticated caller. And the MCP server
+reads rows through these same policies rather than through a key that bypasses them — a Supabase Edge
+Function can run in a mode where the platform validates the caller's token and hands the function a
+database client already scoped to that user, so the guarantee stays in the database instead of moving
+into the server's own code.
+
+**One schema decision this settles rather than passes on.** The local Room tables key on an
+autoincrementing integer, which cannot be the cloud key: two devices on one account both generate id 1.
+Cloud rows therefore carry a UUID primary key, and mapping a local id to it is
+[0018-cloud-sync-paid-tier]'s work. Naming it here stops the sync build inventing a key shape around
+code it has already written.
+
+**The failure mode to write against, and it is silent.** For a caller with no session the identity
+function returns null, and a policy phrased as a comparison against null evaluates to null rather than
+false — phrased as a negation or an `or`, that widens to every row instead of none. Each policy is
+written so the no-session case denies, and [supabase-apply-cloud-migrations] is what proves it on a real
+database.
+
+Files:
+- new `supabase/migrations/0001_initial_schema.sql` — the four cloud tables mirroring the Room schema at
+  version 5 (`tasks`, `projects`, `strategy_entries`, `life_areas`), each with a UUID primary key and a
+  `user_id` column referencing the authenticated user, and each with Row Level Security enabled.
+- new `supabase/migrations/0002_rls_policies.sql` — select, insert, update and delete policies on all
+  four tables, scoped to authenticated callers and matching `user_id` against the caller's identity,
+  each written so a null identity denies rather than matches.
+- new `supabase/README.md` — what the two files are, that they are applied by
+  [supabase-apply-cloud-migrations], and the naming note that `sb_publishable_` and `sb_secret_` have
+  replaced the anon and service_role key names.
+
+Reads but does not change: `app/schemas/com.example.taskflow.data.local.TaskflowDatabase/5.json`, the
+recorded Room schema the cloud tables mirror.
+
+Observation: every table created in `0001` carries a `user_id` column and an enable-RLS statement, and
+`0002` carries a policy for each of the four operations on each of the four tables with none phrased so
+that a null identity matches. Checkable by reading the two files. The check reaches the three files named
+above. Proving the denial against a live database is [supabase-apply-cloud-migrations], which is where a
+database exists.
+
+Refused: a service role key for the MCP server, bypassing RLS and enforcing per-account access in the
+server's own code. It moves the guarantee out of the database and into every call site that might
+forget, and the research below shows it is not necessary.
+
+Rests on, each read 2026-09-05 and recorded in
+`workshop/resources/research/supabase-rls-and-edge-function-identity.md`: that the publishable key is
+safe to expose only because RLS checks the caller's token against each table's policies; that the
+per-user policy shape is a `user_id` comparison against the authenticated identity, scoped to
+authenticated callers; that a no-session identity is null and can widen a carelessly phrased policy to
+every row; and that an Edge Function can run RLS-scoped to its caller rather than bypassing RLS.
+Supabase amends this on a cycle and the key names are mid-rename, so re-read before writing the SQL.
+
+No SPEC edit is owed. SPEC §Claude integration via remote MCP already states that every tool call is
+answered against that account's cloud data and no other's, and that a request the server cannot tie to
+an authenticated account is refused rather than guessed at. That is the product truth; Row Level
+Security is the mechanism serving it, which SPEC's own admission rule keeps out.
+
+Filed 2026-09-04, 22:50, by /rescan at the end of a /next run.
+
+#### Strategy page shows two headers now that it is on the spine [strategy-page-double-header]
+
+Found while building [strategy-on-spine] on 2026-09-04. That item moved the Strategy doc from an
+overlay shown over the spine to being the spine's rightmost page, and deliberately did not alter
+`StrategyScreen.kt` — it names the file as read but not changed, on the reasoning that the screen is
+rendered from a different place rather than rewritten.
+
+The consequence is cosmetic and visible on the first look at the page. `StrategyScreen` carries its
+own header row from its overlay days: a back arrow, the word "Strategy", and the share button. The
+spine's own header sits above it and also names the page. So the user swiping right from Later meets
+"Strategy" twice, one under the other, with a back arrow that duplicates what the system back gesture
+already does.
+
+Nothing is broken — the back arrow works, and it was wired to return to Today, which is the spine's
+back rule (SPEC §Schedule view). It reads wrong rather than behaving wrong.
+
+**Settled in planning on 2026-09-05.** The back arrow and the title go: the spine header already names
+the page, and the arrow was wired to return to Today, which is exactly what the system back gesture does
+under the spine rule. The share button moves into the spine header, which gains a trailing action slot —
+empty on every page but Strategy.
+
+**The constraint that made this a design question, and why it does not bite.** The spine header's
+top-right corner was deliberately left clear at the original build for the drag-to-delete target SPEC
+§Drag-target icons puts in the upper-right. That reservation is real, but it applies while a task is
+being dragged, and the Strategy page holds headings and paragraphs rather than tasks — so on the one
+page that uses the slot, the corner is never claimed. Refused: leaving the share button in
+`StrategyScreen`'s own row with only the arrow and title removed — it is the smallest change and it
+still leaves two header rows stacked, which is the thing being fixed. Refused: a share control at the
+foot of the document — it hides the app's one sharing affordance below a scroll of the user's own
+writing. The user chose the header slot over both.
+
+**How the action reaches the header.** `StrategyScreen` builds its share intent today from its own
+view-model's rendered Markdown, so the header cannot reach it where it sits. The view-model is obtained
+in `ScheduleScreen` instead — the same factory call, moved up — and its sections passed down into
+`StrategyScreen` as a parameter, which is what lets the header's Share action render the same text.
+Ordinary state hoisting; named here so the build does not have to invent a route.
+
+Files:
+- `app/src/main/java/com/example/taskflow/ui/schedule/ScheduleScreen.kt` — `SpineHeader` gains an
+  optional trailing composable slot, rendered in the top-right and absent when not supplied; the
+  `SpinePage.STRATEGY` branch obtains `StrategyViewModel` and supplies a Share button as that slot,
+  passing the sections into `StrategyScreen`.
+- `app/src/main/java/com/example/taskflow/ui/strategy/StrategyScreen.kt` — its own header row and the
+  divider beneath it removed entirely, along with the back arrow, the "Strategy" title, the Share
+  button and the now-unused `onBack` parameter; sections arrive as a parameter rather than from a
+  view-model obtained here.
+
+Observation: on a device, swiping right from Later shows "Strategy" once, in the spine header, with a
+Share button in the header's top-right and no back arrow on the page; tapping Share opens the share
+sheet with the document's text; the system back gesture returns to Today; and the other spine pages
+show no trailing control. The check reaches both files named above.
+
+Rests on, each read 2026-09-05: that `SpineHeader` is a private composable in `ScheduleScreen.kt` with
+its menu key at the start and a centred title flanked by chevrons, and nothing in its end corner; that
+`ScheduleScreen.kt`'s pager renders `StrategyScreen` for `SpinePage.STRATEGY`; and that `StrategyScreen`
+holds its own header row and obtains `StrategyViewModel` itself.
+
+No SPEC edit is owed. SPEC §Strategy doc says a share button in the Strategy doc area shares the doc
+through Android's share sheet, which stays true — where the button sits is UI mechanics, which SPEC's
+intro excludes by design.
+
+Filed rather than done, so the change is weighed against the rest of the queue and gets a file list
+before anything is written. Filed 2026-09-04, 12:47, mid-run, after the 2026-09-04 close.
+
+#### Script the LOG index month split, and run it [log-index-month-split]
+
+Writes a small script that moves each ended month's index lines out of `LOG/index.md` into
+`LOG/index-YYYY-MM.md`, and runs it. The method's rule is that a month that has ended moves out, leaving
+the current month's lines behind, so a planning session's opening read stays short as the archive grows.
+Nothing has ever been moved: the file holds every line back to May.
+
+**Merged from two entries in planning on 2026-09-05** — this one, filed at the 2026-09-04 close, and
+[log-index-month-rollover-blocked], filed at the 2026-09-05 close after a close tried the move and
+stopped. The second is deleted; its findings are here.
+
+**What stopped the close, and why it no longer stops this.** A line's month is read from the entry
+filename it ends with, and many entries carry no date in their filename — the numbered `00NN-*.md` batch
+records and other pre-convention ones. Counted on 2026-09-05: 117 lines, of which 62 name September
+entries, 17 name August, and 37 name undated ones. Moving only the identifiable August lines would leave
+the index holding September plus a block of undated older lines with August cut out of the middle, which
+is worse than the file that exists, because the index reads newest-first and that ordering would break.
+
+Both routes the blocked entry proposed — dating the undated lines by hand, or abandoning rollover and
+letting the file grow — were costed against having to open around thirty-eight entry files to read their
+dates. **That premise is false, checked on 2026-09-05:** git records when each entry file was added, so
+one command dates every undated line without opening anything. Five undated entries were tested and all
+five returned a date. That is what turns this from a bulk hand restructure into a mechanical job, and it
+also answers the question the original entry left open — it should be a script, because it is due again
+every month.
+
+Accepted rather than solved: a git add-date is when the entry was committed, which can be a day after
+the session it records. For sorting into months that is almost always the same answer; an entry within a
+day of a month boundary could land in the wrong file. Worth knowing, not worth engineering around.
+
+Files:
+- new `scripts/split_log_index.py` — reads `LOG/index.md`, takes each line's entry filename, derives its
+  month from a date in that filename where there is one and from `git log --diff-filter=A` where there
+  is not, writes each ended month's lines to `LOG/index-YYYY-MM.md` newest-first, and leaves the current
+  month's lines in place. Re-runnable: a month already split is left alone.
+- `LOG/index.md` — the ended months' lines removed, September's kept.
+- new `LOG/index-2026-08.md` and the earlier months' files the script produces.
+
+Reads but does not change: the `LOG/` entry files, by filename only — the script reads git for their
+dates rather than their contents.
+
+Observation: `LOG/index.md` holds only lines naming September entries; every line that left it appears
+exactly once in a `LOG/index-YYYY-MM.md` file; the total line count across `LOG/index*.md` equals what
+`LOG/index.md` held before the run; and running the script a second time changes nothing. The check
+reaches all the files named above.
+
+Refused: doing this by hand. It is due again every month, and the next close would rediscover the same
+obstacle.
+
+Rests on, each read 2026-09-05: that `LOG/index.md` holds 117 lines with 37 naming undated entries; that
+`git log --diff-filter=A` returns an add date for those entries; and that retrieval searches
+`LOG/index*.md`, so nothing is lost to the move.
+
+Filed at the 2026-09-04 close, 12:27, by Claude.
+
+#### Record the 2026-09-05 Gradle re-check in TOOLS.md [tools-md-gradle-recheck-2026-09-05]
+
+Adds one dated line to TOOLS.md saying that Gradle's loopback failure was re-tested on 2026-09-05 and
+still fails, and that moving the build output out of Google Drive did not fix it.
+
+Raised by /rescan on 2026-09-05 and processed in the same session. The re-check itself was run at the
+decision step of [run-instrumentation-tests], to test whether that item was still genuinely `[user]`
+work; it is, and the result is recorded in that item's prose. TOOLS.md is where a later session looks
+for what this machine can do, so the fact belongs there too.
+
+**Why the negative result is the useful half.** TOOLS.md carries the Google Drive explanation as an
+explicit hypothesis rather than a finding — that the project living inside Drive causes the
+"Unable to delete directory" file lock, and that moving it out would probably end that problem. A later
+session reading that alongside the loopback line could reasonably infer that [project-out-of-drive]
+would have cured the shell failure as well. It did not: the two failures are unrelated, and that has now
+been tried rather than reasoned about.
+
+Files:
+- `TOOLS.md` — one line appended in the file's existing shape: that `gradlew` was run from Claude's
+  shell on 2026-09-05 and died with the same `Unable to establish loopback connection`, that
+  [project-out-of-drive] having moved Gradle's output to `C:\builds\taskflow` did not change it, and
+  that the Drive hypothesis covers the file-lock failure rather than this one. Dated 2026-09-05 like
+  every other line.
+
+Observation: TOOLS.md carries a 2026-09-05 line naming the loopback failure and the output move, and the
+existing 2026-08-31 loopback line is unchanged. The check reaches the one file named above.
+
+Refused: rewriting or replacing the 2026-08-31 line. It is a finding with its own date and its own
+detail of everything that was tried, and today's run confirms it rather than overturning it — TOOLS.md's
+own format is one dated line per fact.
+
+Rests on, read 2026-09-05: that `gradlew --no-daemon --no-watch-fs` fails from Claude's shell with
+`Unable to establish loopback connection`, run today; and that TOOLS.md currently carries the loopback
+finding and the Drive hypothesis as separate lines dated 2026-08-31 and 2026-09-01.
+
+#### Report the queue digest's --next disagreeing with the fixed-median ladder [digest-next-recomputes-medians]
+
+Drafts a method defect report to the No code method project about `queue_digest.py --next` recomputing
+the section medians on every call, when plan.md's ladder requires them fixed for the whole pass, and
+sends it once the user has approved the exact text.
+
+Found on 2026-09-05 during a planning session, and processed in the same session at /rescan.
+
+**What was seen.** plan.md fixes each section's median line count and median age at the opening and holds
+them for the pass, and states the reason: recomputing mid-session lets an entry swell past the median and
+re-enter a group already worked through, so the group stops shrinking. `queue_digest.py --next`
+recomputes both from the section as it currently stands. As long items left Unprocessed during that
+session, the medians fell, and `--next` three times offered an item that the opening's medians had placed
+in a lower rung. Passing `--picked` did not change it: the disagreement is about which entries are in the
+long-and-old group, not about the alternating rung's parity.
+
+**Why it is worth reporting rather than working around.** The override happened only because the session
+was holding the opening's medians and noticed the mismatch. A session that takes the tool's answer gets a
+different processing order with nothing indicating it diverged from the documented ladder — the failure
+is silent, and the tool is the thing the doc tells sessions to ask.
+
+**What the report should not do: propose the fix as though it were obvious.** The script cannot know the
+opening's medians unless it is told them, so the choices are roughly that `--next` takes them as
+arguments, or that the digest reports the medians it used so a divergence is visible, or that plan.md
+stops promising they are fixed. Which of those is right depends on the plugin's own design and is the No
+code method project's call. Say what was seen and let them choose.
+
+Files:
+- new `../../No code method/INBOX/2026-09-05-from-taskflow-digest-next-recomputes-medians.md` — the
+  report, in the shape the two sent this year use: what happened, the passage it contradicts, what
+  seems to be missing, the counterweight, and what Taskflow is not claiming.
+- `INBOX/sent.md` — one line at the top recording the send, per the file's newest-first shape.
+
+Reads but does not change: `plan.md` and `queue_digest.py` under the installed plugin root, for the
+exact wording of the fixed-median rule and the script's behaviour, so the report quotes rather than
+paraphrases.
+
+Observation: the report file exists in the No code method project's INBOX and `INBOX/sent.md` carries a
+line naming it. The check reaches both files named above.
+
+**Approval gate, and it is the standing rule rather than anything special to this item:** the exact text
+is shown to the user and sent only on their explicit yes, because it leaves this project. The same gate
+applied to the report sent earlier on 2026-09-05.
+
+Refused: flavoring this `[user]`. It was first recommended that way and corrected in the same exchange —
+Claude writes the file and can do every part of the work; needing the user's approval on outbound text is
+the approval rule, not a reason the work is theirs.
+
+Rests on, read 2026-09-05: that plan.md states both medians are computed at the opening and fixed for
+that pass; and that `queue_digest.py --next` recomputed them mid-session, observed three times in one
+session. The installed plugin is version 1.22.0-test1, so the report names that version.
+
+#### [audit] Verify the rest of the 2026-08-31 run on a device [verify-run-2026-08-31]
+Red flag · State: cleared
+
+**Lifted above the readiness line on 2026-09-05.** It waited on [install-current-build-on-device], which
+was driven to done on 2026-09-04: Android Studio compiled without deploying, so Claude installed the APK
+over adb (with `-t`, the intermediates APK being test-only) and confirmed the install from dumpsys. The
+twelve builds of that run are therefore on the phone, which is the condition this audit needed. Note
+that the run which closed on 2026-09-05 shipped twelve further builds whose ticks also read UNCONFIRMED
+— this item's list covers the 2026-08-31 run only, and the newer ones are not folded in here.
+
+Drives the twelve unrun checks from that run against the app on a real phone, records a verdict for
+each, and files a capture for anything that fails. Claude runs it over adb; nothing here is handed to
+you.
+
+**Reshaped from a `[user]` item on 2026-09-03**, on Claude's recommendation and your agreement, after a
+capability check found what nobody had checked before. TOOLS.md says Claude cannot compile, test or
+install this app — true of Gradle, and never true of the device. Read 2026-09-03: `adb` is present in
+the Android SDK (not on PATH, which is why it read as absent), a phone is connected over wireless
+debugging, and `com.example.taskflow` is installed on it. So Claude can tap, type, screenshot, restart
+the app and inspect state. Almost every observable below is a pass/fail state check rather than a
+judgement, and those are Claude's to run.
+
+**Refused: leaving it as one `[user]` walkthrough.** Twelve areas of mechanical checking is hours of
+someone's evening spent doing what a script can do, and the original item's own note asked whether it
+should be split. Refused: splitting it into twelve items — the checks share one app session and one
+setup, so twelve items would pay that cost twelve times.
+
+**Out of scope, deliberately: how any of it looks.** Whether a screen reads well, whether an empty
+state lands, whether something feels slow — that is [first-end-to-end-test], which already asks you to
+note anything slow, confusing, ugly or surprising. This item answers "does it work", not "is it good".
+
+**The risk, and how it is designed out.** Driving your phone means Claude sees your real tasks in
+screenshots, and this repository is public — a screenshot committed here would publish whatever was on
+screen, permanently. So evidence stays in the session scratchpad, which is outside the repository and
+self-clearing; nothing from the device is written into a tracked file, and the database is never copied
+off the phone. TEST-LOG.md records verdicts, never task content. Red flag cleared by that design rather
+than by accepting the risk.
+
+Nineteen work items shipped in that run and three things were checked on the device: the onboarding
+screens' legibility, the blank New-task form, and the drawer's gesture behaviour. Everything else was
+written, compiled once, and never exercised.
+
+Each shipped item's LOG entry ends with an UNCONFIRMED tick naming its own check, so the checks
+exist — but they exist scattered across nineteen files that nothing reads on a schedule. Without one
+queue line collecting them, nothing surfaces them again, and the app accumulates features nobody has
+watched work.
+
+Unchecked, with the shortest observable for each:
+
+- Recurring tasks — set one to repeat daily; instances appear across Today, Tomorrow and Soon and
+  stop at 30 days; completing today's leaves tomorrow's; a one-off dated six months out still shows
+  in Later. Its unit tests have also never been run.
+- Subtasks — add two under a task; the parent shows a chevron rather than a checkbox; completing
+  both completes the parent; un-completing one brings it back with its children.
+- Drag-reorder — drag within a Schedule slot, and within a Later card; the order survives navigation
+  and relaunch.
+- Drag between screens — a dated task moves and takes the new slot's date; an undated one parks
+  still undated.
+- The outliner and the drag targets — Enter makes a subtask, Backspace merges one away, bin deletes,
+  promote lifts a child out.
+- Cut and paste — cut a parent with children, paste it into a notes app, paste it back.
+- Settings, day begins at — set it a few minutes ahead and watch a Tomorrow task move with the app
+  open.
+- Settings, date format — switch to MM/DD and check every surface follows.
+- JSON export and import — and this one matters more than its place in the list suggests: it is the
+  only thing standing between a schema change and losing everything on the phone, and it has never
+  been run once. See [durable-local-data].
+- Strategy doc — edit a paragraph, confirm it survives a relaunch, confirm the share sheet opens.
+- Empty states — an empty slot, an empty Project card, a card whose Project has only near-term
+  tasks, and Later before any Project exists.
+- Focus on a Project — enter from a card header, confirm the near-term slots filter and the top bar
+  says so, add a task while focused, relaunch and confirm it opens unfocused.
+
+Files:
+- `TEST-LOG.md` — one row per check above, carrying the area, what was done, and a pass, fail or
+  blocked verdict. Verdicts only; no task content.
+- `QUEUE.md`, Unprocessed — one capture per failure, describing what was expected and what happened.
+  An audit files findings and changes no product code.
+
+Reads but does not change: the nineteen `LOG/` entries from that run, for each item's UNCONFIRMED tick
+and the check it names; and `SPEC.md`, for the behaviour each check is measuring against.
+
+Observation: TEST-LOG.md carries a row for every one of the twelve areas with a verdict, and every
+failed row has a matching capture in QUEUE.md's Unprocessed section. The check reaches both files named
+above.
+
+Rests on, each read 2026-09-03: that `adb.exe` sits in the Android SDK's `platform-tools`; that a device
+answers `adb devices`; and that `com.example.taskflow` is installed on it. A phone can be unplugged, so
+re-check all three before starting rather than assuming them.
+
 #### [user] First end-to-end test of Taskflow on a device [first-end-to-end-test]
 
 Filed in planning on 2026-08-25, doing what [post-first-test-polish-review] asked for: that item waits on a real-world event rather than on a build, so the event becomes its own line and the review is held against it.
@@ -70,7 +493,93 @@ Held against this: [help-thanks-report-content] does not name it as a blocker, b
 waits on the MCP work as well and this address is only one sentence of it. The ordering is written
 here instead: this must be done before [0022-help-thanks-report-a-bug-content] ships the screen.
 
+#### [user] Run the instrumentation tests, MigrationTest first [run-instrumentation-tests]
+
+The app's instrumentation tests have never been executed. `MigrationTest` was written on 2026-09-04
+and has never run once; `TaskDaoTest` and `ProjectDaoTest` predate it and have no recorded run
+either.
+
+It is `[user]` work for the reason TOOLS.md records: Gradle cannot run from Claude's shell on this
+machine, so anything that compiles is Android Studio's job and Android Studio is yours. Claude can
+drive the device over adb and read results back, but cannot start the run.
+
+**Re-checked on 2026-09-05 at the decision step, rather than taken from the record.** `gradlew` was run
+from Claude's shell and failed with the same `Unable to establish loopback connection` recorded on
+2026-08-31. Worth re-checking because [project-out-of-drive] has since moved the build output out of
+Google Drive, and that could plausibly have fixed it; it did not, because the Drive hypothesis was about
+the file-lock failure rather than this one.
+
+**MigrationTest matters more than its size suggests.** [durable-local-data] made version 5 the floor
+below which device data may not be destroyed, and that test is what proves the recorded schema in
+`app/schemas` is actually usable — it creates a v5 database, writes a task, reopens it, and asserts
+the task survived. Until it runs, the floor is a claim rather than a demonstrated fact, and the next
+schema change will be written against a schema nobody has exercised.
+
+Walkthrough:
+
+1. Open the Taskflow project in Android Studio and connect your phone. Look for: your device in the
+   dropdown at the top of the window.
+2. Right-click the `androidTest` source folder in the project tree and choose the option to run all
+   tests in it. Look for: a results panel listing each test with a pass or fail.
+3. Tell a session the run has finished. Look for: nothing on your side — this step is a handover, and
+   Claude goes looking for the results itself.
+4. If Claude comes back saying it found no results file, read the panel yourself and say which tests
+   passed and which failed. Look for: the failure text itself where anything failed — that is what a
+   session needs, rather than a description of it.
+
+Observable: Gradle writes instrumentation results as XML under the build output, which
+[project-out-of-drive] moved to `C:\builds\taskflow`, so Claude looks under
+`C:\builds\taskflow\app\outputs\` for an `androidTest-results` folder and reads the verdicts and any
+failure text out of it. **Written as expected rather than as established**: that folder does not exist
+today, because these tests have never run, so nothing has yet proved Android Studio's test run puts
+results there. Step 4 is the fallback for exactly that. If the results are not readable, completion is
+not checkable from here and a later session asks rather than checks.
+
+Filed 2026-09-04, 22:50, by /rescan at the end of a /next run.
+
 --- Cleared to run above this line ---
+
+#### [user] Apply the cloud migrations and prove a cross-account read is denied [supabase-apply-cloud-migrations]
+Blocked by: [supabase-rls-policies]
+
+Runs the two SQL files [supabase-rls-policies] writes against the real Supabase project, then checks
+that one account genuinely cannot read another's rows. Until this is done the policies are text in this
+repository rather than rules on a database.
+
+Split out of [supabase-rls-policies] in planning on 2026-09-05. Writing the SQL is Claude's work;
+applying it is not. The capability check that day found no Supabase CLI on this machine, and the two
+routes that exist both need a credential — the CLI needs a project access token, and the dashboard needs
+your Google sign-in. Claude is barred from handling either, so the applying and the proving are yours.
+Claude can read the SQL back and tell you what each statement is for at any point.
+
+Walkthrough:
+
+1. Open your Supabase dashboard and select the Taskflow project, then open the SQL editor. Look for: an
+   empty query pane with a run button.
+2. Ask a session to show you `supabase/migrations/0001_initial_schema.sql`, paste it into the pane and
+   run it. Look for: a success message, and the four tables — `tasks`, `projects`, `strategy_entries`,
+   `life_areas` — listed in the table editor.
+3. Confirm each of those four shows Row Level Security as enabled. Look for: an RLS-enabled marker
+   against every one of the four, not just some.
+4. Paste and run `supabase/migrations/0002_rls_policies.sql` the same way. Look for: a success message,
+   and policies listed against each of the four tables.
+5. Create two test users in the project's authentication section, and insert one row into `tasks` under
+   each. Look for: two rows, with different `user_id` values.
+6. Signed in as the first test user, query `tasks`. Look for: exactly that user's own row, and not the
+   other's. This is the check the whole item exists for — if both rows come back, the policies are not
+   doing their job and a session needs to know before any real data goes near this.
+7. Query `tasks` with no session at all. Look for: no rows. This is the null-identity case, which is the
+   one that fails silently if a policy is phrased loosely.
+8. Delete the two test users and their rows. Look for: an empty `tasks` table.
+9. Tell a planning session what steps 6 and 7 returned. If either returned rows it should not have, say
+   so exactly — the row count is what a session needs.
+
+Observable: the tables and their policies exist inside your Supabase project, which is not visible from
+this repository, so completion is not checkable from here — a later session asks rather than checks.
+Stated plainly so nobody builds a check that cannot work.
+
+Rests on, read 2026-09-05: that no Supabase CLI is installed on this machine, so the dashboard SQL editor
+is the available route. Installing the CLI would not change who owns the credential.
 
 #### Day-detail card layer, opened from a search result [nav-day-card-layer]
 Blocked by: [nav-search-completed-history]
@@ -157,90 +666,6 @@ Rests on, each read 2026-09-03: that `StrategyScreen.kt` shares text through `AC
 `createChooser`; that no `FileProvider` is declared in the manifest today; and the format finding
 above, filed 2026-08-21.
 
-#### [audit] Verify the rest of the 2026-08-31 run on a device [verify-run-2026-08-31]
-Blocked by: [install-current-build-on-device]
-Red flag · State: cleared
-
-Drives the twelve unrun checks from that run against the app on a real phone, records a verdict for
-each, and files a capture for anything that fails. Claude runs it over adb; nothing here is handed to
-you.
-
-**Reshaped from a `[user]` item on 2026-09-03**, on Claude's recommendation and your agreement, after a
-capability check found what nobody had checked before. TOOLS.md says Claude cannot compile, test or
-install this app — true of Gradle, and never true of the device. Read 2026-09-03: `adb` is present in
-the Android SDK (not on PATH, which is why it read as absent), a phone is connected over wireless
-debugging, and `com.example.taskflow` is installed on it. So Claude can tap, type, screenshot, restart
-the app and inspect state. Almost every observable below is a pass/fail state check rather than a
-judgement, and those are Claude's to run.
-
-**Refused: leaving it as one `[user]` walkthrough.** Twelve areas of mechanical checking is hours of
-someone's evening spent doing what a script can do, and the original item's own note asked whether it
-should be split. Refused: splitting it into twelve items — the checks share one app session and one
-setup, so twelve items would pay that cost twelve times.
-
-**Out of scope, deliberately: how any of it looks.** Whether a screen reads well, whether an empty
-state lands, whether something feels slow — that is [first-end-to-end-test], which already asks you to
-note anything slow, confusing, ugly or surprising. This item answers "does it work", not "is it good".
-
-**The risk, and how it is designed out.** Driving your phone means Claude sees your real tasks in
-screenshots, and this repository is public — a screenshot committed here would publish whatever was on
-screen, permanently. So evidence stays in the session scratchpad, which is outside the repository and
-self-clearing; nothing from the device is written into a tracked file, and the database is never copied
-off the phone. TEST-LOG.md records verdicts, never task content. Red flag cleared by that design rather
-than by accepting the risk.
-
-Nineteen work items shipped in that run and three things were checked on the device: the onboarding
-screens' legibility, the blank New-task form, and the drawer's gesture behaviour. Everything else was
-written, compiled once, and never exercised.
-
-Each shipped item's LOG entry ends with an UNCONFIRMED tick naming its own check, so the checks
-exist — but they exist scattered across nineteen files that nothing reads on a schedule. Without one
-queue line collecting them, nothing surfaces them again, and the app accumulates features nobody has
-watched work.
-
-Unchecked, with the shortest observable for each:
-
-- Recurring tasks — set one to repeat daily; instances appear across Today, Tomorrow and Soon and
-  stop at 30 days; completing today's leaves tomorrow's; a one-off dated six months out still shows
-  in Later. Its unit tests have also never been run.
-- Subtasks — add two under a task; the parent shows a chevron rather than a checkbox; completing
-  both completes the parent; un-completing one brings it back with its children.
-- Drag-reorder — drag within a Schedule slot, and within a Later card; the order survives navigation
-  and relaunch.
-- Drag between screens — a dated task moves and takes the new slot's date; an undated one parks
-  still undated.
-- The outliner and the drag targets — Enter makes a subtask, Backspace merges one away, bin deletes,
-  promote lifts a child out.
-- Cut and paste — cut a parent with children, paste it into a notes app, paste it back.
-- Settings, day begins at — set it a few minutes ahead and watch a Tomorrow task move with the app
-  open.
-- Settings, date format — switch to MM/DD and check every surface follows.
-- JSON export and import — and this one matters more than its place in the list suggests: it is the
-  only thing standing between a schema change and losing everything on the phone, and it has never
-  been run once. See [durable-local-data].
-- Strategy doc — edit a paragraph, confirm it survives a relaunch, confirm the share sheet opens.
-- Empty states — an empty slot, an empty Project card, a card whose Project has only near-term
-  tasks, and Later before any Project exists.
-- Focus on a Project — enter from a card header, confirm the near-term slots filter and the top bar
-  says so, add a task while focused, relaunch and confirm it opens unfocused.
-
-Files:
-- `TEST-LOG.md` — one row per check above, carrying the area, what was done, and a pass, fail or
-  blocked verdict. Verdicts only; no task content.
-- `QUEUE.md`, Unprocessed — one capture per failure, describing what was expected and what happened.
-  An audit files findings and changes no product code.
-
-Reads but does not change: the nineteen `LOG/` entries from that run, for each item's UNCONFIRMED tick
-and the check it names; and `SPEC.md`, for the behaviour each check is measuring against.
-
-Observation: TEST-LOG.md carries a row for every one of the twelve areas with a verdict, and every
-failed row has a matching capture in QUEUE.md's Unprocessed section. The check reaches both files named
-above.
-
-Rests on, each read 2026-09-03: that `adb.exe` sits in the Android SDK's `platform-tools`; that a device
-answers `adb devices`; and that `com.example.taskflow` is installed on it. A phone can be unplugged, so
-re-check all three before starting rather than assuming them.
-
 #### Subtasks in the edit dialogue have no affordance, so nobody finds them [subtask-affordance-in-edit-dialogue]
 Blocked by: [verify-run-2026-08-31]
 
@@ -304,6 +729,18 @@ sent to every subscriber. **Refused: a personal account**, on exactly that groun
 faster route, and it publishes your home address to strangers. The account type cannot be changed by
 editing a setting afterwards, which is why this was decided rather than defaulted.
 
+**The profile that would carry those receipts is already an organisation profile.** Seen on 2026-09-04
+on the Google Workspace checkout screen while driving [bug-report-email-address]: the payments profile
+the purchase went through reads Flintcraft, Organisation, Australia. A Google payments profile is shared
+across Google services — Workspace, Play, Ads — so it is the same object this account would bill
+through, and the billing half of the identity question is therefore already answered correctly. Folded
+in from a standalone capture on 2026-09-05, which was deleted in the same move: it changed no files and
+was a fact rather than work, and it belongs where the reasoning that uses it lives. **What it does not
+establish, stated so it is not read as more than it is:** none of the registration, verification, $25
+fee, D-U-N-S number, incorporation documents, address proof or authorised representative below is done
+by having an organisation payments profile. The profile ID itself is deliberately not recorded — this
+repository is public, and the ID is an account identifier of no use to anyone reading these documents.
+
 The consequence is that this item now waits on the business registration rather than on a choice. Held
 against [business-registration-for-play-account], which stands for the Taskflow-side dependency; the
 registration work itself belongs to the flintcraft.tech project and is not duplicated here. Note the
@@ -344,9 +781,11 @@ number is free and can take up to 30 days; and that the payments profile's legal
 on customer receipts. Registration requirements are amended on a cycle, so re-read before driving this.
 
 #### Cloud sync, paid tier [0018-cloud-sync-paid-tier]
-Blocked by: [supabase-project-setup]
+Blocked by: [supabase-rls-policies], [supabase-apply-cloud-migrations]
 
 Held below the line on 2026-09-03, with your agreement: the backend is now named, but the Supabase project it syncs to does not exist yet and creating it is your step.
+
+**Re-held on 2026-09-05, against different work.** [supabase-project-setup] shipped on 2026-09-04, so the original hold was spent and its slug no longer resolved. What replaces it is the cloud schema and its Row Level Security policies, plus applying them: this item writes sync against tables that do not exist, and the shape of the policy protecting those tables is the whole security model. Building sync first would mean designing the security around code already written, which is the reasoning [supabase-rls-policies] was widened on. It also inherits the key decision made there — cloud rows carry a UUID primary key rather than the local autoincrementing integer, because two devices on one account both generate id 1, and mapping a local id to that UUID is this item's work.
 
 Push-pull sync between the device Room DB and a cloud backend. Full original spec: `archive/backlog-specs/0018-cloud-sync-paid-tier.md`.
 
@@ -533,42 +972,40 @@ Flavored `[audit]` because it reads and reports rather than editing: it takes th
 > Processed) or drop it. Each is filed as its own `#### ` heading, so the list shows
 > up in an editor's outline.
 
-#### Last session advises processing [supabase-rls-policies] next [forward-advisory]
+#### Last session advises processing [supabase-apply-cloud-migrations] next [forward-advisory]
 
-Advice from the /next run that closed on 2026-09-05, for whoever opens the next planning session.
+Advice from the /plan session that closed on 2026-09-05, for whoever opens the next planning session.
 Read it, act on it or don't, and clear it — it is orientation rather than work.
 
-**Why this one first.** That run shipped `[supabase-project-setup]`, so the cloud project now exists
-and `[0018-cloud-sync-paid-tier]` is free to be built. `[supabase-rls-policies]` is the thing that
-should be settled before it is: the publishable key ships inside the Android app on every phone and
-is public by construction, so the row-level policies are the only barrier between one account's key
-and every other account's tasks. Nothing is exposed today — the project was created with automatic
-RLS on, so tables arrive locked — but RLS with no policies also denies the app, which means the
-first sync table cannot be written without the policy being designed in the same move. Sorting it
-after the sync work would mean designing the security model around code that already exists.
+**Read the queue's shape first.** Unprocessed holds only three entries and none of them can be taken up:
+[help-thanks-report-content] is held against open MCP work, and [personal-strategy-preview] and
+[business-registration-for-play-account] carry dates ahead of today. So a planning session opening on
+this queue has nothing to process, and that is the intended state rather than a fault — ten items are
+cleared to run and the work now is building them.
 
-**Four held items became liftable in that run and none has been re-examined.** Their `Blocked by:`
-lines now name work that is no longer in the queue, which from the queue alone is indistinguishable
-from a blocker that was deleted — so each needs checking against LOG rather than lifting on sight:
+**Why [supabase-apply-cloud-migrations] is the one to look at.** It is held against
+[supabase-rls-policies], which is cleared, so it becomes live the moment that build ships — and it is the
+step that turns the Row Level Security policies from text in this repository into rules on a database.
+Nothing about the cloud tables is actually protected until its cross-account read test has been run by a
+person. If the RLS build has shipped by the time you read this, that walkthrough is the first thing worth
+driving.
 
-- `[verify-run-2026-08-31]` named `[install-current-build-on-device]`, which shipped. This one is
-  the most straightforward, and it is also the item that would confirm most of the twelve builds
-  that run left ticked UNCONFIRMED.
-- `[0018-cloud-sync-paid-tier]` and `[0020-remote-mcp-server]` both named `[supabase-project-setup]`,
-  which shipped.
-- `[nav-day-card-layer]` named `[nav-search-completed-history]`, which shipped. Note that the Search
-  page ships with tapping a completed result deliberately inert, because SPEC puts editing and
-  un-completing only on a day card — so that gap closes when this item builds.
+**What lifts when the cleared work ships.** [subtask-affordance-in-edit-dialogue] waits on
+[verify-run-2026-08-31], which is now cleared. [0018-cloud-sync-paid-tier] waits on both the RLS build
+and the applying step. Several older held items — [verify-schedule-date-matrix],
+[verify-far-future-project-card], [project-delete-later], [project-reorder-strategy] — name blockers that
+shipped in the 2026-08-31 run but have never been verified on a device, which is exactly what
+[verify-run-2026-08-31] does; expect a batch of them to become liftable once that audit has run.
 
-**Also worth knowing at the opening.** Nine captures were waiting before that run's own filings, and
-it added five more. Two of those touch items already in the queue rather than standing alone:
-`[stale-app-build-folder]` finishes what `[project-out-of-drive]` started, and
-`[play-account-payments-profile-known]` records a fact that bears on
-`[play-console-subscription-product]`'s business-identity hold.
+**Condition on the build route.** The cleared region opens with four build items and the device audit,
+then three `[user]` items — the end-to-end test the user is running through their own day, the bug-report
+address waiting on Google provisioning a Workspace account, and the instrumentation test run that needs
+Android Studio. A /next run will get through the builds and the audit and then stop at work only the user
+can do.
 
-**Condition on the build route.** The cleared region holds only `[first-end-to-end-test]`, which the
-user is running through their own day, and `[bug-report-email-address]`, which is waiting on Google
-provisioning an account. A `/next` run would find nothing it could build and halt.
+**Two reports are queued outward rather than inward.** [digest-next-recomputes-medians] drafts a message
+to the No code method project; a second report on the same project's over-asking rule was already sent
+during this session and is recorded in `INBOX/sent.md`.
 
 #### Help, Thanks and Report-a-bug content [help-thanks-report-content]
 Blocked by: [0019-ai-choice-flow-and-mcp-setup], [0020-remote-mcp-server]
@@ -633,189 +1070,4 @@ work.
 Filed 2026-09-03 during planning, at the moment the account-type choice was settled. The capture that
 held that choice was deleted in the same move, its facts folded into
 [play-console-subscription-product], which is where they are used.
-
-#### LOG/index.md is overdue for its month split [log-index-month-split]
-
-`LOG/index.md` still holds every line this project has ever written, back to May. The close's own rule
-says a month that has ended moves into `LOG/index-YYYY-MM.md`, leaving the current month's lines in the
-main file, so that a planning session's opening read stays short as the archive grows. Nothing has been
-moved yet, and the file now runs to dozens of entries.
-
-Not attempted at the 2026-09-04 close, deliberately. Index lines begin with a commit hash rather than a
-date, and the older entry filenames carry no date prefix at all, so working out which month each line
-belongs to means opening the entries it points at. That is a bulk restructure of the one file every
-session's opening depends on, and doing it unasked at commit time — after a close that had already had
-to repair a mis-placed readiness marker — was the wrong moment for it.
-
-What it would take: derive each line's month from the entry it names (its own date field, or the
-commit), split the ended months into `LOG/index-YYYY-MM.md` files newest-first, and leave September's
-lines in `LOG/index.md`. Retrieval searches `LOG/index*.md`, so nothing is lost to the move.
-
-Worth weighing at the same time: whether this should be a small script rather than a hand edit, given it
-will be due again every month, and whether the method's own close should have caught it sooner than it
-did.
-
-Filed at the 2026-09-04 close, 12:27, by Claude.
-
-#### Strategy page shows two headers now that it is on the spine [strategy-page-double-header]
-
-Found while building [strategy-on-spine] on 2026-09-04. That item moved the Strategy doc from an
-overlay shown over the spine to being the spine's rightmost page, and deliberately did not alter
-`StrategyScreen.kt` — it names the file as read but not changed, on the reasoning that the screen is
-rendered from a different place rather than rewritten.
-
-The consequence is cosmetic and visible on the first look at the page. `StrategyScreen` carries its
-own header row from its overlay days: a back arrow, the word "Strategy", and the share button. The
-spine's own header sits above it and also names the page. So the user swiping right from Later meets
-"Strategy" twice, one under the other, with a back arrow that duplicates what the system back gesture
-already does.
-
-Nothing is broken — the back arrow works, and it was wired to return to Today, which is the spine's
-back rule (SPEC §Schedule view). It reads wrong rather than behaving wrong.
-
-What the fix probably is, not decided here: drop the back arrow and the title from
-`StrategyScreen`'s own row and leave it holding the share button alone, since the spine header
-already names the page and back is the system gesture. That would need the share button rehoused
-somewhere the spine header can carry, which is the part that makes this a design question rather
-than a deletion — the other spine pages have no per-page control in the header, and Later's card
-actions do not live there either.
-
-Filed rather than done, so the change is weighed against the rest of the queue and gets a file list
-before anything is written. Filed 2026-09-04, 12:47, mid-run, after the 2026-09-04 close.
-
-#### Row Level Security policies for the synced tables [supabase-rls-policies]
-
-Before any real user data reaches Supabase, the cloud tables need per-account Row Level Security
-policies written. Nothing in the queue says so today, and [0018-cloud-sync-paid-tier] describes the
-sync without describing who is allowed to read what.
-
-Found on 2026-09-04 while driving [supabase-project-setup], at the create-project form's Security
-block. Settled there with the user, and recorded in that item's LOG record: the Data API is on
-because the app needs it, automatic exposure of new tables is OFF, and **automatic RLS is ON** — so
-a new table arrives with Row Level Security enabled and no policies, which denies everything. That
-is why this is not an uncleared red flag: there is no exposure today, and the default is closed
-rather than open.
-
-What makes it real work rather than a setting already taken care of: RLS enabled with no policies
-denies the app too. The moment [0018-cloud-sync-paid-tier] writes a table the app must read, a
-policy has to be written with it, and the shape of that policy is the whole security model. The
-reason it matters more here than in an ordinary web app: **the publishable key ships inside the
-Android app on every phone**, so it is public by construction and cannot be treated as a secret.
-The policies are the only thing standing between one account's key and every other account's tasks.
-
-Not designed here. What it has to settle: which Supabase Auth identity a Taskflow account maps to,
-how a row is tied to that identity, and whether the MCP server reaches rows through the same
-policies or through a service role that bypasses them — which is its own decision, because a
-service role bypassing RLS moves the whole guarantee into the server's own code.
-
-Filed 2026-09-04, 22:50, by /rescan at the end of a /next run.
-
-#### Delete the stale app/build folder left behind by the output move [stale-app-build-folder]
-
-`app/build` is still in the project, dated 2026-09-01, holding roughly 59 MB that Google Drive keeps
-syncing for nothing.
-
-Found on 2026-09-04, immediately after [project-out-of-drive] shipped and its first build ran. That
-item pointed Gradle's output at `C:\builds\taskflow\app`, and the build confirmed it — the new
-location holds the compiled output and the APK. What it does not do is remove what was already
-there: relocating where a tool writes says nothing about the folder it used to write.
-
-The item's own observation expected `app\build` to be "gone or empty" and it is neither, which was
-recorded against its tick rather than quietly passed. This is the other half.
-
-It is git-ignored generated output, so deleting it loses nothing and no build depends on it. The
-reason to bother: it is 59 MB of constantly-rewritten files inside a Drive-synced folder, which is
-half of what [project-out-of-drive] was trying to stop, and it will sit there indefinitely because
-nothing writes to it any more to make its staleness visible.
-
-Small enough to fold into another piece of work rather than run alone.
-
-Filed 2026-09-04, 22:50, by /rescan at the end of a /next run.
-
-#### [user] Run the instrumentation tests, MigrationTest first [run-instrumentation-tests]
-
-The app's instrumentation tests have never been executed. `MigrationTest` was written on 2026-09-04
-and has never run once; `TaskDaoTest` and `ProjectDaoTest` predate it and have no recorded run
-either.
-
-It is `[user]` work for the reason TOOLS.md records: Gradle cannot run from Claude's shell on this
-machine, so anything that compiles is Android Studio's job and Android Studio is yours. Claude can
-drive the device over adb and read results back, but cannot start the run.
-
-**MigrationTest matters more than its size suggests.** [durable-local-data] made version 5 the floor
-below which device data may not be destroyed, and that test is what proves the recorded schema in
-`app/schemas` is actually usable — it creates a v5 database, writes a task, reopens it, and asserts
-the task survived. Until it runs, the floor is a claim rather than a demonstrated fact, and the next
-schema change will be written against a schema nobody has exercised.
-
-Walkthrough:
-
-1. Open the Taskflow project in Android Studio and connect your phone. Look for: your device in the
-   dropdown at the top of the window.
-2. Right-click the `androidTest` source folder in the project tree and choose the option to run all
-   tests in it. Look for: a results panel listing each test with a pass or fail.
-3. Tell a session the result. If anything failed, say which — the failure text is what a session
-   needs, not a description of it.
-
-Observable: Claude cannot see the results panel, so completion is not checkable from here — a later
-session asks rather than checks. Stated plainly so nobody pretends otherwise.
-
-Filed 2026-09-04, 22:50, by /rescan at the end of a /next run.
-
-#### Google payments profile is already an organisation profile [play-account-payments-profile-known]
-
-Seen on 2026-09-04, on the Google Workspace checkout screen while driving [bug-report-email-address]:
-the payments profile the purchase went through reads **Flintcraft · Organisation · Australia**, with
-a payments profile ID.
-
-Worth recording because [play-console-subscription-product] is held partly on business identity, and
-that item's reasoning turns on exactly this object. It settled on an organization Play account
-rather than a personal one because **the payments profile's legal name and address appear on
-customer receipts**, and a personal profile's are the individual's own name and home address. The
-profile that would carry that is already an organisation profile rather than a personal one, and a
-Google payments profile is shared across Google services — Workspace, Play, Ads — so it is the same
-object that account would use.
-
-**What this does NOT establish, stated so nobody reads it as more than it is.** A Play developer
-account still needs its own registration and verification, the $25 fee, a D-U-N-S number that can
-take up to 30 days, incorporation documents, proof of a physical address, and an authorised
-representative named on the registration — all recorded in
-`workshop/resources/research/google-play-organization-account-requirements.md`. None of that is done
-by having an organisation payments profile. What it removes is the question of which identity the
-billing half is under, and it says the answer is already the right one.
-
-The profile ID itself is deliberately not recorded here: this repository is public, and the ID is an
-account identifier with no use to anyone reading these documents.
-
-Filed 2026-09-04, 22:50, by /rescan at the end of a /next run.
-
-#### LOG/index.md cannot be split by month, because most of its lines carry no date [log-index-month-rollover-blocked]
-
-The close's month-rollover step could not run on 2026-09-05 and was skipped deliberately rather than
-done badly. Recorded so the next close does not rediscover it.
-
-The rule is that when a month ends, its index lines move into `LOG/index-YYYY-MM.md`, leaving the
-current month's where they are. August has ended and `LOG/index.md` holds August lines, so the step
-was due.
-
-**What blocks it.** The step identifies a line's month from the entry filename it ends with, and 38
-of the file's roughly 100 lines point at entries whose filenames carry no date at all — the numbered
-`00NN-*.md` batch records and other pre-convention entries. Only 21 lines are identifiably August
-and 45 identifiably September. Extracting the 21 would leave the main index holding September plus
-38 undated older lines with August cut out of the middle, which is a worse file than the one that
-exists now: the index reads newest-first, and that ordering would no longer hold.
-
-Establishing each undated entry's month means opening around 38 entry files to read their dates,
-which is not work a close should be doing on the way to a commit.
-
-Two routes, neither chosen here:
-
-- date the undated index lines once, by reading each entry, after which every future rollover is
-  mechanical;
-- or accept that the index does not roll over and let it grow, with retrieval continuing to search
-  `LOG/index*.md` as it already does — which costs a longer read at every planning opening.
-
-The second is cheaper today and more expensive every month. Worth deciding rather than defaulting.
-
-Filed 2026-09-05, 11:26, by the close of the twelve-item /next run.
 
