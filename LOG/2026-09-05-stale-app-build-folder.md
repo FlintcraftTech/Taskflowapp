@@ -1,4 +1,4 @@
-# [HASH] — /plan [stale-app-build-folder]: kept standalone and placed first, with the deletion's claims checked before clearing it
+# c03f25b — /plan [stale-app-build-folder]: kept standalone and placed first, with the deletion's claims checked before clearing it
 
 Session date and time: 2026-09-05, afternoon planning run.
 

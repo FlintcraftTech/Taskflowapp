@@ -223,19 +223,19 @@ class TaskDaoTest {
         )
 
         // Complete first child
-        taskDao.updateCompletion(child1Id, true)
+        taskDao.updateCompletion(child1Id, true, completedAt = System.currentTimeMillis())
         var children = taskDao.getSubtasksList(parentId)
         val allCompleteAfterFirst = children.all { it.isCompleted }
         assertTrue(!allCompleteAfterFirst) // Not all complete yet
 
         // Complete second child
-        taskDao.updateCompletion(child2Id, true)
+        taskDao.updateCompletion(child2Id, true, completedAt = System.currentTimeMillis())
         children = taskDao.getSubtasksList(parentId)
         val allCompleteAfterSecond = children.all { it.isCompleted }
         assertTrue(allCompleteAfterSecond) // All children complete — parent should be marked complete
 
         // Mark parent complete (app-level rollup logic)
-        taskDao.updateCompletion(parentId, true)
+        taskDao.updateCompletion(parentId, true, completedAt = System.currentTimeMillis())
         val parent = taskDao.getById(parentId)
         assertTrue(parent!!.isCompleted)
     }

@@ -1,4 +1,4 @@
-# [HASH] — /plan [supabase-rls-policies]: widened from policies-only to owning the cloud schema, after a lookup settled that the MCP server can read through RLS rather than bypassing it
+# c03f25b — /plan [supabase-rls-policies]: widened from policies-only to owning the cloud schema, after a lookup settled that the MCP server can read through RLS rather than bypassing it
 
 Session date and time: 2026-09-05, 12:0x (processed during the afternoon planning run).
 

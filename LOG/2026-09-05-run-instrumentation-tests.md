@@ -1,4 +1,4 @@
-# [HASH] — /plan [run-instrumentation-tests]: `[user]` re-verified by running Gradle rather than trusting the record, and the results-reading step handed back to Claude
+# c03f25b — /plan [run-instrumentation-tests]: `[user]` re-verified by running Gradle rather than trusting the record, and the results-reading step handed back to Claude
 
 Session date and time: 2026-09-05, afternoon planning run.
 

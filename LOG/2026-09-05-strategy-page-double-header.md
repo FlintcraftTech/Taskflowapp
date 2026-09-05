@@ -1,4 +1,4 @@
-# [HASH] — /plan [strategy-page-double-header]: the spine header gains a trailing action slot, which is where the Strategy share button goes
+# c03f25b — /plan [strategy-page-double-header]: the spine header gains a trailing action slot, which is where the Strategy share button goes
 
 Session date and time: 2026-09-05, afternoon planning run.
 

@@ -1,4 +1,4 @@
-# [HASH] — /plan [play-account-payments-profile-known]: deleted as a finding rather than work, its fact folded into the Play Console item that uses it
+# c03f25b — /plan [play-account-payments-profile-known]: deleted as a finding rather than work, its fact folded into the Play Console item that uses it
 
 Session date and time: 2026-09-05, afternoon planning run.
 

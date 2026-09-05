@@ -1,4 +1,4 @@
-# [HASH] — /plan [digest-next-recomputes-medians]: the digest's next-pick disagreed with the ladder three times, filed as a report to the method project
+# c03f25b — /plan [digest-next-recomputes-medians]: the digest's next-pick disagreed with the ladder three times, filed as a report to the method project
 
 Session date and time: 2026-09-05, afternoon planning run, at /rescan.
 

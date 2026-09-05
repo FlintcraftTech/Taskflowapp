@@ -1,4 +1,4 @@
-# [HASH] — /plan [supabase-apply-cloud-migrations]: the user step split out of the RLS work, carrying the cross-account read test that actually proves the policies
+# c03f25b — /plan [supabase-apply-cloud-migrations]: the user step split out of the RLS work, carrying the cross-account read test that actually proves the policies
 
 Session date and time: 2026-09-05, afternoon planning run.
 

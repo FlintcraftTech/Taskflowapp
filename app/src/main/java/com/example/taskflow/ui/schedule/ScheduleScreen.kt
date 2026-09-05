@@ -1,5 +1,6 @@
 package com.example.taskflow.ui.schedule
 
+import android.content.Intent
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -25,6 +26,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,6 +56,7 @@ import com.example.taskflow.ui.history.SearchScreen
 import com.example.taskflow.ui.history.YesterdayScreen
 import com.example.taskflow.ui.navigation.SpinePage
 import com.example.taskflow.ui.strategy.StrategyScreen
+import com.example.taskflow.ui.strategy.StrategyViewModel
 import kotlinx.coroutines.launch
 
 /**
@@ -64,8 +67,9 @@ import kotlinx.coroutines.launch
  *
  * Header: the current page's name, centred in a fixed-width frame (as wide as the longest label),
  * sliding in the direction of travel, flanked by chevrons that hide at the spine's ends. The menu
- * key sits in the top-left corner the layout leaves clear; the top-right corner stays clear for the
- * pick-up delete target added in a later batch.
+ * key sits in the top-left corner the layout leaves clear. The end corner holds the pick-up delete
+ * target while a task is held, and otherwise a page's own action where it has one — only Strategy
+ * does, with its Share button.
  */
 @Composable
 fun ScheduleScreen(
@@ -88,6 +92,14 @@ fun ScheduleScreen(
         )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+
+    // The Strategy doc's view-model is obtained here rather than inside StrategyScreen, because the
+    // spine header — which now carries the doc's Share action — is a sibling of the pager and cannot
+    // reach into the page. Same factory call, one level up.
+    val strategyViewModel: StrategyViewModel = viewModel(
+        factory = StrategyViewModel.factory(app.projectRepository, app.strategyRepository),
+    )
+    val strategySections by strategyViewModel.sections.collectAsStateWithLifecycle()
 
     // Drag-between-screens state (SPEC §Drag a task between Schedule screens). While a task is held,
     // sideways movement accumulates here; crossing DRAG_PAGE_THRESHOLD turns the page under it, and
@@ -119,6 +131,27 @@ fun ScheduleScreen(
             onMenuClick = onMenuClick,
             onPrevious = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
             onNext = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
+            trailing = if (SpinePage.entries[pagerState.currentPage] == SpinePage.STRATEGY) {
+                {
+                    TextButton(
+                        onClick = {
+                            val share = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(
+                                    Intent.EXTRA_TEXT,
+                                    strategyViewModel.renderMarkdown(strategySections),
+                                )
+                            }
+                            context.startActivity(Intent.createChooser(share, null))
+                        },
+                        enabled = strategySections.isNotEmpty(),
+                    ) {
+                        Text("Share")
+                    }
+                }
+            } else {
+                null
+            },
         )
         HorizontalDivider()
         Box(
@@ -148,11 +181,8 @@ fun ScheduleScreen(
                     )
                     SpinePage.YESTERDAY -> YesterdayScreen(modifier = Modifier.fillMaxSize())
                     SpinePage.STRATEGY -> StrategyScreen(
-                        // The screen keeps its own back control from its overlay days. As a page,
-                        // back means what it means everywhere on the spine: return to Today.
-                        onBack = {
-                            scope.launch { pagerState.animateScrollToPage(SpinePage.TODAY.ordinal) }
-                        },
+                        sections = strategySections,
+                        onDescriptionChange = strategyViewModel::setDescription,
                         modifier = Modifier.fillMaxSize(),
                     )
                     else -> Unit
@@ -257,6 +287,7 @@ private fun SpineHeader(
     onMenuClick: () -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     val focused = focusedProjectName != null
     Box(
@@ -304,6 +335,19 @@ private fun SpineHeader(
                 visible = hasNext,
                 onClick = onNext,
             )
+        }
+        // A page's own action, in the end corner. Only Strategy supplies one, and the corner is
+        // otherwise the pick-up delete target's — which claims it only while a task is held, and
+        // Strategy holds headings and paragraphs rather than tasks, so the two never collide.
+        if (focusedProjectName == null && trailing != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 4.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                trailing()
+            }
         }
         // The focused Project's name with an X, so leaving focus is always one tap away.
         if (focusedProjectName != null) {

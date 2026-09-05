@@ -1,4 +1,4 @@
-# [HASH] — /plan [setup-entry-unfilled-hash]: deleted, its premise gone — the automatic backfill had filled the placeholder minutes after it was noticed
+# c03f25b — /plan [setup-entry-unfilled-hash]: deleted, its premise gone — the automatic backfill had filled the placeholder minutes after it was noticed
 
 Session date and time: 2026-09-05, afternoon planning run.
 

@@ -1,4 +1,4 @@
-# [HASH] — /plan [log-index-month-split]: two entries merged into one scripted item, after git turned the blocking cost into nothing
+# c03f25b — /plan [log-index-month-split]: two entries merged into one scripted item, after git turned the blocking cost into nothing
 
 Session date and time: 2026-09-05, afternoon planning run.
 

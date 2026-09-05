@@ -1,4 +1,4 @@
-# [HASH] — /plan chat-level record, 2026-09-05: nine entries processed and the queue emptied of everything not held by rule, plus a method defect report on the method's own over-asking
+# c03f25b — /plan chat-level record, 2026-09-05: nine entries processed and the queue emptied of everything not held by rule, plus a method defect report on the method's own over-asking
 
 Session date and time: 2026-09-05, opened 11:42, closed in the afternoon. One planning run, one rescan,
 one close.
@@ -55,6 +55,13 @@ item that does exactly that properly, with a script.
 **Also in this chat:** the user interrupted one message mid-send to redirect an answer, and the redirect
 was taken as given. Research filed:
 `workshop/resources/research/supabase-rls-and-edge-function-identity.md`.
+
+**Routed to Captures (post-commit tail):** [prose-hash-token-in-setup-entry] — filling this close's own
+placeholders swept `LOG/` for the token afterwards and found one left, in prose inside backticks in
+`LOG/2026-08-21-setup.md`, which the method's rule bans for the reason that a blind find-replace would
+overwrite the sentence. It does not disturb the deletion of [setup-entry-unfilled-hash] earlier in this
+session: that entry's hash position is correctly filled and no entry in `LOG/` lacks a hash. This capture
+rides the next commit rather than this one.
 
 **Queue changes:** nine entries processed, three deleted, two created, one lifted from below the
 readiness line, one held item re-pointed at new blockers, and the Processed section reordered. The
