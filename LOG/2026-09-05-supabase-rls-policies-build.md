@@ -1,4 +1,4 @@
-# [HASH] — Cloud schema and its Row Level Security policies written, before any sync code exists
+# 0bd8c64 — Cloud schema and its Row Level Security policies written, before any sync code exists
 
 Taskflow's four cloud tables now exist as SQL, with the policies that make each row reachable only by the
 account it belongs to. This is the security model for everything that will ever reach the cloud, written

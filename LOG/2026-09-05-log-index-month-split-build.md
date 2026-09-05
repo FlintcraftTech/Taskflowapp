@@ -1,4 +1,4 @@
-# [HASH] — LOG index month split scripted and run, moving 55 lines out of index.md
+# 0bd8c64 — LOG index month split scripted and run, moving 55 lines out of index.md
 
 The method's rule is that a month which has ended moves out of `LOG/index.md` into its own file, so a
 planning session's opening read stays short as the archive grows. Nothing had ever been moved: the index

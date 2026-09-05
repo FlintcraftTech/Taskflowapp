@@ -288,7 +288,7 @@ The user needs this because portability matters even with no external integratio
 
 The Settings screen is reachable from the side menu's bottom section (alongside Help, Thanks, and Report a bug — see *Side menu*). Settings holds the user-configurable controls that don't live on a task or a screen.
 
-The user needs this because there is a small set of app-level controls (Day begins at, Date format, JSON export/import, AI tier) that need a home, and Settings is where Android users expect to find them.
+The user needs this because there is a small set of app-level controls (Day begins at, Date format, JSON export/import) that need a home, and Settings is where Android users expect to find them. The AI tier is not among them: turning AI on is reached from the side menu's own "Turn on AI" row (see *Side menu* and *Tier model — free and paid*), and it lives in one place only.
 
 ### Settings → Day begins at
 

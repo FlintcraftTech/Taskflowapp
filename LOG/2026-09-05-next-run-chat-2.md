@@ -1,4 +1,4 @@
-# [HASH] — /next chat-level record, 2026-09-05: six builds, a device audit, two [user] items driven, and a test run that uninstalled the app
+# 0bd8c64 — /next chat-level record, 2026-09-05: six builds, a device audit, two [user] items driven, and a test run that uninstalled the app
 
 Written 2026-09-05, 22:10. The per-item records are the six `-build` entries, the audit entry
 `2026-09-05-verify-run-2026-08-31.md`, and the two `[user]` records named below. This carries what

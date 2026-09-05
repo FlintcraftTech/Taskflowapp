@@ -1,4 +1,4 @@
-# [HASH] — Strategy page's leftover header row removed and its Share action moved into the spine header
+# 0bd8c64 — Strategy page's leftover header row removed and its Share action moved into the spine header
 
 Moving the Strategy doc onto the spine ([strategy-on-spine]) left it with two headers: the spine's own,
 naming the page, and `StrategyScreen`'s own row from its overlay days — a back arrow, the word

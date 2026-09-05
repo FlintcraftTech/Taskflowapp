@@ -1,4 +1,4 @@
-# [HASH] — TOOLS.md records that moving the build output out of Google Drive did not fix the Gradle failure
+# 0bd8c64 — TOOLS.md records that moving the build output out of Google Drive did not fix the Gradle failure
 
 One dated line, and the negative result is the useful half.
 

@@ -49,7 +49,7 @@ are genuinely theirs.
 - Also established and filed: a domain transfers at any time rather than at its renewal date,
   blocked only by ICANN's 60-day locks, and a transfer adds a year to the expiry rather than
   forfeiting paid-up time.
-- Direction of travel: **Google Workspace at $84/year** for `hello@flintcraft.tech`, half GoDaddy's
+- Direction of travel: **Google Workspace at $84/year** for a public address on the domain, half GoDaddy's
   price and about seven times a bare mailbox. The deciding argument was behavioural rather than
   technical, and it came out of the user's own evidence — an existing address on the domain has gone
   unread, so a mailbox they do not already live in is a liability whatever it costs. Workspace is
@@ -64,9 +64,9 @@ are genuinely theirs.
   is flintcraft.tech's work, not Taskflow's. Taskflow's item needs only an address that exists and
   receives, which is why the transfer went out as a message to that project rather than growing into
   this item.
-- 2026-09-04 22:11 — Google Workspace bought and set up, driven step by step. `alex@flintcraft.tech`
-  as the first account, deliberately: that username becomes the super-admin, and the public
-  bug-report address should not also be the administrator login. `hello@` is to be added afterwards
+- 2026-09-04 22:11 — Google Workspace bought and set up, driven step by step. A personal address on
+  the domain as the first account, deliberately: that username becomes the super-admin, and the public
+  bug-report address should not also be the administrator login. The public alias is added afterwards
   as an alias, which costs nothing in Workspace and can be sent from, so the whole thing stays at
   one seat.
 - A live DNS lookup corrected what both parties had been assuming for an hour, and it is the finding

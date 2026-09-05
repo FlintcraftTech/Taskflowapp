@@ -1,4 +1,4 @@
-# [HASH] — Deleted the stale app/build folder the output move left behind
+# 0bd8c64 — Deleted the stale app/build folder the output move left behind
 
 `app/build` had been sitting in the project since 2026-09-01, holding 53 MB that Google Drive kept
 syncing for nothing. It was left there by [project-out-of-drive], which pointed Gradle's output at

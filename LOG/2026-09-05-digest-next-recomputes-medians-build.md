@@ -1,4 +1,4 @@
-# [HASH] — Method defect reported: the queue digest's --next recomputes medians the ladder requires fixed
+# 0bd8c64 — Method defect reported: the queue digest's --next recomputes medians the ladder requires fixed
 
 A report to the No code method project, sent after Alex approved the exact text.
 
