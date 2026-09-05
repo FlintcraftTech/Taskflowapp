@@ -28,15 +28,14 @@ import com.example.taskflow.ui.edit.EditTarget
 import com.example.taskflow.ui.edit.EditTaskScreen
 import com.example.taskflow.ui.schedule.ScheduleScreen
 import com.example.taskflow.ui.settings.SettingsScreen
-import com.example.taskflow.ui.strategy.StrategyScreen
 import kotlinx.coroutines.launch
 
 /**
  * Top-level navigation host. Wraps the app in a left-edge drawer (SPEC §Side menu) over the
  * navigation spine. The spine — the four Schedule slots (Today · Tomorrow · Soon · Later) — is the
  * home surface; Projects live inside Later (grouped cards), so there is no separate Project surface.
- * The remaining "deep" destinations (Strategy, the app actions) are shown as a placeholder overlay
- * in this batch. The drawer scrolls the spine for slot taps and opens overlays for the rest.
+ * The remaining "deep" destinations — the app actions — are shown as a placeholder overlay. The
+ * drawer scrolls the spine for every page's row and opens an overlay only for the rest.
  */
 @Composable
 fun AppRoot(modifier: Modifier = Modifier) {
@@ -76,10 +75,23 @@ fun AppRoot(modifier: Modifier = Modifier) {
     // focused belongs to the focused Project.
     var focusedProjectId by remember { mutableStateOf<Long?>(null) }
 
-    // System back closes the edit dialogue first, then an open overlay. (When the drawer is open it
-    // owns back itself, so this only fires on the spine-with-overlay-or-edit state.)
-    BackHandler(enabled = editTarget != null || overlay != null) {
-        if (editTarget != null) editTarget = null else overlay = null
+    // System back means "up one level", and the levels are checked in the order they sit on screen:
+    // the edit dialogue first, then an open overlay, then the spine itself — where back returns to
+    // Today and only closes the app from Today (SPEC §Schedule view). Left unhandled on the spine,
+    // an edge back-swipe on any page closed the app outright, which nobody chose.
+    //
+    // Written as a list of cases rather than an if/else pair so a further layer above the spine —
+    // the day-detail card — can be added as another case rather than by restructuring this.
+    val offTodayOnSpine = editTarget == null && overlay == null &&
+        pagerState.currentPage != SpinePage.TODAY.ordinal
+    BackHandler(enabled = editTarget != null || overlay != null || offTodayOnSpine) {
+        when {
+            editTarget != null -> editTarget = null
+            overlay != null -> overlay = null
+            // Animated rather than jumped, so back reads as travel along the spine and the user can
+            // see which direction they came from.
+            else -> scope.launch { pagerState.animateScrollToPage(SpinePage.TODAY.ordinal) }
+        }
     }
 
     ModalNavigationDrawer(
@@ -101,12 +113,8 @@ fun AppRoot(modifier: Modifier = Modifier) {
                         pagerState.scrollToPage(page.ordinal)
                     }
                 },
-                onStrategy = {
-                    overlay = Overlay.Strategy
-                    scope.launch { drawerState.close() }
-                },
                 onAppAction = { action ->
-                    // "Turn on AI for the full experience" re-triggers the AI choice rather than
+                    // "Turn on AI" re-triggers the AI choice rather than
                     // opening a screen of its own (SPEC §Tier model — free and paid).
                     if (action is Overlay.TurnOnAi) {
                         onboarding.reopenAiChoice()
@@ -125,9 +133,11 @@ fun AppRoot(modifier: Modifier = Modifier) {
                 // surfaces whose context a new task inherits — and is hidden over the placeholder
                 // overlays and the edit dialogue itself. On Later the new task is created undated and
                 // defaults to the Unassigned card.
-                val showFab = editTarget == null && overlay == null
-                if (showFab) {
-                    val slot = SpinePage.entries[pagerState.currentPage].slot
+                // A page with no Schedule slot — Yesterday — is not one of the four add surfaces
+                // SPEC §Add a new task names, so the button is absent there rather than disabled.
+                val slot = SpinePage.entries[pagerState.currentPage].slot
+                val showFab = editTarget == null && overlay == null && slot != null
+                if (showFab && slot != null) {
                     // Capture inherits context (UX principle 5), and while focused the focused
                     // Project is the context the user is capturing in.
                     FloatingActionButton(
@@ -161,11 +171,6 @@ fun AppRoot(modifier: Modifier = Modifier) {
                     modifier = contentModifier,
                     focusedProjectId = focusedProjectId,
                     onFocusProject = { focusedProjectId = it },
-                )
-            } else if (currentOverlay is Overlay.Strategy) {
-                StrategyScreen(
-                    onBack = { overlay = null },
-                    modifier = contentModifier,
                 )
             } else if (currentOverlay is Overlay.Settings) {
                 SettingsScreen(

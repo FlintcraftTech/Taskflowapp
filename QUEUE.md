@@ -10,791 +10,6 @@
 > item carrying a `Red flag · State: cleared/uncleared` marker. The line below marks
 > how far down is cleared to build; anything below it is decided but not ready yet.
 
-#### Move Gradle's build output to a short path outside Drive [project-out-of-drive]
-
-Points Gradle's build directory at `C:\builds\taskflow` instead of `app\build` inside the project. The
-project itself does not move. This is aimed at the recurring "Unable to delete directory …\app\build\…"
-failure that has now hit twice.
-
-**The slug predates the decision.** It was filed as "Google Drive is the likely cause of the recurring
-build lock", proposing the project be moved out of Drive. That is not what this item does. The slug is
-kept because [install-current-build-on-device] and [verify-run-2026-08-31] already cite it, and a slug
-is stable through a rename.
-
-**Why the original hypothesis was demoted, 2026-09-03.** You said this never happens in your other
-Android Studio projects, which Drive alone does not explain. Measuring the paths found something that
-does: **sixteen files under `app/build` exceed Windows' 260-character path limit**, the longest at 279.
-The project's folder path is 99 characters before the project name begins. "Unable to delete directory"
-is what a deletion looks like when it walks a tree and meets files it cannot address, so path length now
-leads and Drive is a co-suspect rather than the explanation.
-
-**Stated as an open question rather than settled:** `LongPathsEnabled` is `1` on this machine, which
-should lift that limit. Whether Gradle's Java processes actually honour it was not established and is
-not guessed at here. Neither cause is proven, and this item does not need to prove one — the fix
-addresses both. The longest path drops from 279 characters to roughly 190, and the folder Gradle
-rewrites constantly leaves Drive's sync entirely, taking about 59 MB of repeated uploads with it.
-
-Files:
-- `app/build.gradle.kts` — set the module's build directory from an optional `buildDir` entry read out
-  of `local.properties`, via `layout.buildDirectory`. Where the entry is absent, behaviour is exactly
-  as it is today, so a clone on any other machine builds normally.
-- `local.properties` — add `buildDir=C:\\builds\\taskflow\\app`. This file is already git-ignored and
-  already carries the SDK path, so the machine-specific value stays out of the repository.
-
-Reads but does not change: `gradle/libs.versions.toml` and `settings.gradle.kts`, to confirm the Gradle
-version supports `layout.buildDirectory` and that no setting there fixes the build path.
-
-Observation: after a build, `C:\builds\taskflow\app` holds the compiled output, `app\build` is gone or
-empty, no path under the new location exceeds 260 characters, and the build completes without the
-delete failure. The check reaches both files named above.
-
-**Who can observe it.** Claude makes the change and can inspect the filesystem afterwards, but cannot
-compile — see [tools-md-device-capability]. The build is one press of Run in Android Studio, which is
-yours, and the same press produces the APK [install-current-build-on-device] needs — that item was
-moved to the end of the cleared region at the 2026-09-04 close, so one press covers this change and
-every other build in the run.
-
-**If it goes wrong, it is one line to undo.** Deleting the `buildDir` entry from `local.properties`
-restores today's behaviour with no other change. The risk of putting it first is that a broken build
-also blocks the install item behind it; that is visible immediately and reversible in seconds, which is
-why it was accepted rather than sequenced around.
-
-Refused: moving the whole project out of Drive — your call on 2026-09-03. Every one of your projects
-lives under the same parent folder, so moving this one alone would put it somewhere different from all
-the others, a cost paid every time you go looking for it, for a benefit this change already delivers.
-Refused: excluding `app/build` from Drive's sync — Drive for desktop's folder selection decides what
-exists on the machine, not what is uploaded, so excluding the folder Gradle must write is incoherent
-rather than merely unsupported. Refused: hardcoding the path into `app/build.gradle.kts` — it is a
-committed file in a public repository, and a machine-specific absolute path there breaks every other
-checkout.
-
-Rests on, each read 2026-09-03: that sixteen files under `app/build` exceed 260 characters with the
-longest at 279; that the project root path is 99 characters; that `LongPathsEnabled` is `1` on this
-machine; that the wrapper is on **Gradle 9.4.1**, where `layout.buildDirectory` is the live API and the
-old `buildDir` property is gone, so the modern form is required rather than preferred; and that
-`.gitignore` excludes `local.properties` on two lines, with the file untracked. Not established,
-deliberately: whether Gradle's JVM honours the long-path setting.
-
-#### Stop wiping the device on every schema change [durable-local-data]
-
-Taskflow currently destroys every task on the device whenever its database shape changes. This item
-puts a floor under that: version 5 becomes the oldest schema whose data must survive, and every change
-after it has to carry a real migration.
-
-captured by you, 2026-09-01, at the moment an install prompt warned it would delete the app's data.
-Your point: the goal is a state where your tasks live in Taskflow stably enough that you can start
-actually using it, and that is a requirement rather than a nice-to-have. The justification written
-into the code — that a wipe is "acceptable while there are no real users" — is retired by you becoming
-one, so the decision needed remaking rather than merely honouring.
-
-Read in the code on 2026-09-03, and all of it checks out. `TaskflowDatabase` is at `version = 5` with
-`exportSchema = false`, built with `fallbackToDestructiveMigration(dropAllTables = true)`, and there is
-no `app/schemas` folder. The last fact is the one that bites: Room writes and tests migrations against
-a *recorded* schema, so today no migration could be written even if someone wanted one. The version
-comments record four bumps — v2 non-null project IDs, v3 recurrence, v4 completion timestamps, v5 life
-areas — three of which landed in the single run that closed on 2026-09-02, each emptying the device.
-
-**Scope, settled with you on 2026-09-03: surviving app upgrades.** Surviving a reinstall or a lost
-phone is a different mechanism and is left where it already sits — Android Auto Backup, on by default
-per SPEC §JSON export and import, and the JSON export shipped in the same run. Neither has been tested,
-which is part of [verify-run-2026-08-31]. The full answer to a lost phone is cloud sync, which is paid
-tier and now waits on [supabase-project-setup].
-
-Nothing needs migrating today, because v5 is current. The work is building the floor, so that the next
-schema change cannot quietly fall back to a wipe.
-
-Files:
-- `app/build.gradle.kts` — pass Room's schema-location argument to ksp so schemas are exported to
-  `app/schemas`, and point the androidTest source set's assets at that folder so `MigrationTestHelper`
-  can read them.
-- `app/src/main/java/com/example/taskflow/data/local/TaskflowDatabase.kt` — set `exportSchema = true`,
-  and replace the blanket `fallbackToDestructiveMigration(dropAllTables = true)` with
-  `fallbackToDestructiveMigrationFrom(dropAllTables = true, 1, 2, 3, 4)`, which is Room 2.7's overload
-  (2.7.1 is the version in `gradle/libs.versions.toml`, and the existing call already uses the 2.7
-  signature). A v5 database is then no longer allowed to be thrown away. Rewrite the comment beside it
-  so it states the new rule rather than the retired justification.
-- new `app/schemas/com.example.taskflow.data.local.TaskflowDatabase/5.json` — generated by the build,
-  and committed, because it is what every later migration is written against.
-- new `app/src/androidTest/java/com/example/taskflow/data/local/MigrationTest.kt` — a
-  `MigrationTestHelper` test that creates a version 5 database, writes a task into it, closes and
-  reopens it, and asserts the task is still there. It proves the recorded schema is usable and gives
-  the next schema change somewhere to add its migration case.
-
-Reads but does not change: `gradle/libs.versions.toml`, for the Room version.
-
-Observation: after a build, `app/schemas/com.example.taskflow.data.local.TaskflowDatabase/5.json`
-exists; a grep for `fallbackToDestructiveMigration(` finds no remaining bare call; and the migration
-test passes. The check reaches the four files named above.
-
-**Who can observe it, stated plainly.** Claude cannot run Gradle on this machine — the failure is
-recorded in TOOLS.md and was what stopped the 2026-09-02 run compiling anything — so the schema file
-is produced, and the test run, by a build in Android Studio, which is yours. The code and config
-changes are Claude's. [project-out-of-drive] is the capture about the underlying build problem.
-
-Refused: writing migrations for versions 1 to 4. No data exists at those versions that anyone wants,
-and the effort would buy nothing — hence a floor at 5 rather than at 1.
-
-Rests on, each read 2026-09-03: that the database is at version 5 with `exportSchema = false` and a
-blanket destructive fallback; that no `app/schemas` folder exists; that Room 2.7.1 is in use; and that
-Auto Backup is on by default per SPEC.
-
-#### Taskflow follows the phone's light/dark setting [compose-dark-theme]
-
-Taskflow has no colour scheme of its own, so it renders light on every phone whatever the phone is set
-to. This item gives it a light and a dark palette and makes it follow the system setting.
-
-Found on 2026-09-02 while driving [verify-blank-new-task-form] on the device, when the onboarding
-screens rendered dark-on-dark. That instance was fixed in the same run by wrapping the screen in a
-Surface; the condition underneath was left alone. Confirmed against your own device on 2026-09-03,
-captured by you: your phone is in dark mode and the app is always white.
-
-The mechanism, read in the code on 2026-09-03. `MainActivity` calls `MaterialTheme { AppRoot() }` with
-no colour scheme argument, so Compose falls back to its built-in **light** palette regardless of the
-phone. The Android window underneath does follow the system — `res/values/themes.xml` uses
-`android:Theme.Material.Light.NoActionBar` and `res/values-night/themes.xml` overrides it to the dark
-parent — so on a dark phone the window is dark while everything Compose paints on it is light. Where a
-screen paints its own background the result is a light screen in a dark frame; where a screen paints
-none, the light palette's near-black text lands on the dark window and is unreadable, which is what the
-onboarding screens did.
-
-Why this is cheap, and it is the fact the decision turned on: a grep on 2026-09-03 found **zero**
-hardcoded colours across the app's 40 Kotlin files — no `Color(0x…)`, no `Color.White`, `Color.Black`
-or the greys. Every colour already resolves through `MaterialTheme.colorScheme`, so defining the
-schemes is the whole job and no screen needs touching.
-
-Whether Taskflow has a dark theme at all was a product question rather than a defect call, and it was
-settled by you on 2026-09-03: follow the system. The reason given in that discussion — a phone in dark
-mode at 1 AM is exactly the person SPEC §Settings → Day begins at exists for, and a task app that
-answers them with a full white screen fails them. SPEC gains §Light and dark in the same planning
-session.
-
-Files:
-- new `app/src/main/java/com/example/taskflow/ui/theme/Theme.kt` — a `TaskflowTheme` composable
-  holding a `lightColorScheme()` and a `darkColorScheme()`, choosing between them with
-  `isSystemInDarkTheme()`, and wrapping its content in `MaterialTheme` with the chosen scheme. Palette
-  values may sit in a sibling `Color.kt` if they run long enough to be worth splitting out.
-- `app/src/main/java/com/example/taskflow/MainActivity.kt` — `MaterialTheme { AppRoot() }` becomes
-  `TaskflowTheme { AppRoot() }`.
-
-Reads but does not change: `app/src/main/res/values/themes.xml` and
-`app/src/main/res/values-night/themes.xml`. The window themes already follow the system and stay as
-they are; this is what makes the content agree with them rather than the other way round.
-
-Observation: on a device with the phone in dark mode, every screen renders dark with readable text,
-onboarding included — it paints no background of its own, so it is the screen that fails first. Switch
-the phone to light mode and every screen renders light. The check reaches both files named above.
-
-Refused: light only, deleting `values-night` — the cheapest fix and it would end the disagreement, but
-it hands a full white screen to the 1 AM user the app is designed around. Refused: an in-app
-appearance setting — the phone already holds that preference, so it would be a Settings row to build
-and maintain for a choice Android has already made.
-
-Rests on, each read 2026-09-03: that `MaterialTheme` with no `colorScheme` argument uses Compose's
-light palette; that no hardcoded colours exist anywhere under `app/src/main`; and that the two window
-theme files are light and night as described.
-
-#### Narrow TOOLS.md's claim that Claude cannot test this app [tools-md-device-capability]
-
-TOOLS.md's closing line reads "Claude cannot compile, test or install this app." Only the first of those
-three is true, and the sentence has been read as all three. This item replaces it with two accurate
-lines.
-
-Found on 2026-09-03 while processing [verify-run-2026-08-31]. The capability check that item's decision
-step required turned up what nobody had tried: `adb` is present, a phone was connected, and Taskflow was
-installed on it. The blanket sentence is why nobody had tried — nineteen items shipped on 2026-09-02
-with UNCONFIRMED ticks against them and the device sat untouched for two days, because the environment
-file said device work was impossible. Not a wrong fact; a true fact (Gradle is broken from Claude's
-shell) stated far wider than it holds.
-
-Files:
-- `TOOLS.md` — replace the final bullet, the one beginning "Consequence: Claude cannot compile, test or
-  install this app", with three bullets:
-  1. Claude cannot **compile** this app. Producing a build is Android Studio's job and the user's, so
-    code items tick UNCONFIRMED until a build has run, naming the build as the check nobody has done.
-    (Keep the existing date, 2026-08-31, on this one — the fact is unchanged, only its scope.)
-  2. Claude **can** drive the app on a connected device. `adb.exe` is at
-    `C:\Users\Alex\AppData\Local\Android\Sdk\platform-tools\` — not on PATH, which is why it reads as
-    absent to `which adb`. On 2026-09-03 a phone answered `adb devices` over wireless debugging with
-    `com.example.taskflow` installed. Device verification is therefore Claude's work rather than the
-    user's. (2026-09-03)
-  3. The app's database sits almost entirely in a write-ahead log — the main file is one page while the
-    WAL holds the rest — so its schema version cannot be read from the file header on the device. Doing
-    it properly means copying the database off the phone, which carries the user's real task content.
-    (2026-09-03)
-
-Observation: a grep of `TOOLS.md` for "cannot compile, test or install" returns nothing, and the file
-names the `platform-tools` path. The check reaches the one file named above.
-
-Refused: deleting the old line outright. The Gradle limit is real and load-bearing — it is why builds
-are the user's — so the correction narrows the claim rather than removing it.
-
-Rests on, each read 2026-09-03: that `adb.exe` sits in that SDK path; that a device answered
-`adb devices`; that `com.example.taskflow` was installed on it; and that the on-device database file
-carries a 4 KB main file against a much larger `-wal`.
-
-#### Back gesture closes Taskflow from the spine, unhandled [left-edge-swipe-collision]
-
-**Rescoped on 2026-09-03, on your reasoning.** This was filed as a three-way collision over the left
-edge and read as something that had to be settled before the pages left of Today could be built. It is
-not. Swiping between pages is one mechanism, not two: adding Yesterday and Search to the page list
-makes right-swipes work exactly as left-swipes already do, and there is no new gesture to build. And
-Android's back gesture lives on **both** edges, so the outermost-strip contest has been present all
-along in the direction that works fine. A collision the app already lives with, in the direction you
-use daily, is not a gate on the direction that does not exist yet. The slug is kept because
-[nav-completed-history] cites it.
-
-**What is actually left, and it is real but small.** Read in the code on 2026-09-03: Taskflow is a
-single activity, and `AppRoot.kt` enables its `BackHandler` only while an edit dialogue or a menu
-overlay is open. On the bare spine, back is unhandled — so an edge back-swipe on Today, Tomorrow, Soon
-or Later closes the app. Nobody chose that; it is what falls out of never having decided.
-
-**Settled by you on 2026-09-03: back returns to Today, and closes the app only from Today.** That is
-the standard Android pattern for an app whose top level is a row of pages. SPEC §Schedule view gained
-the sentence in the same planning session.
-
-Files:
-- `app/src/main/java/com/example/taskflow/ui/navigation/AppRoot.kt` — the existing `BackHandler`, today
-  enabled only when `editTarget != null || overlay != null`, also becomes enabled when neither is open
-  and the pager is off Today; in that case it animates the pager to `SpinePage.TODAY`. On Today with
-  nothing open it stays disabled, so the system closes the app as it does now. The dialogue and overlay
-  branches are untouched.
-
-Reads but does not change: `ui/navigation/Destination.kt`, for `SpinePage` and its ordering.
-
-**One future case is named here so it is not missed.** [nav-day-card-layer] adds a day-detail card that
-opens in front of the spine, and back closes that card rather than returning to Today — settled with
-you on 2026-09-03, the same "up one level" meaning the dialogue and overlay branches already carry.
-That item does the wiring when it builds; this item only has to leave the handler's structure able to
-take a third case, rather than hard-coding two.
-
-Observation: on a device, back from Later, Soon or Tomorrow lands on Today; back again closes the app;
-back with an edit dialogue open still closes the dialogue and back with a menu overlay open still
-closes the overlay. The check reaches the one file named above.
-
-Refused: back stepping one page left. It reads well until someone swipes right three times, at which
-point back walks them through pages they never visited. Refused: leaving it as it is — the app closing
-from a mid-spine page is a surprise nobody chose.
-
-Not owed an edit after all: SPEC §Side menu explains the disabled drawer swipe by naming the collision
-with the spine's own swiping, which is still accurate. The original capture expected that sentence to
-need rewriting, on the larger reading of this item that was withdrawn.
-
-Rests on, each read 2026-09-03: that `AppRoot.kt` holds the pager state and gates its `BackHandler` on
-`editTarget` and `overlay`; that `SpinePage` has four entries with `TODAY` first; and that Android caps
-system-gesture exclusions at 200dp per edge, which is why no exclusion is attempted here.
-
-Not established: whether the phone in use is on gesture navigation or three-button navigation. The
-device dropped off wireless debugging mid-check on 2026-09-03. On three-button navigation there is no
-edge-back at all and none of this is reachable, which would explain the original report that nothing
-happened.
-
-Also refused, 2026-09-03: claiming a gesture-exclusion zone for the left edge. Android caps exclusions
-at **200dp per edge** — roughly four touch targets on a screen many times taller — so the app can only
-ever take a band, leaving paging to work in part of the edge and back in the rest. Worse than either
-clean answer, and it was ruled out on that.
-
-The original capture is kept below, since it is the reasoning that produced this one.
-
----
-
-captured by you, 2026-09-02, while being asked to swipe right from the left edge and expect nothing
-to happen. Your objection: that gesture contradicts the environment — everywhere else a swipe right
-means the screen to the left comes in.
-
-The objection lands, and it exposes a collision nobody has named. Three things want the left edge:
-
-- **Android's system back gesture**, which is an inward swipe from the left edge and belongs to the
-  OS rather than to Taskflow.
-- **The spine's own navigation**, which SPEC §Schedule view now runs as Search · Yesterday · Today ·
-  Tomorrow · Soon · Later · Strategy — so a swipe right on Today is supposed to bring Yesterday in
-  from the left, exactly as you expect.
-- **The drawer's swipe-to-open**, which SPEC §Side menu already disables for precisely this reason,
-  naming the collision with the spine but not the one with system back.
-
-Today the conflict is invisible because Today is the leftmost page built, so a swipe right has
-nowhere to go and does nothing. It becomes real the moment [nav-completed-history] builds Yesterday
-and Search: from then on the user's edge swipe is contested between paging left and going back, and
-which one wins is decided by the OS's gesture-exclusion behaviour rather than by anything Taskflow
-has chosen.
-
-What this needs is a decision before that work is built, not after: whether the spine's leftward
-navigation is reachable from the edge at all, or only from further in, and whether Taskflow claims
-any gesture-exclusion zone. SPEC §Side menu currently explains the disabled drawer swipe by naming
-only the spine, so whichever way this goes, that sentence is owed an update.
-
-Also noted from the same moment: this made the walkthrough step in [verify-drawer-swipe-off-on-device]
-weaker than it reads. "Swipe from the left edge and the menu does not open" is satisfied by the
-drawer being off *and* by Today simply having nowhere to go, so it does not isolate what it means to
-test. Its look-for was sharpened while driving it.
-
-#### Yesterday page, and the spine plumbing that lets it exist [nav-yesterday-page]
-
-Adds **Yesterday** to the row of pages, immediately left of Today, showing what the user completed
-yesterday. It also carries the shared plumbing the whole left half needs, which is why it goes first.
-
-Split out of [nav-completed-history] on 2026-09-03 with your agreement, after that item's own blocker
-([nav-left-spine-spec-edit]) shipped and SPEC gained §Yesterday page as decided product truth. It is
-first of the four because it is the simplest real page and because the enum change below is a
-precondition for the other three.
-
-Foundations confirmed in the code on 2026-09-03: `Task` carries `completedAt: Long?` alongside
-`is_completed`, and `TaskDao.getCompletedTasks(): Flow<List<Task>>` already exists. Nothing new is
-needed in the data layer.
-
-Files:
-- `app/src/main/java/com/example/taskflow/ui/navigation/Destination.kt` — `SpinePage` currently pairs
-  each entry with a non-null `ScheduleSlot`. Yesterday has no slot, so `slot` becomes `ScheduleSlot?`
-  and a `YESTERDAY` entry is added **before** `TODAY`. This is the shared change the other three
-  left-half items build on.
-- `app/src/main/java/com/example/taskflow/ui/schedule/ScheduleScreen.kt` — the pager's page content
-  branches on a null `slot`, rendering the Yesterday screen instead of a slot list.
-- `app/src/main/java/com/example/taskflow/ui/navigation/AppRoot.kt` — confirm the pager still opens on
-  Today. `initialPage = SpinePage.TODAY.ordinal` already reads the ordinal, so it follows the enum, but
-  it is named here because a wrong opening page is the most likely regression.
-- new `app/src/main/java/com/example/taskflow/ui/history/YesterdayScreen.kt` and its ViewModel — the
-  list of tasks whose `completedAt` falls inside yesterday, newest first. Yesterday's bounds are
-  computed from the day-begins-at setting, not from midnight, per SPEC §Settings → Day begins at.
-- `app/src/main/java/com/example/taskflow/ui/navigation/AppDrawer.kt` — a **Yesterday** row in the
-  menu's navigation list, directly above Today. Folded in from [side-menu-spine-mismatch] on
-  2026-09-03, which was deleted at that point: SPEC §Side menu now says the menu mirrors the whole
-  spine, and a row navigating to a page that does not exist yet is the only thing a separate item could
-  have delivered, so each page's row ships with that page.
-
-Reads but does not change: `app/src/main/java/com/example/taskflow/data/local/TaskDao.kt`, for the
-existing completed-tasks flow; and `app/src/main/java/com/example/taskflow/data/settings/` for
-day-begins-at.
-
-Observation: on a device, swiping right from Today opens a page headed Yesterday listing what was
-completed yesterday; a task completed today does not appear on it; swiping left returns to Today; and
-the app still opens on Today after a relaunch. The check reaches the four files named above.
-
-Refused: giving Yesterday its own `ScheduleSlot`. It is a history view, not a place tasks can be put,
-and a slot would make it a capture target — which SPEC §Add a new task rules out by naming the four
-add surfaces.
-
-Rests on, each read 2026-09-03: that `SpinePage` has four entries carrying a non-null `ScheduleSlot`;
-that `Task.completedAt` exists; and that `TaskDao.getCompletedTasks()` returns a flow of completed
-tasks.
-
-#### Search and completed-history page, the new leftmost page [nav-search-completed-history]
-
-Adds the **Search** page at the far left of the row: a search field above a dated list of completed
-tasks, newest first, with a date header between each day's results.
-
-Split out of [nav-completed-history] on 2026-09-03. **Build it after [nav-yesterday-page]** — both edit
-the same two files, and that item makes `SpinePage.slot` nullable, which this one depends on. An
-ordering preference written here rather than a blocker, so the item stays visible.
-
-Files:
-- `app/src/main/java/com/example/taskflow/ui/navigation/Destination.kt` — a `SEARCH` entry added before
-  `YESTERDAY`, with a null slot.
-- `app/src/main/java/com/example/taskflow/ui/schedule/ScheduleScreen.kt` — the null-slot branch routes
-  to the search screen for this page.
-- new `app/src/main/java/com/example/taskflow/ui/history/SearchScreen.kt` and its ViewModel — the search
-  field, and beneath it completed tasks in completion order with per-day headers. Typing narrows the
-  list; the date headers for days still holding results stay above them.
-- `app/src/main/java/com/example/taskflow/data/local/TaskDao.kt` — a query matching a search term
-  against task titles across active and completed tasks, and against Project names. The Strategy doc is
-  excluded, per SPEC §Search and completed history.
-- `app/src/main/java/com/example/taskflow/ui/navigation/AppDrawer.kt` — a **Search** row at the top of
-  the menu's navigation list, above Yesterday. Folded in from [side-menu-spine-mismatch] on 2026-09-03,
-  which was deleted at that point. SPEC §Side menu now says the menu mirrors the whole spine, and names
-  Search as the row that earns its place most: it is the page the user reaches for when they have lost
-  something, which is exactly when swiping around hunting for it is the wrong answer.
-
-Observation: on a device, swiping right from Yesterday opens the Search page; it lists completed tasks
-newest first under date headers; typing part of a task's title narrows the list and leaves the headers
-above the days that still match; typing a Project's name matches that Project; a result cannot be
-completed or edited from the list, and tapping one navigates to where the task lives. The check reaches
-the four files named above.
-
-Refused: scoping search to the current page or Project — SPEC settles this, on the reasoning that a
-task someone is searching for is one they have lost, so the app's own organising principles are exactly
-what they cannot use at that moment.
-
-Rests on, read 2026-09-03: that `TaskDao` holds no title-search query today; and SPEC §Search and
-completed history for the scope and the read-only rule.
-
-#### Strategy becomes the spine's rightmost page, not a drawer overlay [strategy-on-spine]
-
-Moves the Strategy doc from a "deep destination" overlay shown over the spine to being the spine's
-rightmost page, reached by swiping right from Later. Its menu row stays, scrolling the pager to it the
-way the four slot rows already do.
-
-**No SPEC edit: SPEC already says this, and has twice.** Found on 2026-09-04 while looking at the
-navigation code, and settled by reading the record rather than by re-deciding it — you asked for that
-retrieve, and it changed the answer:
-
-- `LOG/nav-spine-spec-edit.md` (June) records the spine as Today · Tomorrow · Soon · Later · Projects ·
-  Strategy, "with Strategy the page to its right", and says §Strategy doc's row sentence was rewritten
-  "keeping the reachable-but-never-foregrounded intent" — which is about where the menu row sits and
-  Today remaining the default page, not about excluding Strategy from the spine.
-- `LOG/later-by-project-spec-edit.md` (2026-06-22) restates it after the Projects page was folded into
-  Later: the right end of the spine becomes "one 'zoom by time' flow — Today, Tomorrow, Soon, Later,
-  Strategy".
-- SPEC §Schedule view and UX principle 3 both carry it today: the spine "extends rightward into
-  Strategy".
-
-**Why the code differs, and why that reason has expired.**
-`LOG/0003-side-menu-schedule-projects-app-actions.md` records the divergence as a deliberate build
-choice: "'deep' destinations — a Project, Strategy, the app actions — are shown as a single placeholder
-overlay over the spine", chosen over Jetpack Navigation because "every deep destination is a
-placeholder in this batch, so a navigation-library dependency and its boilerplate buy nothing now —
-the overlay can be swapped for NavHost later if destinations multiply". Strategy's real screen then
-shipped in [0015-strategy-doc-and-life-area-context] and the routing was left alone. So the overlay
-was right when every deep destination was a placeholder, and Strategy stopped being one.
-
-**Corrected in the same session:** this was first described as SPEC being ambiguous about whether
-Strategy is swipeable or menu-only. It is not ambiguous. That reading is recorded here so it is not
-reached for again.
-
-Files:
-- `app/src/main/java/com/example/taskflow/ui/navigation/Destination.kt` — a `STRATEGY` entry added to
-  `SpinePage` after `LATER`, with a null slot, and `Overlay.Strategy` removed.
-- `app/src/main/java/com/example/taskflow/ui/schedule/ScheduleScreen.kt` — the null-slot branch renders
-  `StrategyScreen` for that page.
-- `app/src/main/java/com/example/taskflow/ui/navigation/AppRoot.kt` — the `Overlay.Strategy` branch that
-  renders `StrategyScreen` over the spine is removed, and the drawer's Strategy tap scrolls the pager
-  to that page instead of setting an overlay, matching what the slot rows already do.
-- `app/src/main/java/com/example/taskflow/ui/navigation/AppDrawer.kt` — the Strategy row's callback
-  moves from the app-action/overlay path to the page-navigation path. Its position in the list is
-  unchanged.
-
-**Build it after [nav-yesterday-page]**, which makes `SpinePage.slot` nullable — this item needs that
-change and does not repeat it. An ordering preference written here rather than a blocker, so the item
-stays visible. Nothing else depends on this one.
-
-Reads but does not change: `app/src/main/java/com/example/taskflow/ui/strategy/StrategyScreen.kt`,
-which is the real screen already and is rendered from a different place rather than altered.
-
-Observation: on a device, swiping right from Later opens the Strategy doc as a page with the spine
-header naming it; the drawer's Strategy row jumps to that page rather than opening something over the
-spine; the back gesture from Strategy returns to Today, per SPEC §Schedule view's back rule; and the
-Strategy doc's editor and share button still work. The check reaches the four files named above.
-
-Refused: keeping the overlay and editing SPEC to match it. SPEC's account is the older and twice-stated
-one, and UX principle 3 rests on it — the spine's whole story is that navigation glides from arranging
-time into arranging areas of life, which needs Strategy to be somewhere you can swipe to. Refused:
-introducing Jetpack Navigation Compose to do it. 0003 weighed and rejected that, and putting Strategy on
-the pager removes a deep destination rather than adding one, so its reasoning holds even more now.
-
-Rests on, each read 2026-09-04: that `SpinePage` holds four entries, Today through Later; that
-`Overlay.Strategy` exists in `Destination.kt` and is rendered by `AppRoot.kt`; that `StrategyScreen` is
-the real screen rather than a placeholder; and the three LOG entries cited above.
-
-#### Take the Notes field out of the edit dialogue [notes-out-of-edit-dialogue]
-
-Removes the free-text Notes box from the task edit dialogue, leaving the outliner, Project, date and
-repeat. The database column stays where it is.
-
-captured by you, 2026-09-02, looking at the dialogue on the device: you did not understand why there
-was a Notes field you never asked for. Checked on 2026-09-03 and your not recognising it is evidence
-rather than forgetfulness — the earliest trace in the record is the 0005 build entry listing "title,
-notes, editable Project incl. unassigned, read-only date" as what it built, with no decision recorded
-anywhere about wanting notes. It arrived as part of a minimum-viable editor and was later written into
-SPEC as though it had been chosen.
-
-**Settled by you on 2026-09-03: Notes comes out.** The reason: the app exists to reduce the weight of a
-task list, and a free-text box invites the user to put work into describing work. The counter-argument
-in your capture — that a task sometimes carries a real detail like an address or a phone number — was
-weighed and lost, because a subtask line holds "123 Fake Street" perfectly well and needs no field of
-its own. SPEC §Edit a task and §Move between Schedule and Project were edited in the same planning
-session.
-
-Files:
-- `app/src/main/java/com/example/taskflow/ui/edit/EditTaskScreen.kt` — remove the notes text field from
-  the dialogue's layout.
-- `app/src/main/java/com/example/taskflow/ui/edit/EditTaskViewModel.kt` — remove `notes` from the
-  rendered edit state and from the save path, so the dialogue neither reads nor writes it.
-
-**Two exclusions, each stated apart from the files above because getting either wrong is expensive.**
-`Task.notes` in `data/model/Task.kt` is **not** dropped, and no schema change is made — see the refusal
-below. And `LifeArea.notes` in `data/model/LifeArea.kt` is a **different field**, holding Claude's
-working understanding of an area of life; it is untouched, and a change that catches it has gone wrong.
-
-Reads but does not change: `app/src/main/java/com/example/taskflow/data/model/Task.kt` and
-`app/src/main/java/com/example/taskflow/data/transfer/TaskflowJson.kt`, which keeps writing and reading
-the `notes` key so existing exports stay valid.
-
-Observation: on a device, the edit dialogue shows the outliner, Project, date and repeat and no notes
-box; a JSON export still contains a `notes` key for every task; and a task that already had notes still
-carries them in that export. The check reaches the two files that change.
-
-Refused: dropping the `notes` column. That is a schema change, and [durable-local-data] — cleared to
-run — makes version 5 the floor below which no data may be destroyed, so from that point a removal
-needs a real migration written and tested. Taking the field out of the UI costs nothing, breaks no
-export, and is reversible by putting the field back if you miss it. The column can be dropped later as
-its own item if it is still dead.
-
-Rests on, each read 2026-09-03: that `Task.notes` exists as a column; that `TaskflowJson` both writes
-and reads it; that `EditTaskScreen.kt` renders it; that `LifeArea` carries an unrelated field of the
-same name; and that SPEC's three mentions of task notes were edited out in this planning session.
-
-#### Date strip — week jump, day-over-month tiles, and no clipped tile [date-strip-legibility]
-
-Three changes to the date picker's side-scrolling strip, all in one file: the jump control moves by a
-week as well as a month, each tile shows its day number above the month name, and tiles stop being cut
-off at the screen edge.
-
-captured by you, 2026-09-02, from the strip on the device. Two of the three were your proposals; the
-clipped tile is what the screenshot showed on its own. Settled with you on 2026-09-03.
-
-**1. The jump control gains a week step.** Read in the code on 2026-09-03: `DateStrip.kt` renders a row
-of `‹ month`, the month currently in view, and `month ›`, driven by a `jumpMonths(delta)` function. So
-it is a labelled navigator rather than a bare button, and the label is worth keeping. It becomes
-`‹‹ ‹ Sep 2026 › ››` — single chevrons move a **week**, double chevrons a **month**. Your reasoning,
-and it is the stronger argument: the control's unit should match the view's unit, and the strip shows
-about a week, so a month jump lands the user somewhere they have to re-read. **Refused: swapping month
-for week outright** — your own capture named the problem with it, that crossing to next April by week
-is many presses, so the coarse step is kept rather than dropped.
-
-**2. Tiles show the day number over the month name.** Today they read "24/08 25/08 26/08" in a row,
-which runs together into a continuous line of digits with nothing for the eye to catch on. Each tile
-becomes 24 with Aug beneath it: one large glanceable number, and the month no longer repeated seven
-times in a form that looks like part of the number.
-
-This one reached SPEC and was settled deliberately rather than patched. §Date picker said each tile
-showed its date "in DD/MM format (or MM/DD per the user's setting)", while §Settings → Date format said
-that setting applied "everywhere a date is shown" — and a tile reading 24 above Aug has no day/month
-order left to obey. **The resolution, written into SPEC in this planning session: the date-format
-setting governs dates rendered as numbers, and does not reach the tiles**, because the setting exists to
-disambiguate digits and a month name leaves nothing ambiguous. **Refused: making the strip a silent
-exception to "everywhere"** — the word was doing real work, and quietly breaking it would leave the two
-sections contradicting each other for the next reader.
-
-**3. No tile is clipped.** `TILE_WIDTH` is a fixed value, with a comment recording that it was sized so
-five to seven tiles sit on a typical phone and a 360dp screen fits six. On your device seven nearly fit
-and the seventh renders as "Su" over "30/" with the rest cut off at the edge. Tiles are sized instead so
-a whole number of them fills the width available. A tile showing half a date is worse than one fewer
-tile. No SPEC change — SPEC never named a tile count, and the count was a build decision from 0006.
-
-Files:
-- `app/src/main/java/com/example/taskflow/ui/edit/DateStrip.kt` — the jump row gains a week step
-  alongside the month step; the tile composables render the day number above the short month name
-  instead of DD/MM; and `TILE_WIDTH` is replaced by a width derived from the available space so a whole
-  number of tiles fits.
-
-Reads but does not change: `app/src/main/java/com/example/taskflow/data/settings/SettingsRepository.kt`,
-for the date-format setting the tiles now stop consulting.
-
-Observation: on a device, opening the edit dialogue shows tiles reading a day number above a month name
-with no tile clipped at the right edge; the single chevrons move the strip seven days and the double
-chevrons a month; the month label still names the month in view; and switching the date format between
-DD/MM and MM/DD changes task rows while leaving the tiles unchanged. The check reaches the one file
-named above.
-
-Rests on, each read 2026-09-03: that `DateStrip.kt` holds a month-jump row driven by `jumpMonths`, a
-fixed `TILE_WIDTH` commented as fitting five to seven tiles, and tiles rendering DD/MM; and that SPEC's
-two sentences about tile format and setting reach were edited in this planning session.
-
-#### Shorten the AI row and size the drawer to its contents [drawer-ai-row-copy]
-
-The side menu's bottom row becomes **"Turn on AI"**, and the drawer sheet is sized to its own content
-instead of taking Material3's default width.
-
-captured by you, 2026-09-02, on seeing the drawer on the device: the menu was too fat, and the bottom
-row should read something like "Turn on AI".
-
-**The capture's mechanism was wrong, and the correction is why both halves are in one item.** It read
-as though the long row set the drawer's width. It does not: `AppDrawer.kt` calls
-`ModalDrawerSheet(modifier = modifier)` with no width, so the width comes from Material3's own
-`DrawerDefaults.MaximumDrawerWidth`, which the app never passes and the text cannot influence. You
-confirmed on 2026-09-03 that the drawer was too wide and the row sat on **one** line filling that
-width — so the row was making an already-wide sheet visible rather than causing it. Shortening the copy
-alone would therefore have made it worse: a wide sheet with nothing in it reaching the edge.
-
-**Sized to content rather than to a number.** The sheet's width wraps its longest row plus padding,
-bounded by the Material default as a maximum. That follows the copy instead of hard-coding a figure
-picked out of the air, and it stays correct if the rows change again. **Refused: choosing a fixed dp
-value** — it would be an invented number with no derivation, and it would rot the next time a row is
-reworded.
-
-**The copy change is product truth and SPEC was edited in this planning session**, in §Side menu and
-§Tier model, both of which carried the old string. Your capture's own point is recorded there: the
-phrase was doing two jobs, naming the row and selling the tier, and the screen the row opens is the AI
-choice flow, which exists to make that case properly.
-
-Files:
-- `app/src/main/java/com/example/taskflow/ui/navigation/Destination.kt` — `Overlay.TurnOnAi`'s `label`
-  becomes "Turn on AI".
-- `app/src/main/java/com/example/taskflow/ui/navigation/AppDrawer.kt` — the row's text becomes "Turn on
-  AI", and `ModalDrawerSheet` gains a width that wraps the sheet's content, bounded by the Material
-  default.
-- `app/src/main/java/com/example/taskflow/ui/navigation/AppRoot.kt` — the comment quoting the old string
-  is updated so it still names what it describes.
-
-**One thing to watch:** `Overlay.TurnOnAi.label` is both the drawer row's text and the title of the
-placeholder screen the row opens, so the two move together. That is intended, not a side effect.
-
-Observation: on a device, the drawer's bottom row reads "Turn on AI"; the sheet's right edge sits just
-past its longest row rather than at the Material default width; every row still opens what it opened
-before; and the screen that row opens is titled "Turn on AI". The check reaches the three files named
-above.
-
-Rests on, each read 2026-09-03: that `AppDrawer.kt` passes `ModalDrawerSheet` no width; that
-`DrawerDefaults.MaximumDrawerWidth` is Material3's default and maximum drawer width; that the string
-lives in both `AppDrawer.kt` and `Destination.kt` with a third mention in an `AppRoot.kt` comment; and
-that SPEC's two occurrences were edited in this planning session.
-
-#### Remove the orphaned worktree folder carrying retired instructions [orphan-worktree-cleanup]
-
-Deletes `.claude/worktrees/optimistic-ellis-3ec0fa/`, a dead directory inside this project holding a
-July snapshot of Taskflow's pre-migration layout, an early copy of your Claude instructions as
-`claude.md.md`, and a copy of the no-code-method project. The check that its contents are superseded
-runs first; the deletion follows.
-
-Found at the end of the 2026-09-03 planning session, when you asked whether a `UX.md` still existed —
-a retired doc type. It does not exist as a live doc in this project: the principles are a section
-inside SPEC.md, and CLAUDE.md's migration note records `UX.md → SPEC.md`. But the search turned up a
-real `UX.md` at `.claude/worktrees/optimistic-ellis-3ec0fa/no-code-method/UX.md`, alongside a
-`claude.md.md` instructing a reader to search `UX.md` first, to compare `UX.md` against `MANIFEST.md`,
-and to file things in `BACKLOG.md`. All three doc types are retired.
-
-**What makes it worth removing rather than ignoring.** It is under `.claude/`, which `.gitignore`
-excludes, so none of it is published — that part is fine. The risk is a future session grepping this
-folder for guidance, finding those instructions, and following them. That is the same failure the
-TOOLS.md correction addressed in the same session: stale text nobody deleted, read as current.
-
-**It is inert, established by three reads.** Its `.git` is not a repository but a one-line pointer to
-`C:\Users\Alex\Desktop\Taskflowapp\.git` — a different user profile, at a path that no longer exists,
-so git cannot read the directory at all. `git worktree list` in this repository does not include it.
-And it is 344K, so the Google Drive sync-weight argument that was first reached for does not apply and
-was withdrawn.
-
-**The one thing that makes this a real deletion: git holds nothing.** The repository this folder
-belonged to is gone from the path it names, so "delete it, history keeps it" is false here. Whatever
-exists only in that folder exists only there. Hence the check before the removal rather than a
-straight delete, and hence the deletion being your call, made knowing that.
-
-Files:
-- `.claude/worktrees/optimistic-ellis-3ec0fa/` — removed entirely, after the check below. Plain
-  directory removal: it is not a registered worktree here, so `git worktree remove` does not apply.
-
-Steps, in order, because the second is irreversible:
-1. List the folder's contents and compare each part against its live original — this project for
-   Taskflow's files, the no-code-method project folder one level up for that project's, and the live
-   root `CLAUDE.md` for the instructions in `claude.md.md`.
-2. Where every part is covered, delete the folder. Where anything is not covered, stop, leave the
-   folder alone, and file a capture saying what is unique to it.
-
-Observation: `.claude/worktrees/` no longer contains `optimistic-ellis-3ec0fa`, and a grep for `UX.md`
-across the project returns nothing outside this item's own text. The check reaches the path named
-above.
-
-Refused: leaving it in place because it is gitignored and small. Being unpublished answers the privacy
-question and not the misreading one, which is the actual risk. Refused: moving it into this project's
-`archive/` folder instead — that folder is tracked, so it would commit a stale copy of an entire
-project into a public repository, which is worse than either alternative.
-
-Rests on, each read at the end of the 2026-09-03 planning session: that the folder's `.git` is a
-pointer file naming a path with no repository at it; that `git worktree list` here lists only the main
-checkout; that the folder is 344K; that the no-code-method project exists as its own live folder; and
-that `.gitignore` excludes `.claude/`.
-
-#### [user] Install the current Taskflow build on the device [install-current-build-on-device]
-
-Puts a build of the current code on your phone, so the twelve unrun checks in [verify-run-2026-08-31]
-test the code that actually shipped. It is one press of Run in Android Studio; everything after it is
-Claude's.
-
-It is `[user]` work for one reason only, recorded in TOOLS.md: Gradle cannot run from Claude's shell on
-this machine — every invocation dies on a loopback-socket error — so compiling is Android Studio's job
-and Android Studio is yours. Claude can drive the device over adb and can install an APK; what it
-cannot do is produce one.
-
-Why it is needed rather than reusing what is there, read 2026-09-03: the phone is running a build
-installed **2026-09-01 at 16:41**, while the newest APK on disk was built **2026-09-02 at 16:26** —
-after the run's last commit. Installing that existing APK was considered and refused: nothing here can
-confirm it is the run's final state, and verifying against the wrong binary produces confident wrong
-answers. A fresh build removes the question.
-
-**Run this after the cleared code builds, not before them** — revised at the 2026-09-04 close, when
-the close's own step batches the human stops at the end of the cleared region. The first placement put
-it second, so the audit would measure the 2026-08-31 run before two new changes landed on top of it.
-That reasoning was overtaken: eleven builds are now cleared ahead of it, so installing early would
-leave the device stale again by the time anything was checked. Running it last means one press of Run
-covers every build in the run, and the audit then measures the app as it actually stands. That is an
-ordering preference and not a blocker.
-
-Walkthrough:
-
-1. Open the Taskflow project in Android Studio. Look for: the project tree loaded and the status bar
-   reporting Gradle sync finished rather than an error.
-2. Connect your phone and pick it in the device dropdown at the top of the window. It was reachable
-   over wireless debugging on 2026-09-03, so it may already be listed. Look for: your device's name
-   showing in that dropdown.
-3. Press Run. Look for: Taskflow launching on the phone by itself.
-
-**Expect the app's data to be wiped, and do not read it as a new fault.** Taskflow currently falls back
-to destroying the database whenever the schema changes, which is precisely the behaviour
-[durable-local-data] is queued to end. If your tasks vanish on this install, that is the known bug
-rather than a fresh one. Nothing here depends on the old data surviving.
-
-If the build fails with "Unable to delete directory …\app\build", that is the Google Drive file lock
-CLAUDE.md's Project rules already describe — ask a session to delete `app\build` and press Run again.
-[project-out-of-drive] is the capture about the underlying cause.
-
-Observable: Claude reads the install time off the device over adb and sees a timestamp later than
-2026-09-02 16:26. This is checkable without asking you, so nothing waits on you remembering to report
-it.
-
-#### [user] Create the Taskflow Supabase project [supabase-project-setup]
-Red flag · State: cleared
-
-Supabase is where Taskflow's paid tier runs — the cloud store the app syncs to and the host of the
-MCP server Claude connects to, settled by you on 2026-09-03. Nothing on the paid tier can be built
-until that project exists, so this is the step everything else waits behind.
-
-It is `[user]` work because it starts with creating an account, which needs your own identity and
-eventually your card, and ends with credentials only you can read out of your own dashboard. The
-capability check on 2026-09-03: no tool available here can sign up for a service on your behalf, and
-account creation is barred to Claude in any case.
-
-**The risk, and how it is designed out.** This repository is public. A Supabase database password
-committed into it would be readable by anyone, permanently, and removing it later would not untrack
-what was already pushed. So the walkthrough sends the database password to your password manager and
-never into the project folder, and sends the app's connection values to `local.properties`, which
-`.gitignore` excludes on two separate lines (checked 2026-09-03). Nothing this step produces lands in
-a tracked file. Red flag cleared by that design rather than by accepting the risk.
-
-Stay on the **Free** plan for now. Free is enough to build against; the reason it cannot ship is that
-Supabase pauses a free project after a week of inactivity, so the move to Pro at $25/month belongs
-with launch, not with this step. That is recorded in [0018-cloud-sync-paid-tier].
-
-Walkthrough:
-
-1. Go to `supabase.com` and sign up, or sign in if you already have an account. Look for: a dashboard
-   page listing your organizations.
-2. Open `https://supabase.com/dashboard/new/_` to start a new project. Give it the name **Taskflow**,
-   let the page generate the database password rather than typing one, and pick the region closest to
-   you. Look for: the new project's page. It may say it is still setting up for a minute or two.
-3. Copy the generated database password into your password manager and save it there now, before
-   leaving the page — Supabase does not show it again. Do not put it anywhere in the Taskflow project
-   folder. Look for: an entry in your password manager you can find again by searching "Supabase".
-4. Confirm the project is on the Free plan. Look for: the plan named as Free on the project's billing
-   or settings page.
-5. Open `https://supabase.com/dashboard/project/_?showConnect=true&framework=androidkotlin&connectTab=mobiles`
-   — this is the project's Connect panel, already set to Android Kotlin. Look for: a panel showing a
-   project URL and a publishable (anon) key.
-6. Open `local.properties` in the Taskflow project folder. It already exists and is git-ignored, so
-   you are adding to it rather than creating it. Add two lines, pasting your own values after the
-   equals signs: `supabaseUrl=` and `supabaseAnonKey=`. Look for: the file saved with both lines
-   present and nothing else changed.
-7. Tell a planning session the Supabase project exists. That is what releases the four items held
-   against this one.
-
-Observable: `local.properties` in the project root contains a `supabaseUrl` line and a
-`supabaseAnonKey` line, both with values after the equals sign. A later session checks the file rather
-than asking whether the step was done. The database password is deliberately not observable from here
-— it lives only in your password manager, which is the point.
-
-Held against this one: [0018-cloud-sync-paid-tier], and through it [0020-remote-mcp-server],
-[0019-ai-choice-flow-and-mcp-setup] and [0021-strategy-doc-reconciliation-paid-tier].
-
-Rests on, read 2026-09-03: that a project is created from `supabase.com/dashboard/new/_` and its URL
-and publishable key are read from the project's Connect panel, both per Supabase's own Android Kotlin
-quickstart; and that `.gitignore` here excludes `local.properties`.
-
 #### [user] First end-to-end test of Taskflow on a device [first-end-to-end-test]
 
 Filed in planning on 2026-08-25, doing what [post-first-test-polish-review] asked for: that item waits on a real-world event rather than on a build, so the event becomes its own line and the review is held against it.
@@ -1318,6 +533,43 @@ Flavored `[audit]` because it reads and reports rather than editing: it takes th
 > Processed) or drop it. Each is filed as its own `#### ` heading, so the list shows
 > up in an editor's outline.
 
+#### Last session advises processing [supabase-rls-policies] next [forward-advisory]
+
+Advice from the /next run that closed on 2026-09-05, for whoever opens the next planning session.
+Read it, act on it or don't, and clear it — it is orientation rather than work.
+
+**Why this one first.** That run shipped `[supabase-project-setup]`, so the cloud project now exists
+and `[0018-cloud-sync-paid-tier]` is free to be built. `[supabase-rls-policies]` is the thing that
+should be settled before it is: the publishable key ships inside the Android app on every phone and
+is public by construction, so the row-level policies are the only barrier between one account's key
+and every other account's tasks. Nothing is exposed today — the project was created with automatic
+RLS on, so tables arrive locked — but RLS with no policies also denies the app, which means the
+first sync table cannot be written without the policy being designed in the same move. Sorting it
+after the sync work would mean designing the security model around code that already exists.
+
+**Four held items became liftable in that run and none has been re-examined.** Their `Blocked by:`
+lines now name work that is no longer in the queue, which from the queue alone is indistinguishable
+from a blocker that was deleted — so each needs checking against LOG rather than lifting on sight:
+
+- `[verify-run-2026-08-31]` named `[install-current-build-on-device]`, which shipped. This one is
+  the most straightforward, and it is also the item that would confirm most of the twelve builds
+  that run left ticked UNCONFIRMED.
+- `[0018-cloud-sync-paid-tier]` and `[0020-remote-mcp-server]` both named `[supabase-project-setup]`,
+  which shipped.
+- `[nav-day-card-layer]` named `[nav-search-completed-history]`, which shipped. Note that the Search
+  page ships with tapping a completed result deliberately inert, because SPEC puts editing and
+  un-completing only on a day card — so that gap closes when this item builds.
+
+**Also worth knowing at the opening.** Nine captures were waiting before that run's own filings, and
+it added five more. Two of those touch items already in the queue rather than standing alone:
+`[stale-app-build-folder]` finishes what `[project-out-of-drive]` started, and
+`[play-account-payments-profile-known]` records a fact that bears on
+`[play-console-subscription-product]`'s business-identity hold.
+
+**Condition on the build route.** The cleared region holds only `[first-end-to-end-test]`, which the
+user is running through their own day, and `[bug-report-email-address]`, which is waiting on Google
+provisioning an account. A `/next` run would find nothing it could build and halt.
+
 #### Help, Thanks and Report-a-bug content [help-thanks-report-content]
 Blocked by: [0019-ai-choice-flow-and-mcp-setup], [0020-remote-mcp-server]
 
@@ -1404,4 +656,166 @@ will be due again every month, and whether the method's own close should have ca
 did.
 
 Filed at the 2026-09-04 close, 12:27, by Claude.
+
+#### Strategy page shows two headers now that it is on the spine [strategy-page-double-header]
+
+Found while building [strategy-on-spine] on 2026-09-04. That item moved the Strategy doc from an
+overlay shown over the spine to being the spine's rightmost page, and deliberately did not alter
+`StrategyScreen.kt` — it names the file as read but not changed, on the reasoning that the screen is
+rendered from a different place rather than rewritten.
+
+The consequence is cosmetic and visible on the first look at the page. `StrategyScreen` carries its
+own header row from its overlay days: a back arrow, the word "Strategy", and the share button. The
+spine's own header sits above it and also names the page. So the user swiping right from Later meets
+"Strategy" twice, one under the other, with a back arrow that duplicates what the system back gesture
+already does.
+
+Nothing is broken — the back arrow works, and it was wired to return to Today, which is the spine's
+back rule (SPEC §Schedule view). It reads wrong rather than behaving wrong.
+
+What the fix probably is, not decided here: drop the back arrow and the title from
+`StrategyScreen`'s own row and leave it holding the share button alone, since the spine header
+already names the page and back is the system gesture. That would need the share button rehoused
+somewhere the spine header can carry, which is the part that makes this a design question rather
+than a deletion — the other spine pages have no per-page control in the header, and Later's card
+actions do not live there either.
+
+Filed rather than done, so the change is weighed against the rest of the queue and gets a file list
+before anything is written. Filed 2026-09-04, 12:47, mid-run, after the 2026-09-04 close.
+
+#### Row Level Security policies for the synced tables [supabase-rls-policies]
+
+Before any real user data reaches Supabase, the cloud tables need per-account Row Level Security
+policies written. Nothing in the queue says so today, and [0018-cloud-sync-paid-tier] describes the
+sync without describing who is allowed to read what.
+
+Found on 2026-09-04 while driving [supabase-project-setup], at the create-project form's Security
+block. Settled there with the user, and recorded in that item's LOG record: the Data API is on
+because the app needs it, automatic exposure of new tables is OFF, and **automatic RLS is ON** — so
+a new table arrives with Row Level Security enabled and no policies, which denies everything. That
+is why this is not an uncleared red flag: there is no exposure today, and the default is closed
+rather than open.
+
+What makes it real work rather than a setting already taken care of: RLS enabled with no policies
+denies the app too. The moment [0018-cloud-sync-paid-tier] writes a table the app must read, a
+policy has to be written with it, and the shape of that policy is the whole security model. The
+reason it matters more here than in an ordinary web app: **the publishable key ships inside the
+Android app on every phone**, so it is public by construction and cannot be treated as a secret.
+The policies are the only thing standing between one account's key and every other account's tasks.
+
+Not designed here. What it has to settle: which Supabase Auth identity a Taskflow account maps to,
+how a row is tied to that identity, and whether the MCP server reaches rows through the same
+policies or through a service role that bypasses them — which is its own decision, because a
+service role bypassing RLS moves the whole guarantee into the server's own code.
+
+Filed 2026-09-04, 22:50, by /rescan at the end of a /next run.
+
+#### Delete the stale app/build folder left behind by the output move [stale-app-build-folder]
+
+`app/build` is still in the project, dated 2026-09-01, holding roughly 59 MB that Google Drive keeps
+syncing for nothing.
+
+Found on 2026-09-04, immediately after [project-out-of-drive] shipped and its first build ran. That
+item pointed Gradle's output at `C:\builds\taskflow\app`, and the build confirmed it — the new
+location holds the compiled output and the APK. What it does not do is remove what was already
+there: relocating where a tool writes says nothing about the folder it used to write.
+
+The item's own observation expected `app\build` to be "gone or empty" and it is neither, which was
+recorded against its tick rather than quietly passed. This is the other half.
+
+It is git-ignored generated output, so deleting it loses nothing and no build depends on it. The
+reason to bother: it is 59 MB of constantly-rewritten files inside a Drive-synced folder, which is
+half of what [project-out-of-drive] was trying to stop, and it will sit there indefinitely because
+nothing writes to it any more to make its staleness visible.
+
+Small enough to fold into another piece of work rather than run alone.
+
+Filed 2026-09-04, 22:50, by /rescan at the end of a /next run.
+
+#### [user] Run the instrumentation tests, MigrationTest first [run-instrumentation-tests]
+
+The app's instrumentation tests have never been executed. `MigrationTest` was written on 2026-09-04
+and has never run once; `TaskDaoTest` and `ProjectDaoTest` predate it and have no recorded run
+either.
+
+It is `[user]` work for the reason TOOLS.md records: Gradle cannot run from Claude's shell on this
+machine, so anything that compiles is Android Studio's job and Android Studio is yours. Claude can
+drive the device over adb and read results back, but cannot start the run.
+
+**MigrationTest matters more than its size suggests.** [durable-local-data] made version 5 the floor
+below which device data may not be destroyed, and that test is what proves the recorded schema in
+`app/schemas` is actually usable — it creates a v5 database, writes a task, reopens it, and asserts
+the task survived. Until it runs, the floor is a claim rather than a demonstrated fact, and the next
+schema change will be written against a schema nobody has exercised.
+
+Walkthrough:
+
+1. Open the Taskflow project in Android Studio and connect your phone. Look for: your device in the
+   dropdown at the top of the window.
+2. Right-click the `androidTest` source folder in the project tree and choose the option to run all
+   tests in it. Look for: a results panel listing each test with a pass or fail.
+3. Tell a session the result. If anything failed, say which — the failure text is what a session
+   needs, not a description of it.
+
+Observable: Claude cannot see the results panel, so completion is not checkable from here — a later
+session asks rather than checks. Stated plainly so nobody pretends otherwise.
+
+Filed 2026-09-04, 22:50, by /rescan at the end of a /next run.
+
+#### Google payments profile is already an organisation profile [play-account-payments-profile-known]
+
+Seen on 2026-09-04, on the Google Workspace checkout screen while driving [bug-report-email-address]:
+the payments profile the purchase went through reads **Flintcraft · Organisation · Australia**, with
+a payments profile ID.
+
+Worth recording because [play-console-subscription-product] is held partly on business identity, and
+that item's reasoning turns on exactly this object. It settled on an organization Play account
+rather than a personal one because **the payments profile's legal name and address appear on
+customer receipts**, and a personal profile's are the individual's own name and home address. The
+profile that would carry that is already an organisation profile rather than a personal one, and a
+Google payments profile is shared across Google services — Workspace, Play, Ads — so it is the same
+object that account would use.
+
+**What this does NOT establish, stated so nobody reads it as more than it is.** A Play developer
+account still needs its own registration and verification, the $25 fee, a D-U-N-S number that can
+take up to 30 days, incorporation documents, proof of a physical address, and an authorised
+representative named on the registration — all recorded in
+`workshop/resources/research/google-play-organization-account-requirements.md`. None of that is done
+by having an organisation payments profile. What it removes is the question of which identity the
+billing half is under, and it says the answer is already the right one.
+
+The profile ID itself is deliberately not recorded here: this repository is public, and the ID is an
+account identifier with no use to anyone reading these documents.
+
+Filed 2026-09-04, 22:50, by /rescan at the end of a /next run.
+
+#### LOG/index.md cannot be split by month, because most of its lines carry no date [log-index-month-rollover-blocked]
+
+The close's month-rollover step could not run on 2026-09-05 and was skipped deliberately rather than
+done badly. Recorded so the next close does not rediscover it.
+
+The rule is that when a month ends, its index lines move into `LOG/index-YYYY-MM.md`, leaving the
+current month's where they are. August has ended and `LOG/index.md` holds August lines, so the step
+was due.
+
+**What blocks it.** The step identifies a line's month from the entry filename it ends with, and 38
+of the file's roughly 100 lines point at entries whose filenames carry no date at all — the numbered
+`00NN-*.md` batch records and other pre-convention entries. Only 21 lines are identifiably August
+and 45 identifiably September. Extracting the 21 would leave the main index holding September plus
+38 undated older lines with August cut out of the middle, which is a worse file than the one that
+exists now: the index reads newest-first, and that ordering would no longer hold.
+
+Establishing each undated entry's month means opening around 38 entry files to read their dates,
+which is not work a close should be doing on the way to a commit.
+
+Two routes, neither chosen here:
+
+- date the undated index lines once, by reading each entry, after which every future rollover is
+  mechanical;
+- or accept that the index does not roll over and let it grow, with retrieval continuing to search
+  `LOG/index*.md` as it already does — which costs a longer read at every planning opening.
+
+The second is cheaper today and more expensive every month. Worth deciding rather than defaulting.
+
+Filed 2026-09-05, 11:26, by the close of the twelve-item /next run.
 

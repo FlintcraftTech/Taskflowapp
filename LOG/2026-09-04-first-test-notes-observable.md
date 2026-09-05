@@ -1,4 +1,4 @@
-# [HASH] — /plan [first-test-notes-observable]: dropped, after the user pointed out the risk it introduced was the only risk in play
+# 9e24ba7 — /plan [first-test-notes-observable]: dropped, after the user pointed out the risk it introduced was the only risk in play
 
 The capture proposed giving [first-end-to-end-test]'s notes a file at a stated path, so the item would
 have an observable and nobody would have to remember it was done. The reasoning was sound: that test's

@@ -68,6 +68,24 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE is_completed = 1 AND parent_id IS NULL ORDER BY slot_sort_order ASC")
     fun getCompletedTasks(): Flow<List<Task>>
 
+    // The search surface's one query (SPEC §Search and completed history). It ignores every
+    // organising principle the app has — slot, Project, completion state — because a task someone
+    // is searching for is one they have lost, and those are exactly what they cannot use at that
+    // moment. Project names come along through the join: typing a Project's name and getting that
+    // Project's tasks is the same gesture as typing a task's. Subtasks are excluded, as everywhere
+    // else that lists tasks — a child is found through its parent.
+    //
+    // The Strategy doc is deliberately not reachable from here: it is prose rather than items, so
+    // its matches could not render as task rows.
+    @Query(
+        "SELECT tasks.* FROM tasks " +
+            "LEFT JOIN projects ON tasks.project_id = projects.id " +
+            "WHERE tasks.parent_id IS NULL AND (" +
+            "tasks.title LIKE '%' || :term || '%' OR projects.name LIKE '%' || :term || '%'" +
+            ") ORDER BY tasks.completed_at DESC, tasks.slot_sort_order ASC"
+    )
+    fun search(term: String): Flow<List<Task>>
+
     // Reorder within a slot: update slot_sort_order for a specific task
     @Query("UPDATE tasks SET slot_sort_order = :newOrder WHERE id = :taskId")
     suspend fun updateSlotSortOrder(taskId: Long, newOrder: Int)

@@ -1,4 +1,4 @@
-# [HASH] — /plan [strategy-on-spine]: SPEC was not ambiguous after all — the record says Strategy is the spine's right end, twice, and the code's overlay was a build-time shortcut
+# 9e24ba7 — /plan [strategy-on-spine]: SPEC was not ambiguous after all — the record says Strategy is the spine's right end, twice, and the code's overlay was a build-time shortcut
 
 Found while reading the navigation code during the completed-history split: `SpinePage` holds four
 entries, Today through Later, while SPEC describes seven ending in Strategy, which is built as a drawer

@@ -1,4 +1,4 @@
-# [HASH] — /plan [side-menu-spine-mismatch]: the menu now mirrors the whole spine, with each new row folded into the page item that makes it work
+# 9e24ba7 — /plan [side-menu-spine-mismatch]: the menu now mirrors the whole spine, with each new row folded into the page item that makes it work
 
 SPEC §Side menu claimed the menu "mirrors the spine from top to bottom" and then listed five of its
 seven pages — true when written, false once the spine grew leftward.

@@ -1,4 +1,4 @@
-# [HASH] — /plan [orphan-worktree-cleanup]: a dead worktree folder found by the user's question about a retired doc type, queued for removal with the check first
+# 9e24ba7 — /plan [orphan-worktree-cleanup]: a dead worktree folder found by the user's question about a retired doc type, queued for removal with the check first
 
 Surfaced by `/rescan` and processed in the same session. The user asked whether a `UX.md` still existed,
 that doc type having been retired. It does not exist as a live doc here — the principles are a section

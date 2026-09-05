@@ -1,4 +1,4 @@
-# [first-end-to-end-test] — presented and deferred during the /next run of 2026-08-31
+# 3defa43 — presented and deferred during the /next run of 2026-08-31
 
 Reached on 2026-09-02, on the walk-through pass that closed that run. Presented in full rather than
 filtered out, and deferred on the user's own word.

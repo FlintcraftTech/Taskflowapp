@@ -1,4 +1,4 @@
-# [HASH] — /plan [walkaway-work-integration-case]: dropped, after the user caught two audiences being conflated
+# 9e24ba7 — /plan [walkaway-work-integration-case]: dropped, after the user caught two audiences being conflated
 
 The capture recorded a genuine observation from 2026-09-02: a planning session handing over a task that
 has to be done away from the session, broken into subtasks, waiting where the person will look, is

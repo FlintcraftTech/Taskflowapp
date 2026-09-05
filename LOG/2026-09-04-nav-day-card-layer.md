@@ -1,4 +1,4 @@
-# [HASH] — /plan [nav-day-card-layer]: the day-detail card, and the three interaction details the August design had deliberately left open
+# 9e24ba7 — /plan [nav-day-card-layer]: the day-detail card, and the three interaction details the August design had deliberately left open
 
 One of four items split out of [nav-completed-history] this session; the split's reasoning is in
 `2026-09-04-nav-completed-history.md`. Held below the line because the card is opened from the Search

@@ -48,14 +48,15 @@ import com.example.taskflow.domain.Recurrence
 import com.example.taskflow.domain.RecurrenceUnit
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
 /**
  * The task edit dialogue (SPEC §Edit a task), shown full-screen over the spine or a Project view.
- * Edits title, notes, Project (including "unassigned"), and the date — the last through the embedded
- * side-scrolling date strip, which can set, change or clear it.
+ * Edits title, Project (including "unassigned"), and the date — the last through the embedded
+ * side-scrolling date strip, which can set, change or clear it. There is no free-text notes field:
+ * detail belonging to a task is written as a subtask line, and a box inviting the user to describe
+ * their work would add weight to the list this app exists to lighten.
  *
  * The same dialogue serves *new* tasks: the FAB opens it with the surface's inherited context already
  * resolved by [EditTaskViewModel] (SPEC §Add a new task). Save inserts or updates, then [onClose].
@@ -143,12 +144,6 @@ fun EditTaskScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
-            OutlinedTextField(
-                value = state.notes,
-                onValueChange = viewModel::onNotesChange,
-                label = { Text("Notes") },
-                modifier = Modifier.fillMaxWidth(),
-            )
             ProjectField(
                 projectId = state.projectId,
                 projects = state.projects.map { it.id to it.name },
@@ -158,7 +153,6 @@ fun EditTaskScreen(
             DateField(
                 selectedDate = state.selectedDate,
                 today = state.today,
-                datePattern = state.datePattern,
                 onSelectDate = viewModel::onDateSelected,
                 onClearDate = viewModel::onDateCleared,
             )
@@ -328,12 +322,9 @@ private fun NewProjectCard(
 private fun DateField(
     selectedDate: LocalDate?,
     today: LocalDate,
-    datePattern: String,
     onSelectDate: (LocalDate) -> Unit,
     onClearDate: () -> Unit,
 ) {
-    // Rebuilt only when the setting changes, so switching DD/MM → MM/DD reformats every tile.
-    val formatter = remember(datePattern) { DateTimeFormatter.ofPattern(datePattern) }
     Column {
         Text(
             text = "Date",
@@ -343,7 +334,6 @@ private fun DateField(
         DateStrip(
             selectedDate = selectedDate,
             today = today,
-            dateFormatter = formatter,
             onSelectDate = onSelectDate,
             onClearDate = onClearDate,
             modifier = Modifier.fillMaxWidth(),

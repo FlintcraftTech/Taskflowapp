@@ -50,7 +50,10 @@ import com.example.taskflow.TaskflowApplication
 import com.example.taskflow.data.model.ScheduleSlot
 import com.example.taskflow.ui.common.DragTarget
 import com.example.taskflow.ui.common.DragTargetRow
+import com.example.taskflow.ui.history.SearchScreen
+import com.example.taskflow.ui.history.YesterdayScreen
 import com.example.taskflow.ui.navigation.SpinePage
+import com.example.taskflow.ui.strategy.StrategyScreen
 import kotlinx.coroutines.launch
 
 /**
@@ -132,7 +135,29 @@ fun ScheduleScreen(
             modifier = Modifier.fillMaxSize(),
         ) { page ->
             val slot = SpinePage.entries[page].slot
-            if (slot == ScheduleSlot.LATER) {
+            if (slot == null) {
+                // A page with no Schedule slot is not a list of tasks to put things on — it is
+                // history. Which one it is comes from the page itself.
+                when (SpinePage.entries[page]) {
+                    SpinePage.SEARCH -> SearchScreen(
+                        onNavigateToSlot = { destination ->
+                            val target = SpinePage.entries.first { it.slot == destination }
+                            scope.launch { pagerState.animateScrollToPage(target.ordinal) }
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    SpinePage.YESTERDAY -> YesterdayScreen(modifier = Modifier.fillMaxSize())
+                    SpinePage.STRATEGY -> StrategyScreen(
+                        // The screen keeps its own back control from its overlay days. As a page,
+                        // back means what it means everywhere on the spine: return to Today.
+                        onBack = {
+                            scope.launch { pagerState.animateScrollToPage(SpinePage.TODAY.ordinal) }
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    else -> Unit
+                }
+            } else if (slot == ScheduleSlot.LATER) {
                 // Later is grouped by Project — a list of expand/collapse cards, not a flat list.
                 LaterPage(
                     cards = uiState.laterCards,
@@ -183,8 +208,11 @@ fun ScheduleScreen(
                             else -> {
                                 val origin = dragOriginPage
                                 val landed = pagerState.currentPage
-                                if (origin != null && origin != landed) {
-                                    viewModel.rescheduleToSlot(taskId, SpinePage.entries[landed].slot)
+                                val landedSlot = SpinePage.entries[landed].slot
+                                // A page with no slot is not a drop destination — dropping a task
+                                // on Yesterday would have to mean something, and it doesn't.
+                                if (origin != null && origin != landed && landedSlot != null) {
+                                    viewModel.rescheduleToSlot(taskId, landedSlot)
                                 }
                             }
                         }

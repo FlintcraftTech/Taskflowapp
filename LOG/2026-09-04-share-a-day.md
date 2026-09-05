@@ -1,4 +1,4 @@
-# [HASH] — /plan [share-a-day]: sharing a day as PNG or Markdown, the heaviest of the four despite being the smallest feature
+# 9e24ba7 — /plan [share-a-day]: sharing a day as PNG or Markdown, the heaviest of the four despite being the smallest feature
 
 One of four items split out of [nav-completed-history] this session; the split's reasoning is in
 `2026-09-04-nav-completed-history.md`. Held below the line because there is no day screen to put the

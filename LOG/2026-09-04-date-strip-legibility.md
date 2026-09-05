@@ -1,4 +1,4 @@
-# [HASH] — /plan [date-strip-legibility]: week jump, day-over-month tiles, no clipped tile — and the date-format setting's reach settled rather than quietly broken
+# 9e24ba7 — /plan [date-strip-legibility]: week jump, day-over-month tiles, no clipped tile — and the date-format setting's reach settled rather than quietly broken
 
 The user's capture from 2026-09-02, from the date picker on the device: two proposals of theirs, plus a
 clipped tile the screenshot showed on its own. All three live in one file, so it stayed one item.

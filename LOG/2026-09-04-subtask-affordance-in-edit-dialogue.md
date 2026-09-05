@@ -1,4 +1,4 @@
-# [HASH] — /plan [subtask-affordance-in-edit-dialogue]: a hint that Enter adds a subtask — then held at the close, because the behaviour it advertises has never been run
+# 9e24ba7 — /plan [subtask-affordance-in-edit-dialogue]: a hint that Enter adds a subtask — then held at the close, because the behaviour it advertises has never been run
 
 Split from [notes-versus-subtasks] this session; the decision and its reasoning are in
 `2026-09-04-notes-versus-subtasks.md`.

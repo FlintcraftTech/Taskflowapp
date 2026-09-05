@@ -1,4 +1,4 @@
-# [HASH] — /plan: the whole queue worked through — sixteen entries processed, five cleared items became sixteen, and a capability check turned twelve device checks from the user's evening into Claude's work
+# 9e24ba7 — /plan: the whole queue worked through — sixteen entries processed, five cleared items became sixteen, and a capability check turned twelve device checks from the user's evening into Claude's work
 
 This session ran across 2026-09-03 and 2026-09-04.
 

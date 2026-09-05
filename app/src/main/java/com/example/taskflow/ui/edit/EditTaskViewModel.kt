@@ -46,16 +46,19 @@ sealed interface EditTarget {
 }
 
 /**
- * The edit dialogue's rendered state. Editable fields are [title], [notes], [projectId] and the
- * date — [selectedDate] is the tile the strip highlights (null = the "No date" tile), and [today]
- * is the strip's visual anchor. [dateLabel] is the same date as text, kept for callers that want a
+ * The edit dialogue's rendered state. Editable fields are [title], [projectId] and the date —
+ * [selectedDate] is the tile the strip highlights (null = the "No date" tile), and [today] is the
+ * strip's visual anchor. [dateLabel] is the same date as text, kept for callers that want a
  * one-line rendering. [projects] backs the Project picker, always including an "unassigned" choice.
+ *
+ * The task's `notes` column is deliberately absent here. The dialogue no longer shows a notes field
+ * (SPEC §Edit a task), so it neither reads nor writes the column — an existing task keeps whatever
+ * it already carries, and exports keep printing it.
  */
 data class EditUiState(
     val loading: Boolean = false,
     val isNew: Boolean = true,
     val title: String = "",
-    val notes: String = "",
     val projectId: Long? = null,
     val dateLabel: String = NO_DATE,
     val selectedDate: LocalDate? = null,
@@ -67,8 +70,9 @@ data class EditUiState(
     // The outliner's text: the parent's title on the first line, one indented line per subtask
     // (SPEC §Edit dialogue: outliner-style typing for subtasks). [title] is its first line.
     val outline: String = "",
-    // How dates are written, from Settings (SPEC §Settings → Date format). Carried in the state so
-    // the date strip's tiles match every other date on screen.
+    // How dates are written as numbers, from Settings (SPEC §Settings → Date format). It does NOT
+    // reach the date strip's tiles: those name the month rather than numbering it, so there is no
+    // day/month order left to obey. Kept for [dateLabel] and any other numeric rendering.
     val datePattern: String = "dd/MM",
 ) {
     /** A repeat has to have something to repeat from, so the field is inert on an undated task. */
@@ -116,7 +120,6 @@ class EditTaskViewModel(
         // by position rather than deleting and re-creating them (see ChildSync).
         val childIds: List<Long> = emptyList(),
         val childTitles: List<String> = emptyList(),
-        val notes: String = "",
         val projectId: Long? = null,
         val date: Long? = null,
         val slot: ScheduleSlot? = null,
@@ -137,7 +140,6 @@ class EditTaskViewModel(
                 isNew = f.isNew,
                 title = Outline.parse(f.outline).parentTitle,
                 outline = f.outline,
-                notes = f.notes,
                 projectId = f.projectId,
                 dateLabel = f.date?.let {
                     Instant.ofEpochMilli(it).atZone(zone).toLocalDate().format(dateFormatter)
@@ -165,7 +167,6 @@ class EditTaskViewModel(
                         outline = Outline(task.title, children.map { it.title }).render(),
                         childIds = children.map { it.id },
                         childTitles = children.map { it.title },
-                        notes = task.notes,
                         projectId = task.projectId,
                         date = task.date,
                         slot = task.slot,
@@ -212,10 +213,6 @@ class EditTaskViewModel(
      */
     fun onOutlineChange(value: String) {
         form.value = form.value.copy(outline = Outline.normalise(value))
-    }
-
-    fun onNotesChange(value: String) {
-        form.value = form.value.copy(notes = value)
     }
 
     fun onProjectChange(projectId: Long?) {
@@ -280,7 +277,6 @@ class EditTaskViewModel(
                 val parentId = taskRepository.insert(
                     Task(
                         title = outline.parentTitle,
-                        notes = f.notes,
                         // No Project picked → the system Unassigned Project. projectId is non-null:
                         // every task has a Project home (see Task / Project.UNASSIGNED_PROJECT_ID).
                         projectId = f.projectId ?: Project.UNASSIGNED_PROJECT_ID,
@@ -312,7 +308,8 @@ class EditTaskViewModel(
                 val o = original ?: return@launch
                 var updated = o.copy(
                     title = outline.parentTitle,
-                    notes = f.notes,
+                    // `notes` is not copied here on purpose: the dialogue no longer edits it, so the
+                    // task keeps whatever the column already held and an existing note survives.
                     // No Project picked → Unassigned (projectId is non-null; see the insert path above).
                     projectId = f.projectId ?: Project.UNASSIGNED_PROJECT_ID,
                     date = f.date,

@@ -1,4 +1,4 @@
-# [HASH] — /plan [nav-search-completed-history]: the Search page, the spine's new leftmost, with a dated list of completed tasks beneath it
+# 9e24ba7 — /plan [nav-search-completed-history]: the Search page, the spine's new leftmost, with a dated list of completed tasks beneath it
 
 One of four items split out of [nav-completed-history] this session; the split's reasoning is in
 `2026-09-04-nav-completed-history.md` rather than restated here.

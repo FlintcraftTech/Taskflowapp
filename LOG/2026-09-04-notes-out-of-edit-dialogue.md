@@ -1,4 +1,4 @@
-# [HASH] — /plan [notes-out-of-edit-dialogue]: the buildable half of the Notes decision, with the column deliberately left in place
+# 9e24ba7 — /plan [notes-out-of-edit-dialogue]: the buildable half of the Notes decision, with the column deliberately left in place
 
 Split from [notes-versus-subtasks] this session; the decision and its reasoning are in
 `2026-09-04-notes-versus-subtasks.md` rather than restated here.

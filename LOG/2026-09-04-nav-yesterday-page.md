@@ -1,4 +1,4 @@
-# [HASH] — /plan [nav-yesterday-page]: the Yesterday page, carrying the spine plumbing the whole left half needs
+# 9e24ba7 — /plan [nav-yesterday-page]: the Yesterday page, carrying the spine plumbing the whole left half needs
 
 One of four items split out of [nav-completed-history] this session; the reasoning for the split, and
 for the hold that was written and withdrawn, is in `2026-09-04-nav-completed-history.md` rather than

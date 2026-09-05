@@ -1,4 +1,4 @@
-# [HASH] — /plan [nav-completed-history]: the spine's left half split into four buildable items, after a hold was written and withdrawn within the hour
+# 9e24ba7 — /plan [nav-completed-history]: the spine's left half split into four buildable items, after a hold was written and withdrawn within the hour
 
 The item bundled four sub-features — the Search page, the Yesterday page, the day-detail card layer and
 share-a-day — and had been held against [nav-left-spine-spec-edit]. That shipped in the 2026-09-02 run,

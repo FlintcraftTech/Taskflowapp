@@ -1,4 +1,4 @@
-# [HASH] — /plan [business-registration-for-play-account]: a one-line item so the Play work has something real to wait on, dated a week out at the user's word
+# 9e24ba7 — /plan [business-registration-for-play-account]: a one-line item so the Play work has something real to wait on, dated a week out at the user's word
 
 Filed at the moment the account type was settled, because deleting [play-account-type] would have left
 [play-console-subscription-product] holding a `Blocked by:` line pointing at nothing. The method allows

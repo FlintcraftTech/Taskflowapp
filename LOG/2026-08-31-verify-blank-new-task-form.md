@@ -1,4 +1,4 @@
-# [verify-blank-new-task-form] — device check walked during the /next run of 2026-08-31
+# 3defa43 — device check walked during the /next run of 2026-08-31
 
 The device check for [add-flow-create-path-fixes], which gave the add dialogue a fresh view-model
 store per open so the New-task title no longer carries over from the previous save.

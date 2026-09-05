@@ -1,4 +1,4 @@
-# [HASH] — /plan [notes-versus-subtasks]: the Notes field removed from the edit dialogue, and the invisible subtask feature split off from it
+# 9e24ba7 — /plan [notes-versus-subtasks]: the Notes field removed from the edit dialogue, and the invisible subtask feature split off from it
 
 The user's capture from 2026-09-02, from looking at the dialogue on the device: a Notes field they never
 asked for, and no visible subtasks. Both halves checked out and they are separate problems sharing a

@@ -56,6 +56,8 @@ class TaskRepository(private val taskDao: TaskDao) {
 
     fun getCompletedTasks(): Flow<List<Task>> = taskDao.getCompletedTasks()
 
+    fun search(term: String): Flow<List<Task>> = taskDao.search(term)
+
     suspend fun updateSlotSortOrder(taskId: Long, newOrder: Int) =
         taskDao.updateSlotSortOrder(taskId, newOrder)
 

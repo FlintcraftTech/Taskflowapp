@@ -1,4 +1,4 @@
-# [HASH] — /plan [project-out-of-drive]: the Google Drive hypothesis demoted after the user said other projects don't do this, and sixteen build files found over Windows' path limit
+# 9e24ba7 — /plan [project-out-of-drive]: the Google Drive hypothesis demoted after the user said other projects don't do this, and sixteen build files found over Windows' path limit
 
 The capture proposed moving the project out of `My Drive` to end the recurring "Unable to delete
 directory …\app\build\…" failure. The user rejected the premise rather than the fix: this never happens

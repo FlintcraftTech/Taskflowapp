@@ -1,4 +1,4 @@
-# [HASH] — /plan [play-account-type]: the Play developer account settled as an organization account, because a personal one puts the user's home address on every subscriber's receipt
+# 9e24ba7 — /plan [play-account-type]: the Play developer account settled as an organization account, because a personal one puts the user's home address on every subscriber's receipt
 
 The capture held a choice that could not be undone by editing a setting later, and it was raised
 because the user asked whether the paid tier depends on their business being set up. It does not —

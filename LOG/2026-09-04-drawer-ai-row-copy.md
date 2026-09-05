@@ -1,4 +1,4 @@
-# [HASH] — /plan [drawer-ai-row-copy]: the capture's mechanism was wrong, so shortening the row alone would have made the drawer look worse
+# 9e24ba7 — /plan [drawer-ai-row-copy]: the capture's mechanism was wrong, so shortening the row alone would have made the drawer look worse
 
 The user's capture from 2026-09-02: the menu is too fat, and the bottom row should read something like
 "Turn on AI". It read as though the long row set the drawer's width.

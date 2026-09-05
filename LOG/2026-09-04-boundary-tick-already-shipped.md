@@ -1,4 +1,4 @@
-# [HASH] — /plan [boundary-tick-already-shipped]: a held item confirmed finished in code and deleted, clearing the oldest lift signal in the queue
+# 9e24ba7 — /plan [boundary-tick-already-shipped]: a held item confirmed finished in code and deleted, clearing the oldest lift signal in the queue
 
 The capture reported that [schedule-day-boundary-tick] — sitting below the readiness line, held against
 [0012-settings-day-begins-at] — had already shipped inside that item during the 2026-08-31 run. A build

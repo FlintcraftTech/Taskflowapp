@@ -1,4 +1,4 @@
-# [HASH] — /plan [install-current-build-on-device]: one press of Run, split out so the verification audit measures the code that actually shipped
+# 9e24ba7 — /plan [install-current-build-on-device]: one press of Run, split out so the verification audit measures the code that actually shipped
 
 Created alongside the reshaping of [verify-run-2026-08-31], because that audit can only mean something
 against a current build. The device was running a build installed 2026-09-01 at 16:41 while the newest

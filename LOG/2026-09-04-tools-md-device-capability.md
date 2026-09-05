@@ -1,4 +1,4 @@
-# [HASH] — /plan [tools-md-device-capability]: TOOLS.md's "cannot compile, test or install" narrowed to the one limb that is true
+# 9e24ba7 — /plan [tools-md-device-capability]: TOOLS.md's "cannot compile, test or install" narrowed to the one limb that is true
 
 Raised by Claude during the reshaping of [verify-run-2026-08-31] and processed in the same session on
 the user's word. TOOLS.md's closing line read "Claude cannot compile, test or install this app". Only

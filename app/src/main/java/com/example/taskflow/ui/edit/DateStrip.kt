@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -31,10 +32,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 import kotlin.math.abs
@@ -49,14 +50,21 @@ import kotlin.math.abs
  * [MIN_TILE_ALPHA] so even a far-off tile stays readable rather than disappearing. Tapping a tile
  * selects that date; tapping "No date" clears it.
  *
- * The month-jump row above the strip crosses the twelve-month span quickly (a month per tap) and
- * names the month currently in view, so a long scrub is not the only way to reach next spring.
+ * Each tile carries its day number over the short month name — 24 above Aug — rather than DD/MM.
+ * A row of "24/08 25/08 26/08" runs together into a continuous line of digits with nothing for the
+ * eye to catch on; one large number per tile is the thing being scanned for. The date-format
+ * setting does not reach the tiles: it exists to disambiguate a date written as numbers, and a
+ * month name leaves nothing to disambiguate (SPEC §Settings → Date format).
+ *
+ * The jump row above the strip moves by a week (single chevrons) or a month (double), and names the
+ * month currently in view. The week step matches the view's own unit — the strip shows about a
+ * week — so a jump lands somewhere the user can read without re-orienting; the month step is kept
+ * because crossing to next April a week at a time is many taps.
  */
 @Composable
 fun DateStrip(
     selectedDate: LocalDate?,
     today: LocalDate,
-    dateFormatter: DateTimeFormatter,
     onSelectDate: (LocalDate) -> Unit,
     onClearDate: () -> Unit,
     modifier: Modifier = Modifier,
@@ -89,10 +97,13 @@ fun DateStrip(
         }
     }
 
-    fun jumpMonths(delta: Long) {
-        val target = indexOf(visibleMonth.plusMonths(delta)).coerceIn(1, itemCount - 1)
+    fun jumpTo(date: LocalDate) {
+        val target = indexOf(date).coerceIn(1, itemCount - 1)
         scope.launch { listState.animateScrollToItem((target - CENTRING_OFFSET).coerceAtLeast(0)) }
     }
+
+    fun jumpWeeks(delta: Long) = jumpTo(visibleMonth.plusWeeks(delta))
+    fun jumpMonths(delta: Long) = jumpTo(visibleMonth.plusMonths(delta))
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -100,7 +111,8 @@ fun DateStrip(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            TextButton(onClick = { jumpMonths(-1) }) { Text("‹ month") }
+            TextButton(onClick = { jumpMonths(-1) }) { Text("‹‹") }
+            TextButton(onClick = { jumpWeeks(-1) }) { Text("‹") }
             Text(
                 text = visibleMonth.month.getDisplayName(TextStyle.SHORT, Locale.getDefault()) +
                     " " + visibleMonth.year,
@@ -108,30 +120,45 @@ fun DateStrip(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.weight(1f),
             )
-            TextButton(onClick = { jumpMonths(1) }) { Text("month ›") }
+            TextButton(onClick = { jumpWeeks(1) }) { Text("›") }
+            TextButton(onClick = { jumpMonths(1) }) { Text("››") }
         }
 
-        LazyRow(
-            state = listState,
-            horizontalArrangement = Arrangement.spacedBy(TILE_GAP),
-            contentPadding = PaddingValues(vertical = 4.dp),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            item(key = "no-date") {
-                NoDateTile(selected = selectedDate == null, onClick = onClearDate)
-            }
-            items(count = dayCount, key = { it }) { dayIndex ->
-                val date = firstDate.plusDays(dayIndex.toLong())
-                DateTile(
-                    date = date,
-                    label = date.format(dateFormatter),
-                    isToday = date == today,
-                    selected = date == selectedDate,
-                    distanceFromToday = abs(
-                        java.time.temporal.ChronoUnit.DAYS.between(today, date),
-                    ),
-                    onClick = { onSelectDate(date) },
-                )
+        // Tiles are sized to the width actually available rather than to a fixed figure, so a whole
+        // number of them fills the row and none is cut off at the right edge. A tile showing half a
+        // date is worse than one fewer tile.
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val tileCount = ((maxWidth + TILE_GAP) / (MIN_TILE_WIDTH + TILE_GAP))
+                .toInt()
+                .coerceAtLeast(MIN_TILE_COUNT)
+            val tileWidth = (maxWidth - TILE_GAP * (tileCount - 1)) / tileCount
+
+            LazyRow(
+                state = listState,
+                horizontalArrangement = Arrangement.spacedBy(TILE_GAP),
+                contentPadding = PaddingValues(vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                item(key = "no-date") {
+                    NoDateTile(
+                        selected = selectedDate == null,
+                        width = tileWidth,
+                        onClick = onClearDate,
+                    )
+                }
+                items(count = dayCount, key = { it }) { dayIndex ->
+                    val date = firstDate.plusDays(dayIndex.toLong())
+                    DateTile(
+                        date = date,
+                        isToday = date == today,
+                        selected = date == selectedDate,
+                        width = tileWidth,
+                        distanceFromToday = abs(
+                            java.time.temporal.ChronoUnit.DAYS.between(today, date),
+                        ),
+                        onClick = { onSelectDate(date) },
+                    )
+                }
             }
         }
     }
@@ -143,12 +170,12 @@ fun DateStrip(
  * than as a date they have scrolled too far from (SPEC §Date picker — side-scrolling date strip).
  */
 @Composable
-private fun NoDateTile(selected: Boolean, onClick: () -> Unit) {
+private fun NoDateTile(selected: Boolean, width: Dp, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .width(TILE_WIDTH)
+            .width(width)
             .height(TILE_HEIGHT)
             .clip(RoundedCornerShape(TILE_CORNER))
             .background(if (selected) colors.primaryContainer else colors.surfaceVariant)
@@ -175,9 +202,9 @@ private fun NoDateTile(selected: Boolean, onClick: () -> Unit) {
 @Composable
 private fun DateTile(
     date: LocalDate,
-    label: String,
     isToday: Boolean,
     selected: Boolean,
+    width: Dp,
     distanceFromToday: Long,
     onClick: () -> Unit,
 ) {
@@ -186,7 +213,7 @@ private fun DateTile(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .width(TILE_WIDTH)
+            .width(width)
             .height(TILE_HEIGHT)
             .clip(RoundedCornerShape(TILE_CORNER))
             .background(if (selected) colors.primaryContainer else colors.surface)
@@ -218,11 +245,18 @@ private fun DateTile(
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.onSurfaceVariant,
             )
+            // The day number, large — this is what the eye scans the strip for.
             Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
+                text = date.dayOfMonth.toString(),
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = if (selected || isToday) FontWeight.Bold else FontWeight.Normal,
                 color = if (selected) colors.onPrimaryContainer else colors.onSurface,
+            )
+            // The month named rather than numbered, beneath it.
+            Text(
+                text = date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault()),
+                style = MaterialTheme.typography.labelSmall,
+                color = if (selected) colors.onPrimaryContainer else colors.onSurfaceVariant,
             )
         }
     }
@@ -232,9 +266,14 @@ private fun DateTile(
 private const val DAYS_BEFORE: Long = 30
 private const val DAYS_AFTER: Long = 365
 
-// Tiles are sized so five to seven sit on a typical phone width (a 360dp screen fits six).
-private val TILE_WIDTH = 52.dp
-private val TILE_HEIGHT = 56.dp
+// A tile's width is computed from the space available (see DateStrip) so a whole number of them
+// fills the row. MIN_TILE_WIDTH is the floor that decides how many that is — narrow enough that a
+// typical phone fits six or seven, wide enough for a two-digit day over a three-letter month.
+private val MIN_TILE_WIDTH = 48.dp
+private const val MIN_TILE_COUNT: Int = 4
+
+// Three lines now: weekday, day number, month name.
+private val TILE_HEIGHT = 64.dp
 private val TILE_GAP = 6.dp
 private val TILE_CORNER = 8.dp
 

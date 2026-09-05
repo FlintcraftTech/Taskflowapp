@@ -21,7 +21,7 @@ import com.example.taskflow.data.model.Task
     // it was (SPEC §JSON export and import).
     // v5: the `life_areas` table, which only Claude ever touches through MCP (SPEC §Strategy doc).
     version = 5,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class TaskflowDatabase : RoomDatabase() {
 
@@ -41,11 +41,11 @@ abstract class TaskflowDatabase : RoomDatabase() {
                     TaskflowDatabase::class.java,
                     "taskflow_database"
                 )
-                    // Pre-release: no schema-migration history to preserve. A schema-version bump
-                    // recreates the database from scratch, and the seed callback re-inserts the
-                    // system Unassigned Project. This wipes local data on upgrade — acceptable while
-                    // there are no real users (decision recorded in the batch).
-                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    // Version 5 is the floor: data at v5 or later must survive an app upgrade, so
+                    // every schema change from here carries a real migration written against the
+                    // recorded schema in app/schemas. Only versions 1 to 4 may still be thrown
+                    // away — no data anyone wants exists at those versions.
+                    .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1, 2, 3, 4)
                     .addCallback(SeedCallback)
                     .build()
                 INSTANCE = instance

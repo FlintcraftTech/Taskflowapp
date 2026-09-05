@@ -1,4 +1,4 @@
-# [HASH] — /plan [left-edge-swipe-collision]: a three-way edge collision shrank to one real defect — the back gesture closes the app from the spine, unhandled
+# 9e24ba7 — /plan [left-edge-swipe-collision]: a three-way edge collision shrank to one real defect — the back gesture closes the app from the spine, unhandled
 
 Filed by the user on 2026-09-02 as a collision between Android's back gesture, the spine's own paging
 and the drawer's swipe-to-open, and read as something that had to be settled before the pages left of

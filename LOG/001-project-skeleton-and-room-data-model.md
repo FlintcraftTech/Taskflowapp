@@ -1,4 +1,4 @@
-# 0001 — 2026-05-24 — Project skeleton and Room data model
+# 1e4b29a — 2026-05-24 — Project skeleton and Room data model
 
 **What shipped.** Android project structure with Kotlin/Jetpack Compose, Room database entities (Task, Project, StrategyEntry), DAOs, repositories, and instrumentation test files for TaskDao and ProjectDao. All 20 files written and ticked. One prerequisite carve-out: AndroidManifest.xml updated with `android:name='.TaskflowApplication'`. See TEST-LOG rows 001-011.
 
