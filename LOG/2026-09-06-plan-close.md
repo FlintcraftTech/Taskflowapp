@@ -1,4 +1,4 @@
-# [HASH] — /plan chat-level record: twelve entries processed, the cleared region 3 → 11, and three device checks that overturned what the queue believed
+# 5fa5c85 — /plan chat-level record: twelve entries processed, the cleared region 3 → 11, and three device checks that overturned what the queue believed
 
 Recorded 2026-09-06, 00:29. This session ran across 2026-09-05 and 2026-09-06.
 

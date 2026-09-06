@@ -1,4 +1,4 @@
-# [HASH] — The outliner is not missing: a new subtask line is destroyed by the parser that reads it back, and the item was rewritten around the real defect
+# 5fa5c85 — The outliner is not missing: a new subtask line is destroyed by the parser that reads it back, and the item was rewritten around the real defect
 
 Recorded 2026-09-06, 00:29.
 

@@ -1,4 +1,4 @@
-# [HASH] — Deleted, does not reproduce: Search shows the completed history on the build now on the phone, and the cause of the audit's verdict is left unexplained rather than guessed
+# 5fa5c85 — Deleted, does not reproduce: Search shows the completed history on the build now on the phone, and the cause of the audit's verdict is left unexplained rather than guessed
 
 Recorded 2026-09-06, 00:29.
 

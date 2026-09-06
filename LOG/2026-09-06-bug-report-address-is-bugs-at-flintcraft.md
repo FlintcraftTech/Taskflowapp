@@ -1,4 +1,4 @@
-# [HASH] — Deleted after its content moved into the Help wording item, taking with it a half-falsified reason from the 2026-08-31 bug-report decision
+# 5fa5c85 — Deleted after its content moved into the Help wording item, taking with it a half-falsified reason from the 2026-08-31 bug-report decision
 
 Recorded 2026-09-06, 00:29.
 

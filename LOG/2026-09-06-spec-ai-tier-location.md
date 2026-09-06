@@ -1,4 +1,4 @@
-# [HASH] — Deleted after the SPEC edit: §Settings no longer lists the AI tier, so the two sections that disagreed now agree with the build
+# 5fa5c85 — Deleted after the SPEC edit: §Settings no longer lists the AI tier, so the two sections that disagreed now agree with the build
 
 Recorded 2026-09-06, 00:29.
 

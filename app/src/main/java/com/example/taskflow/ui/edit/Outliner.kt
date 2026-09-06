@@ -68,14 +68,19 @@ data class Outline(
         /**
          * Reads the edited text back into a parent and its children.
          *
-         * The first non-blank line is the parent, whatever its indentation — a user who indents
-         * everything still has a task rather than an orphaned list. After that, every non-blank
-         * line is a child, indented or not: a line the user typed without the indent is far more
-         * likely to be a child they meant than a second parent this dialogue has no way to hold.
-         * Blank lines are dropped, so pressing Enter and thinking better of it leaves nothing.
+         * The first line is the parent, whatever its indentation — a user who indents everything
+         * still has a task rather than an orphaned list. Every later line is a child, indented or
+         * not: a line the user typed without the indent is far more likely to be a child they
+         * meant than a second parent this dialogue has no way to hold.
+         *
+         * **Empty lines are kept.** A child is empty at the exact moment it is created — pressing
+         * Enter opens a blank line for the user to type into — so dropping empty lines here would
+         * discard every new subtask before it could be typed into, which is precisely what it used
+         * to do. Abandoning a half-typed line still leaves nothing behind, but that now happens on
+         * save (see EditTaskViewModel), which is the moment the rule was actually written for.
          */
         fun parse(text: String): Outline {
-            val lines = text.split('\n').map { it.trim() }.filter { it.isNotEmpty() }
+            val lines = text.split('\n').map { it.trim() }
             if (lines.isEmpty()) return Outline("", emptyList())
             return Outline(parentTitle = lines.first(), children = lines.drop(1))
         }

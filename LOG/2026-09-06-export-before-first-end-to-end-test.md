@@ -1,4 +1,4 @@
-# [HASH] — Deleted after its content moved: the end-to-end test's walkthrough now opens on a JSON export
+# 5fa5c85 — Deleted after its content moved: the end-to-end test's walkthrough now opens on a JSON export
 
 Recorded 2026-09-06, 00:29.
 

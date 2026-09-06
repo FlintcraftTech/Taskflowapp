@@ -1,4 +1,4 @@
-# [HASH] — Kept as an [audit] with a stale build caveat corrected and one check split out as user work Claude cannot drive
+# 5fa5c85 — Kept as an [audit] with a stale build caveat corrected and one check split out as user work Claude cannot drive
 
 Recorded 2026-09-06, 00:29.
 

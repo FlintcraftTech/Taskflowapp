@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -176,14 +176,15 @@ private fun NoDateTile(selected: Boolean, width: Dp, onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .width(width)
-            .height(TILE_HEIGHT)
+            .heightIn(min = TILE_MIN_HEIGHT)
             .clip(RoundedCornerShape(TILE_CORNER))
             .background(if (selected) colors.primaryContainer else colors.surfaceVariant)
             .border(
                 BorderStroke(if (selected) 2.dp else 1.dp, colors.outline),
                 RoundedCornerShape(TILE_CORNER),
             )
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .padding(vertical = TILE_VERTICAL_PADDING),
     ) {
         Text(
             text = "No\ndate",
@@ -214,7 +215,7 @@ private fun DateTile(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .width(width)
-            .height(TILE_HEIGHT)
+            .heightIn(min = TILE_MIN_HEIGHT)
             .clip(RoundedCornerShape(TILE_CORNER))
             .background(if (selected) colors.primaryContainer else colors.surface)
             .then(
@@ -233,7 +234,8 @@ private fun DateTile(
             .clickable(onClick = onClick)
             // Selection and the today anchor stay at full strength; only unselected ordinary tiles
             // carry the distance fade, so the two things the eye looks for are never dimmed.
-            .alpha(if (selected || isToday) 1f else fade),
+            .alpha(if (selected || isToday) 1f else fade)
+            .padding(vertical = TILE_VERTICAL_PADDING),
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
@@ -272,8 +274,16 @@ private const val DAYS_AFTER: Long = 365
 private val MIN_TILE_WIDTH = 48.dp
 private const val MIN_TILE_COUNT: Int = 4
 
-// Three lines now: weekday, day number, month name.
-private val TILE_HEIGHT = 64.dp
+// Three lines: weekday, day number, month name. A tile's height FOLLOWS that content — this is a
+// floor, not a size. The old fixed height cut the month row through the middle of its letters
+// whenever the three lines needed more room than 64.dp, which is what a larger user font scale
+// does; a bigger fixed number would only move the point at which it happened. The floor is kept so
+// tiles read as one even row when the content is short, since a LazyRow gives them no shared
+// height to fall back on.
+private val TILE_MIN_HEIGHT = 64.dp
+
+// Breathing room inside the tile, so descenders never sit flush against the border.
+private val TILE_VERTICAL_PADDING = 4.dp
 private val TILE_GAP = 6.dp
 private val TILE_CORNER = 8.dp
 

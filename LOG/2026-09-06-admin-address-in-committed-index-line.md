@@ -1,4 +1,4 @@
-# [HASH] — Deleted after the scrub: the admin address is out of the working copy in all three places, and history keeping it is accepted rather than fixed
+# 5fa5c85 — Deleted after the scrub: the admin address is out of the working copy in all three places, and history keeping it is accepted rather than fixed
 
 Recorded 2026-09-06, 00:29.
 

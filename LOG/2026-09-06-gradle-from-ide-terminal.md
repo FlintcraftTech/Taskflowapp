@@ -1,4 +1,4 @@
-# [HASH] — Kept as a `[user]` fact-finding try, with what a success would actually cost split into its own entry on Alex's reading
+# 5fa5c85 — Kept as a `[user]` fact-finding try, with what a success would actually cost split into its own entry on Alex's reading
 
 Recorded 2026-09-06, 00:29.
 

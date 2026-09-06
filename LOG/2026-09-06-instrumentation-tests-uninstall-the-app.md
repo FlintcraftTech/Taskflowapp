@@ -1,4 +1,4 @@
-# [HASH] — Red flag cleared by informed acceptance: no AGP setting stops a test run uninstalling the app, so the answer is export-first written into TOOLS.md
+# 5fa5c85 — Red flag cleared by informed acceptance: no AGP setting stops a test run uninstalling the app, so the answer is export-first written into TOOLS.md
 
 Recorded 2026-09-06, 00:29.
 

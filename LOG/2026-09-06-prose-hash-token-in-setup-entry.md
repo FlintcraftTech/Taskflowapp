@@ -1,4 +1,4 @@
-# [HASH] — Deleted, premise false on reading the mechanism: the backfill cannot touch a placeholder written in prose, and cannot false-alarm on one either
+# 5fa5c85 — Deleted, premise false on reading the mechanism: the backfill cannot touch a placeholder written in prose, and cannot false-alarm on one either
 
 Recorded 2026-09-06, 00:29.
 

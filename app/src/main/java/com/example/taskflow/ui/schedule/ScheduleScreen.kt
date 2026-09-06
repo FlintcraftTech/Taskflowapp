@@ -10,13 +10,16 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.icons.Icons
@@ -45,6 +48,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -306,78 +310,104 @@ private fun SpineHeader(
             .padding(vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        // Menu key in the cleared top-left corner (SPEC §Side menu).
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .size(48.dp)
-                .clickable(onClick = onMenuClick),
-            contentAlignment = Alignment.Center,
+        // Three slots laid out side by side rather than stacked on top of each other. The end slot
+        // used to be positioned over the centred title, so a focused Project's name drew across the
+        // next-page chevron — the header read "AU>DIT-PROJ" with a ten-character name, and a longer
+        // one buried the chevron entirely. Giving each slot its own horizontal space means the name
+        // yields to the chevron however long it is, by construction rather than by fitting.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(
-                text = "☰",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-        // Centred current-page title flanked by chevrons.
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Chevron(
-                icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = "Previous day",
-                visible = hasPrevious,
-                onClick = onPrevious,
-            )
-            AnimatedSpineTitle(page = page)
-            Chevron(
-                icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Next day",
-                visible = hasNext,
-                onClick = onNext,
-            )
-        }
-        // A page's own action, in the end corner. Only Strategy supplies one, and the corner is
-        // otherwise the pick-up delete target's — which claims it only while a task is held, and
-        // Strategy holds headings and paragraphs rather than tasks, so the two never collide.
-        if (focusedProjectName == null && trailing != null) {
+            // Menu key in the cleared top-left corner (SPEC §Side menu).
             Box(
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 4.dp),
+                    .size(48.dp)
+                    .clickable(onClick = onMenuClick),
                 contentAlignment = Alignment.Center,
             ) {
-                trailing()
+                Text(
+                    text = "☰",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
-        }
-        // The focused Project's name with an X, so leaving focus is always one tap away.
-        if (focusedProjectName != null) {
+            // Current-page title flanked by chevrons, centred in whatever the two ends leave.
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 4.dp),
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.weight(1f),
             ) {
-                Text(
-                    text = focusedProjectName,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                Chevron(
+                    icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "Previous day",
+                    visible = hasPrevious,
+                    onClick = onPrevious,
                 )
-                Box(
+                AnimatedSpineTitle(page = page)
+                Chevron(
+                    icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Next day",
+                    visible = hasNext,
+                    onClick = onNext,
+                )
+            }
+            // The end slot. While focused it carries the Project's name with an X, so leaving focus
+            // is always one tap away; otherwise it carries the page's own action. Only Strategy
+            // supplies one, and the corner is otherwise the pick-up delete target's — which claims
+            // it only while a task is held, and Strategy holds headings and paragraphs rather than
+            // tasks, so the two never collide.
+            if (focusedProjectName != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    // Capped so a long Project name cannot squeeze the title and chevrons out of
+                    // the middle; past the cap the name is ellipsised instead.
                     modifier = Modifier
-                        .size(40.dp)
-                        .clickable(onClick = onExitFocus),
-                    contentAlignment = Alignment.Center,
+                        .widthIn(max = FOCUS_CHIP_MAX_WIDTH)
+                        .padding(end = 4.dp),
                 ) {
                     Text(
-                        text = "✕",
-                        style = MaterialTheme.typography.titleMedium,
+                        text = focusedProjectName,
+                        style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
                     )
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clickable(onClick = onExitFocus),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "✕",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        )
+                    }
                 }
+            } else if (trailing != null) {
+                Box(
+                    modifier = Modifier.padding(end = 4.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    trailing()
+                }
+            } else {
+                // Balances the menu key, so with nothing at the end the title stays optically
+                // centred in the bar exactly as it did before this became a Row.
+                Spacer(modifier = Modifier.size(48.dp))
             }
         }
     }
 }
+
+// A focused Project's name gets at most this much of the bar. Derived from the bar's other
+// occupants rather than picked: the 48.dp menu key, two chevrons and the title frame need the
+// middle, and the X inside this chip is 40.dp of it — so the name itself keeps a readable ~90.dp
+// and ellipsises past that instead of pushing anything aside.
+private val FOCUS_CHIP_MAX_WIDTH = 136.dp
 
 /** The current page name, in a fixed-width frame, sliding in the same direction as a page move. */
 @Composable

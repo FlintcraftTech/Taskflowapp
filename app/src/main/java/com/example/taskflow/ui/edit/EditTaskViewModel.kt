@@ -272,6 +272,10 @@ class EditTaskViewModel(
         val f = form.value
         val outline = Outline.parse(f.outline)
         if (outline.parentTitle.isBlank()) return
+        // Empty child lines are dropped here rather than in Outline.parse, so that a line which is
+        // empty only because it has just been created survives long enough to be typed into. This
+        // is where "pressing Enter and thinking better of it leaves nothing" actually happens.
+        val children = outline.children.filter { it.isNotBlank() }
         viewModelScope.launch {
             if (f.isNew) {
                 val parentId = taskRepository.insert(
@@ -294,7 +298,7 @@ class EditTaskViewModel(
                 // Subtasks typed in on a brand-new task are inserted under it once it has an id.
                 // They inherit the parent's Project and carry no date or slot of their own
                 // (SPEC §Subtasks live under their parent).
-                outline.children.forEachIndexed { index, childTitle ->
+                children.forEachIndexed { index, childTitle ->
                     taskRepository.insert(
                         Task(
                             title = childTitle,
@@ -339,7 +343,7 @@ class EditTaskViewModel(
                     )
                 }
                 taskRepository.update(updated)
-                syncChildren(o.id, f, outline.children)
+                syncChildren(o.id, f, children)
             }
             onSaved()
         }
@@ -419,10 +423,15 @@ class EditTaskViewModel(
         val f = form.value
         val outline = Outline.parse(f.outline)
         if (childIndex !in outline.children.indices) return
+        // A line that is still empty has nothing to promote, and empty lines never reach the
+        // database — so the row to promote is found by counting only the lines that do.
+        if (outline.children[childIndex].isBlank()) return
+        val children = outline.children.filter { it.isNotBlank() }
+        val savedIndex = outline.children.take(childIndex).count { it.isNotBlank() }
         val parentId = original?.id ?: return
         viewModelScope.launch {
-            syncChildren(parentId, f, outline.children)
-            val childId = taskRepository.getSubtasksList(parentId).getOrNull(childIndex)?.id
+            syncChildren(parentId, f, children)
+            val childId = taskRepository.getSubtasksList(parentId).getOrNull(savedIndex)?.id
                 ?: return@launch
             promoteSubtask(childId)
             // The promoted line leaves the outline, and the form's picture of the saved children
