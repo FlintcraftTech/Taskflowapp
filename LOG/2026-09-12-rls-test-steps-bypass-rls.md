@@ -1,4 +1,4 @@
-# [HASH] — /plan [rls-test-steps-bypass-rls]: deleted as a finding, not work — the entry it existed to fix had already left the queue, so the knowledge went to the research file
+# d6ac7e8 — /plan [rls-test-steps-bypass-rls]: deleted as a finding, not work — the entry it existed to fix had already left the queue, so the knowledge went to the research file
 
 The capture's job was to stop [supabase-apply-cloud-migrations] carrying security
 test steps that could not work: they query the tables in Supabase's SQL editor,

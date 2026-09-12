@@ -1,4 +1,4 @@
-# [HASH] — /plan [day-begins-at-hour-granularity]: deleted after settling whole hours as deliberate, with SPEC rewritten so it is not re-filed
+# d6ac7e8 — /plan [day-begins-at-hour-granularity]: deleted after settling whole hours as deliberate, with SPEC rewritten so it is not re-filed
 
 Settings → Day begins at offers twenty-four whole hours and no minutes, so someone
 whose day turns at 4:30 cannot say so. SPEC justified the setting by the person who

@@ -1,4 +1,4 @@
-# [HASH] — /plan chat-level record: sixteen entries processed, the queue re-pointed at a month of real use, and three items whose premise turned out to be false
+# d6ac7e8 — /plan chat-level record: sixteen entries processed, the queue re-pointed at a month of real use, and three items whose premise turned out to be false
 
 This session ran across 2026-09-06, 2026-09-07, 2026-09-08 and 2026-09-12, and the
 plugin moved from 1.22.0-test2 to 1.22.0-test5 partway through, which is why the

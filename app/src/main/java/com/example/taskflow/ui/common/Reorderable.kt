@@ -24,6 +24,16 @@ import androidx.compose.ui.zIndex
 import kotlin.math.roundToInt
 
 /**
+ * What a [ReorderableColumn] row's content can reach: a way to say "this part is what picks the row
+ * up". Only meaningful alongside `dragFromHandleOnly`; a caller that leaves that off never needs it
+ * and can ignore the receiver entirely, which is why every existing call site is unchanged.
+ */
+interface ReorderableItemScope {
+    /** Marks this element as the row's drag handle. */
+    fun Modifier.dragHandle(): Modifier
+}
+
+/**
  * The app's one drag primitive: a vertical list whose rows the user can pick up by long-press and
  * drag into a new position (SPEC §Reorder within a Schedule slot).
  *
@@ -44,6 +54,11 @@ import kotlin.math.roundToInt
  * - **The horizontal axis is left to the caller.** [onHorizontalDrag] receives the sideways
  *   component of the same gesture, so dragging a task off the side of the page (to reschedule it
  *   onto another slot) composes with reordering rather than needing a second, competing gesture.
+ * - **The whole row picks up by default; a caller may narrow that to one part.** Set
+ *   [dragFromHandleOnly] and the row itself no longer responds — the gesture goes wherever the
+ *   caller puts `Modifier.dragHandle()` inside [itemContent]. The Strategy doc needs this: a
+ *   section is a heading with an editable paragraph under it, and a long-press meant to select a
+ *   word in the paragraph must not start a drag.
  *
  * Reordering is shown live and committed once: the rows rearrange under the finger against a local
  * copy of the order, and [onMove] is called with the final from/to only on release. Calling it on
@@ -63,7 +78,10 @@ fun <T> ReorderableColumn(
     // icons hover-test against this; reordering itself has no use for it.
     onDragPosition: (Offset?) -> Unit = {},
     onDragEnd: (T) -> Unit = {},
-    itemContent: @Composable (item: T, isDragging: Boolean) -> Unit,
+    // When true the row itself does not pick up; the gesture lives on whatever the caller marks
+    // with Modifier.dragHandle() inside itemContent.
+    dragFromHandleOnly: Boolean = false,
+    itemContent: @Composable ReorderableItemScope.(item: T, isDragging: Boolean) -> Unit,
 ) {
     // The order shown right now. Reset whenever the incoming list changes, which includes the
     // recomposition that follows a committed move — so the committed order replaces the local one
@@ -84,18 +102,14 @@ fun <T> ReorderableColumn(
             val itemKey = keySelector(item)
             val isDragging = draggingKey == itemKey
             key(itemKey) {
-                Column(
-                    modifier = Modifier
-                        .onGloballyPositioned {
-                            heights[itemKey] = it.size.height
-                            origins[itemKey] = it.boundsInWindow().topLeft
-                        }
-                        // The dragged row rides above its neighbours and follows the finger; every
-                        // other row sits where the live reordering has already put it.
-                        .zIndex(if (isDragging) 1f else 0f)
-                        .offset { IntOffset(0, if (isDragging) dragOffsetY.roundToInt() else 0) }
-                        .pointerInput(itemKey) {
-                            detectDragGesturesAfterLongPress(
+                // The gesture, as a modifier that can be attached either to the whole row or to
+                // whatever the caller marks as the handle. It also reports the origin used to put
+                // pointer positions into window coordinates, so that origin always belongs to the
+                // element the finger is actually on.
+                val dragGesture = Modifier
+                    .onGloballyPositioned { origins[itemKey] = it.boundsInWindow().topLeft }
+                    .pointerInput(itemKey) {
+                        detectDragGesturesAfterLongPress(
                                 onDragStart = { start ->
                                     draggingKey = itemKey
                                     dragOffsetY = 0f
@@ -132,9 +146,22 @@ fun <T> ReorderableColumn(
                                     onDragEnd(item)
                                 },
                             )
-                        },
+                    }
+
+                val scope = object : ReorderableItemScope {
+                    override fun Modifier.dragHandle(): Modifier = this.then(dragGesture)
+                }
+
+                Column(
+                    modifier = Modifier
+                        .onGloballyPositioned { heights[itemKey] = it.size.height }
+                        // The dragged row rides above its neighbours and follows the finger; every
+                        // other row sits where the live reordering has already put it.
+                        .zIndex(if (isDragging) 1f else 0f)
+                        .offset { IntOffset(0, if (isDragging) dragOffsetY.roundToInt() else 0) }
+                        .then(if (dragFromHandleOnly) Modifier else dragGesture),
                 ) {
-                    itemContent(item, isDragging)
+                    scope.itemContent(item, isDragging)
                 }
             }
         }

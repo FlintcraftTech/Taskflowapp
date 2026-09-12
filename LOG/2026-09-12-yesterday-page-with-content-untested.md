@@ -1,4 +1,4 @@
-# [HASH] — /plan [yesterday-page-with-content-untested]: kept as an [audit] held against the first real day of use, with the crafted-import route refused rather than forgotten
+# d6ac7e8 — /plan [yesterday-page-with-content-untested]: kept as an [audit] held against the first real day of use, with the crafted-import route refused rather than forgotten
 
 The Yesterday page passed three of SPEC's four claims on the device and the fourth
 went untested, because nothing had been completed the day before. A page that

@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -57,6 +58,7 @@ import com.example.taskflow.data.model.ScheduleSlot
 import com.example.taskflow.ui.common.DragTarget
 import com.example.taskflow.ui.common.DragTargetRow
 import com.example.taskflow.ui.history.SearchScreen
+import java.time.LocalDate
 import com.example.taskflow.ui.history.YesterdayScreen
 import com.example.taskflow.ui.navigation.SpinePage
 import com.example.taskflow.ui.strategy.StrategyScreen
@@ -83,6 +85,9 @@ fun ScheduleScreen(
     modifier: Modifier = Modifier,
     focusedProjectId: Long? = null,
     onFocusProject: (Long?) -> Unit = {},
+    // Opening a day as a card belongs to the layer above the spine, so the Search page's taps are
+    // handed upward rather than acted on here.
+    onOpenDay: (LocalDate) -> Unit = {},
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as TaskflowApplication
@@ -117,6 +122,10 @@ fun ScheduleScreen(
     var draggedTaskId by remember { mutableStateOf<Long?>(null) }
     var dragPosition by remember { mutableStateOf<Offset?>(null) }
     var hoveredTarget by remember { mutableStateOf<DragTarget?>(null) }
+    // Where the target row has laid itself out, reported by the row as it is measured. Inside this
+    // area the drag belongs to the targets and the page does not turn — without that, reaching a
+    // target and turning a page are the same motion and the page turn always wins.
+    var targetRowBounds by remember { mutableStateOf<Rect?>(null) }
     val clipboard = LocalClipboardManager.current
 
     // The view-model owns the filtering; the caller owns the value, because capture needs it too.
@@ -181,12 +190,14 @@ fun ScheduleScreen(
                             val target = SpinePage.entries.first { it.slot == destination }
                             scope.launch { pagerState.animateScrollToPage(target.ordinal) }
                         },
+                        onOpenDay = onOpenDay,
                         modifier = Modifier.fillMaxSize(),
                     )
                     SpinePage.YESTERDAY -> YesterdayScreen(modifier = Modifier.fillMaxSize())
                     SpinePage.STRATEGY -> StrategyScreen(
                         sections = strategySections,
                         onDescriptionChange = strategyViewModel::setDescription,
+                        onReorder = strategyViewModel::reorderProjects,
                         modifier = Modifier.fillMaxSize(),
                     )
                     else -> Unit
@@ -217,17 +228,31 @@ fun ScheduleScreen(
                     },
                     onTaskDragPosition = { dragPosition = it },
                     onTaskDragHorizontal = { dx ->
-                        dragSideways += dx
-                        // A push past the threshold turns one page, and the accumulator resets so a
-                        // continued push can turn the next. The spine's ends simply don't move.
-                        if (dragSideways <= -DRAG_PAGE_THRESHOLD &&
-                            pagerState.currentPage < SpinePage.entries.lastIndex
-                        ) {
-                            dragSideways = 0f
-                            scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
-                        } else if (dragSideways >= DRAG_PAGE_THRESHOLD && pagerState.currentPage > 0) {
-                            dragSideways = 0f
-                            scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
+                        // Inside the target row's own footprint the drag belongs to the targets, so
+                        // the accumulator is left alone and the page stays put. Below the row,
+                        // sideways still reschedules exactly as it did.
+                        val overTargets = targetRowBounds?.let { row ->
+                            dragPosition?.let { row.contains(it) }
+                        } == true
+                        if (!overTargets) {
+                            dragSideways += dx
+                            // A push past the threshold turns one page, and the accumulator resets
+                            // so a continued push can turn the next. The spine's ends don't move.
+                            if (dragSideways <= -DRAG_PAGE_THRESHOLD &&
+                                pagerState.currentPage < SpinePage.entries.lastIndex
+                            ) {
+                                dragSideways = 0f
+                                scope.launch {
+                                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                }
+                            } else if (dragSideways >= DRAG_PAGE_THRESHOLD &&
+                                pagerState.currentPage > 0
+                            ) {
+                                dragSideways = 0f
+                                scope.launch {
+                                    pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                }
+                            }
                         }
                     },
                     onTaskDragEnd = { taskId ->
@@ -265,6 +290,7 @@ fun ScheduleScreen(
                 targets = listOf(DragTarget.BIN, DragTarget.CUT),
                 dragPosition = dragPosition,
                 onHoverChange = { hoveredTarget = it },
+                onBoundsChange = { targetRowBounds = it },
                 modifier = Modifier.align(Alignment.TopEnd),
             )
         }

@@ -1,4 +1,4 @@
-# [HASH] — /plan [day-begins-at-rollover-still-unrun]: kept as a [user] check, cleared, with its cleanup step changed from a delete nothing can perform to ticking the task off
+# d6ac7e8 — /plan [day-begins-at-rollover-still-unrun]: kept as a [user] check, cleared, with its cleanup step changed from a delete nothing can perform to ticking the task off
 
 Nobody has watched a task on the Tomorrow page roll onto the Today page at the day
 boundary. SPEC says such a task arrives with no label, no reordering and no shame,

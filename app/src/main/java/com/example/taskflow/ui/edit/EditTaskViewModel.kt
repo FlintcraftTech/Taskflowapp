@@ -67,6 +67,9 @@ data class EditUiState(
     // The task's repeat rule, or null for a one-off (SPEC §Recurring tasks). A repeat counts from
     // the task's own date, so the editor only offers one once a date is set.
     val recurrence: Recurrence? = null,
+    // The rotation's names, one per line, empty for a task with no rotation (SPEC §Recurring tasks).
+    // Only meaningful alongside a repeat rule, so the field is shown only when one is set.
+    val roster: String = "",
     // The outliner's text: the parent's title on the first line, one indented line per subtask
     // (SPEC §Edit dialogue: outliner-style typing for subtasks). [title] is its first line.
     val outline: String = "",
@@ -126,6 +129,7 @@ class EditTaskViewModel(
         val isNew: Boolean = true,
         val loaded: Boolean = true,
         val recurrence: Recurrence? = null,
+        val roster: String = "",
     )
 
     private val form = MutableStateFlow(initialForm())
@@ -148,6 +152,7 @@ class EditTaskViewModel(
                 today = SlotDeriver.logicalDate(clock(), zone, settings.dayBeginsAtHour),
                 projects = projects,
                 recurrence = f.recurrence,
+                roster = f.roster,
                 datePattern = settings.dateFormat.pattern,
             )
         }.stateIn(
@@ -173,6 +178,7 @@ class EditTaskViewModel(
                         isNew = false,
                         loaded = true,
                         recurrence = Recurrence.parse(task.recurrence),
+                        roster = task.roster,
                     )
                 }
             }
@@ -242,7 +248,17 @@ class EditTaskViewModel(
 
     /** Sets or clears the repeat rule (null = a one-off task again). SPEC §Recurring tasks. */
     fun onRecurrenceChange(recurrence: Recurrence?) {
-        form.value = form.value.copy(recurrence = recurrence)
+        // Dropping the repeat drops the rotation with it: a roster is a property of a repeating
+        // occasion, and one left behind on a one-off task would never be shown or advanced.
+        form.value = form.value.copy(
+            recurrence = recurrence,
+            roster = if (recurrence == null) "" else form.value.roster,
+        )
+    }
+
+    /** Sets the rotation's names, one per line. SPEC §Recurring tasks. */
+    fun onRosterChange(roster: String) {
+        form.value = form.value.copy(roster = roster)
     }
 
     /**
@@ -293,6 +309,7 @@ class EditTaskViewModel(
                             0
                         },
                         recurrence = f.recurrence?.serialize(),
+                        roster = f.roster,
                     )
                 )
                 // Subtasks typed in on a brand-new task are inserted under it once it has an id.
@@ -319,6 +336,7 @@ class EditTaskViewModel(
                     date = f.date,
                     slot = f.slot,
                     recurrence = f.recurrence?.serialize(),
+                    roster = f.roster,
                     // Changing the rule invalidates the ticked-off instances: they were dates the
                     // old rhythm produced, and keeping them would silently hide days the new one
                     // lands on. Turning a repeat off clears them for the same reason.

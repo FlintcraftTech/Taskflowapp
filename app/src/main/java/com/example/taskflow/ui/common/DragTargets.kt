@@ -50,6 +50,12 @@ enum class DragTarget(val glyph: String, val label: String) {
  * only this composable knows where the icons ended up on screen — each records its own bounds as it
  * is laid out, and the drag position is tested against them.
  *
+ * It also reports the area it has laid itself out into, via [onBoundsChange]. Reaching a target and
+ * turning the page are the same sideways motion, and the page turn fires first, which left every
+ * target unreachable; the caller suspends its page turn while the finger is inside this area. The
+ * row reports where it actually ended up rather than the caller reserving a band of its own, so
+ * there is no second measurement to keep in step with this one.
+ *
  * Text glyphs rather than Material icons: the icon pack is not a project dependency.
  */
 @Composable
@@ -59,13 +65,19 @@ fun DragTargetRow(
     dragPosition: Offset?,
     onHoverChange: (DragTarget?) -> Unit,
     modifier: Modifier = Modifier,
+    onBoundsChange: (Rect?) -> Unit = {},
 ) {
     val bounds = remember { mutableMapOf<DragTarget, Rect>() }
+
+    // While nothing is held the row is not on screen, so it claims no area at all.
+    LaunchedEffect(visible) { if (!visible) onBoundsChange(null) }
 
     AnimatedVisibility(visible = visible, enter = fadeIn(), exit = fadeOut(), modifier = modifier) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier
+                .padding(8.dp)
+                .onGloballyPositioned { onBoundsChange(it.boundsInWindow()) },
         ) {
             targets.forEach { target ->
                 val hovered = dragPosition?.let { bounds[target]?.contains(it) } == true

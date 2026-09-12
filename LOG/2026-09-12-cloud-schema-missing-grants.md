@@ -1,4 +1,4 @@
-# [HASH] — /plan [cloud-schema-missing-grants]: kept and cleared, with its three open questions settled — a new 0003 grants file, per-table, and no guards added to the migrations that already ran
+# d6ac7e8 — /plan [cloud-schema-missing-grants]: kept and cleared, with its three open questions settled — a new 0003 grants file, per-table, and no guards added to the migrations that already ran
 
 The cloud migrations create four tables and enable Row Level Security on each, and
 write sixteen policies — but grant the signed-in role no privilege on any table.

@@ -1,4 +1,4 @@
-# [HASH] — /plan [project-delete-later-premise-may-be-gone]: deleted after its question was answered — [project-delete-later] re-held and the sentence that wrongly cleared it rewritten
+# d6ac7e8 — /plan [project-delete-later-premise-may-be-gone]: deleted after its question was answered — [project-delete-later] re-held and the sentence that wrongly cleared it rewritten
 
 The capture existed because [project-delete-later] had been lifted into the
 cleared region on an argument that turned out to be false: that the drag gesture

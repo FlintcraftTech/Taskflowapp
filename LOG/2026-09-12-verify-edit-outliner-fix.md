@@ -1,4 +1,4 @@
-# [HASH] — /plan [verify-edit-outliner-fix]: filed and cleared — the unverified fix two held items were waiting on had no check of its own
+# d6ac7e8 — /plan [verify-edit-outliner-fix]: filed and cleared — the unverified fix two held items were waiting on had no check of its own
 
 Alex asked, mid-session, whether the app is yet safe to use for real without losing
 her tasks. Answering it from the record surfaced a gap nobody had filed: the fix

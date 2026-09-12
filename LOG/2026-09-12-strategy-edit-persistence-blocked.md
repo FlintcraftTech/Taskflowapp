@@ -1,4 +1,4 @@
-# [HASH] — /plan [strategy-edit-persistence-blocked]: its blocker resolved itself between filing and planning, so it became a cleared [audit] and picked up the share-sheet check as well
+# d6ac7e8 — /plan [strategy-edit-persistence-blocked]: its blocker resolved itself between filing and planning, so it became a cleared [audit] and picked up the share-sheet check as well
 
 The capture said the Strategy doc's edit persistence could not be checked: the doc
 is generated from Projects, the database held none, so there was no paragraph to

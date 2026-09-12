@@ -1,4 +1,4 @@
-# [HASH] — /plan [setup-log-entry-malformed-placeholder]: deleted, already done — the placeholder is filled and the opening warning has stopped
+# d6ac7e8 — /plan [setup-log-entry-malformed-placeholder]: deleted, already done — the placeholder is filled and the opening warning has stopped
 
 The capture existed because every session opening reported that
 `LOG/2026-08-25-setup.md` carried a commit-hash placeholder outside hash position,

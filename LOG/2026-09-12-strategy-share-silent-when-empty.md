@@ -1,4 +1,4 @@
-# [HASH] — /plan [strategy-share-silent-when-empty]: the guard the capture asked for already existed, so the item became "say why" rather than "add a check"
+# d6ac7e8 — /plan [strategy-share-silent-when-empty]: the guard the capture asked for already existed, so the item became "say why" rather than "add a check"
 
 An audit tapped Share on the Strategy page twice with no Projects in the database.
 No share sheet opened and a cleared logcat caught nothing at all. It read that as a

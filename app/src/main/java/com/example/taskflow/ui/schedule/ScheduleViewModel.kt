@@ -345,7 +345,8 @@ class ScheduleViewModel(
                 // A repeat: one row per instance inside the horizon, each bucketed by its own date.
                 for (instance in instancesOf(task, rule, date, now, settings)) {
                     val slot = SlotDeriver.slotForDate(instance.epochMillis, now, zone, hour)
-                    val ui = task.toUi(slot, now, instance.date, childrenByParent, settings)
+                    val ui =
+                        task.toUi(slot, now, instance.date, childrenByParent, settings, instance.label)
                     if (slot == ScheduleSlot.LATER) {
                         laterRows.add(task to ui)
                     } else {
@@ -396,7 +397,12 @@ class ScheduleViewModel(
     }
 
     /** One generated occurrence of a recurring task: the day it falls on, and that day as millis. */
-    private data class Instance(val date: LocalDate, val epochMillis: Long)
+    private data class Instance(
+        val date: LocalDate,
+        val epochMillis: Long,
+        /** The roster name this occasion falls to, or null on a task with no rotation. */
+        val label: String? = null,
+    )
 
     /**
      * The instances of [task] to render. The window opens at today and runs
@@ -419,9 +425,24 @@ class ScheduleViewModel(
         val today = SlotDeriver.logicalDate(now, zone, hour)
         val anchor = SlotDeriver.logicalDate(anchorMillis, zone, hour)
         val done = task.completedInstanceDates
+        val roster = task.rosterLabels
         return rule.instancesBetween(anchor, today, today.plusDays(Recurrence.HORIZON_DAYS))
             .filter { it !in done }
-            .map { Instance(it, noonEpoch(it)) }
+            // The roster advances by COMPLETION, not by date (SPEC §Recurring tasks): names are
+            // handed out in order to the instances still to come, starting from however many the
+            // user has already completed. An occasion nobody ticked adds no completion, so the same
+            // name is still up — a bad week costs the occasion, not the person's turn.
+            .mapIndexed { index, date ->
+                Instance(
+                    date = date,
+                    epochMillis = noonEpoch(date),
+                    label = if (roster.isEmpty()) {
+                        null
+                    } else {
+                        roster[(done.size + index) % roster.size]
+                    },
+                )
+            }
     }
 
     private fun noonEpoch(date: LocalDate): Long =
@@ -540,10 +561,13 @@ class ScheduleViewModel(
         instanceDate: LocalDate?,
         childrenByParent: Map<Long?, List<Task>>,
         settings: TaskflowSettings,
+        rosterLabel: String? = null,
     ): ScheduleTaskUi =
         ScheduleTaskUi(
             id = id,
-            title = title,
+            // A rotation's occasion is named on the row itself: the title with whichever name this
+            // occasion falls to (SPEC §Recurring tasks).
+            title = if (rosterLabel != null) "$title — $rosterLabel" else title,
             dateLabel = dateLabelFor(this, slot, now, instanceDate, settings),
             instanceDate = instanceDate,
             isRecurring = recurrence != null,

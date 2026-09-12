@@ -1,4 +1,4 @@
-# [HASH] — /plan [emulator-for-instrumented-tests]: filed and cleared — a virtual device so the app's tests stop being a threat to Alex's real tasks
+# d6ac7e8 — /plan [emulator-for-instrumented-tests]: filed and cleared — a virtual device so the app's tests stop being a threat to Alex's real tasks
 
 Came out of the session's own look-back. A connected instrumentation test run
 installs the app, runs the tests and then uninstalls both, taking the Room database

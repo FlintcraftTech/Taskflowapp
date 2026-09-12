@@ -1,4 +1,4 @@
-# [HASH] — /plan [help-thanks-report-content]: the writable words folded into the build that consumes them, leaving a capture that names only what is genuinely stuck
+# d6ac7e8 — /plan [help-thanks-report-content]: the writable words folded into the build that consumes them, leaving a capture that names only what is genuinely stuck
 
 This capture had been set aside three times — 2026-08-25, 2026-08-31, 2026-09-03 —
 always because two of Help's topics describe a Claude setup path that does not

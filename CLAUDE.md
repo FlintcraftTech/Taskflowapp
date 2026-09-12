@@ -41,9 +41,29 @@ Language: English
 
 **Building on Windows:** this machine hits Gradle's "Unable to delete directory … build" lock (Gradle's file-system watching, and/or Defender, holding handles on `build/`). Build with `--no-watch-fs --no-daemon` — e.g. `.\gradlew.bat :app:assembleDebug --no-watch-fs --no-daemon`. If a stale lock persists, stop the daemon (`.\gradlew.bat --stop`) and delete `app\build`. Verified working 2026-06-16.
 
+**Compiling during a build — hand the command over, never tick unconfirmed instead:** Claude's own shell cannot run `gradlew` on this machine (the loopback failure recorded in `TOOLS.md`). The route that works is Android Studio's integrated terminal. So when a build's work needs compiling, the build stops, hands Alex the command to paste there, and waits for the result before ticking the item. The handover carries these three lines, as typed lines:
+
+```
+cd "C:\Users\Alex 2\My Drive\Desktop\Prioritity projects\Taskflow Planning\Planning in here\Taskflowapp"
+```
+
+```
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+```
+
+```
+.\gradlew.bat :app:assembleDebug --no-watch-fs --no-daemon
+```
+
+The thing to look for is `BUILD SUCCESSFUL`. The `JAVA_HOME` line is stated because leaving it out is what failed the first attempt on 2026-09-06, and its absence produces a confusing error that looks like the loopback failure rather than a missing setting.
+
+**Never run a connected instrumentation test on Alex's phone without an export taken first.** While she is using Taskflow for real, no connected instrumented test run happens on the phone unless a JSON export has been taken from Settings and moved off the device beforehand. The hazard is recorded in `TOOLS.md`: a connected test run installs the app, runs the tests and then uninstalls both, taking the Room database with it, and on AGP 9.2.1 no build setting prevents it. Any queue item whose observation needs such a run says so in its own text, so an unattended session meets the condition before it drives the check rather than improvising at the moment it matters.
+
+**Work the queue for daily use, not for publishing, until Alex has had her month of real use.** She intends to use Taskflow daily for about a month, testing it and changing it as she goes, before considering publishing; the publishing blockers live in another project waiting on her financial and tax position. Until that month has happened, the queue is ordered for what makes daily use good rather than for what gets the app to the Play Store. The publishing chain is parked rather than abandoned.
+
 **Additional source-of-truth doc — `SYSTEM-PROMPT.md`:** the system prompt the remote MCP server hands Claude on connection (paid tier only). It covers life-area exploration, project-suggestion etiquette, Strategy doc reconciliation, proactive Taskflow checks, and tone. Treat it as locked during builds the same way SPEC.md is — the scope hook does not auto-lock it, so this is a rule to follow, not an enforced one: don't edit it during a build unless it's named in the build working file's Files: list. Planning resolutions that describe SYSTEM-PROMPT.md behaviour fold into it rather than SPEC.md. A work item that changes its domain carries a `Serves SYSTEM-PROMPT.md: ...` line.
 
-**Additional record doc — `TEST-LOG.md`:** a table of test outcomes, one row per test, per shipped work item, maintained by Claude during builds and planning. It predates this project's move to LOG/-based session records; it's kept as the running test history. New per-session test results are recorded in the LOG/ entry; reflect material test outcomes (pass/fail/skip) in TEST-LOG.md too when a build runs tests.
+**Additional record doc — `TEST-LOG.md`:** a table of test outcomes, one row per test, per shipped work item, maintained by Claude during builds and planning. It predates this project's move to LOG/-based session records; it's kept as the running test history. New per-session test results are recorded in the LOG/ entry; reflect material test outcomes (pass/fail/skip) in TEST-LOG.md too, **whoever produced them** — a build's tests, an `[audit]` run's device checks, and a `[user]` walkthrough's steps alike. The value of a running history is being the one place that says what has actually been exercised, and one that silently omits the checks a person ran is worse than none, because it reads as complete.
 
 **Archived backlog specs — `archive/backlog-specs/`:** the detailed original spec files (and the original backlog `INDEX.md`) from before this project adopted the single-file QUEUE.md. The summary of each now lives in its work item in QUEUE.md; the archived file is the full original spec. Reference material — not maintained going forward.
 

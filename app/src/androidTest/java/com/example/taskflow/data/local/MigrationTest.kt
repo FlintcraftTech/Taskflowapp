@@ -56,6 +56,36 @@ class MigrationTest {
         }
     }
 
+    @Test
+    fun migration5To6AddsRosterAndKeepsExistingRows() {
+        helper.createDatabase(TEST_DB, 5).apply {
+            execSQL(
+                "INSERT INTO projects (id, name, sort_order, is_system) VALUES (1, 'Unassigned', 0, 1)"
+            )
+            execSQL(
+                "INSERT INTO tasks (" +
+                    "title, notes, project_id, is_completed, project_suggestion_declined, " +
+                    "slot_sort_order, project_sort_order, completed_instances, recurrence" +
+                    ") VALUES ('Water the plants', '', 1, 0, 0, 0, 0, '', 'WEEK:1')"
+            )
+            close()
+        }
+
+        val migrated = helper.runMigrationsAndValidate(
+            TEST_DB, 6, true, TaskflowDatabase.MIGRATION_5_6,
+        )
+
+        migrated.query("SELECT title, recurrence, roster FROM tasks").use { cursor ->
+            assertEquals("the version 5 task should still be there", 1, cursor.count)
+            assertTrue(cursor.moveToFirst())
+            assertEquals("Water the plants", cursor.getString(0))
+            // The repeat rule is untouched: the roster is a property of the task, not of the rule.
+            assertEquals("WEEK:1", cursor.getString(1))
+            // An existing row arrives with no rotation, which is what an empty roster means.
+            assertEquals("", cursor.getString(2))
+        }
+    }
+
     private companion object {
         const val TEST_DB = "migration-test"
     }

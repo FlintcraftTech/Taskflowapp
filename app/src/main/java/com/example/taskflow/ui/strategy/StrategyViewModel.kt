@@ -66,6 +66,22 @@ class StrategyViewModel(
         }
     }
 
+    /**
+     * Sets Project order from the Strategy doc, which owns it app-wide — including the order of the
+     * cards on Later (SPEC §Strategy doc).
+     *
+     * The whole sequence is rewritten to 0..n-1 rather than nudging the moved row, the same pattern
+     * the Schedule reorders use: positions drift as Projects come and go, so writing the sequence
+     * out is what keeps the order well-defined.
+     */
+    fun reorderProjects(orderedProjectIds: List<Long>) {
+        viewModelScope.launch {
+            orderedProjectIds.forEachIndexed { index, projectId ->
+                projectRepository.updateSortOrder(projectId, index)
+            }
+        }
+    }
+
     /** The whole doc as markdown — what the share button hands to Android's share sheet. */
     fun renderMarkdown(sections: List<StrategySection>): String = buildString {
         sections.forEachIndexed { index, section ->

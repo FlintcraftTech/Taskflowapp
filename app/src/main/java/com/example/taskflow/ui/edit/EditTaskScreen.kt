@@ -162,6 +162,14 @@ fun EditTaskScreen(
                 anchor = state.selectedDate,
                 onRecurrenceChange = viewModel::onRecurrenceChange,
             )
+            // Only alongside a repeat rule: a rotation is a property of a repeating occasion, and
+            // there is nothing for it to advance through on a one-off task.
+            if (state.recurrence != null) {
+                RosterField(
+                    roster = state.roster,
+                    onRosterChange = viewModel::onRosterChange,
+                )
+            }
         }
     }
         DragTargetRow(
@@ -337,6 +345,37 @@ private fun DateField(
             onSelectDate = onSelectDate,
             onClearDate = onClearDate,
             modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+/**
+ * The rotation's roster (SPEC §Recurring tasks): an ordered list of names or subjects, one per line.
+ * Each instance shows the task's title with the next name from the list, and the list advances when
+ * an instance is completed rather than when its date passes — so a week the user does not get to
+ * costs that occasion but not that person's turn.
+ *
+ * A plain multi-line text box rather than a row-per-name editor: the list is short, its order is the
+ * whole of its meaning, and typing a line is the lightest way to express both.
+ */
+@Composable
+private fun RosterField(
+    roster: String,
+    onRosterChange: (String) -> Unit,
+) {
+    Column {
+        Text(
+            text = "Take turns",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedTextField(
+            value = roster,
+            onValueChange = onRosterChange,
+            placeholder = { Text("One name per line — each repeat takes the next.") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
         )
     }
 }

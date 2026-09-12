@@ -1,4 +1,4 @@
-# [HASH] — /plan [two-cleared-items-underspecified]: deleted after designing [project-reorder-strategy] out — its sibling's design waits on the drag fix instead
+# d6ac7e8 — /plan [two-cleared-items-underspecified]: deleted after designing [project-reorder-strategy] out — its sibling's design waits on the drag fix instead
 
 Two items sat cleared to run that no build could follow, because neither named
 files or said what changes inside them. A run on 2026-09-06 reached them, stopped,

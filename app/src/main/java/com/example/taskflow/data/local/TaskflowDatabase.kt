@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.taskflow.data.model.LifeArea
 import com.example.taskflow.data.model.Project
@@ -20,7 +21,9 @@ import com.example.taskflow.data.model.Task
     // v4: tasks gain `completed_at` — an export has to carry when work was finished, not just that
     // it was (SPEC §JSON export and import).
     // v5: the `life_areas` table, which only Claude ever touches through MCP (SPEC §Strategy doc).
-    version = 5,
+    // v6: tasks gain `roster` — the ordered list a recurring task cycles through (SPEC §Recurring
+    // tasks). Version 5 is the floor, so this is a real migration rather than a destructive one.
+    version = 6,
     exportSchema = true
 )
 abstract class TaskflowDatabase : RoomDatabase() {
@@ -46,10 +49,22 @@ abstract class TaskflowDatabase : RoomDatabase() {
                     // recorded schema in app/schemas. Only versions 1 to 4 may still be thrown
                     // away — no data anyone wants exists at those versions.
                     .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1, 2, 3, 4)
+                    .addMigrations(MIGRATION_5_6)
                     .addCallback(SeedCallback)
                     .build()
                 INSTANCE = instance
                 instance
+            }
+        }
+
+        /**
+         * 5 → 6: the `roster` column on `tasks`. Existing rows arrive with an empty roster, which
+         * is exactly a task with no rotation, so nothing already on a user's phone changes
+         * behaviour. A real migration rather than a destructive one because version 5 is the floor.
+         */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE tasks ADD COLUMN roster TEXT NOT NULL DEFAULT ''")
             }
         }
 

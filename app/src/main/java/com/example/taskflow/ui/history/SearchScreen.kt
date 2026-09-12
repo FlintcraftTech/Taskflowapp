@@ -31,13 +31,15 @@ import java.time.format.DateTimeFormatter
  * at that moment.
  *
  * **Results are read-only.** Nothing here completes or edits a task: tapping an active result
- * navigates to where that task actually lives. Editing and un-completing happen only from a day card
- * (SPEC §Day-detail card layer), which is what stops a tappable list of completed tasks becoming a
- * second place to change things — so a completed row is inert until that layer is built.
+ * navigates to where that task actually lives, and tapping a completed result or a date header opens
+ * that day as a card. Editing and un-completing happen only from a day card (SPEC §Day-detail card
+ * layer), which is what stops a tappable list of completed tasks becoming a second place to change
+ * things.
  */
 @Composable
 fun SearchScreen(
     onNavigateToSlot: (ScheduleSlot) -> Unit,
+    onOpenDay: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -83,6 +85,7 @@ fun SearchScreen(
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .clickable { onOpenDay(day.date) }
                         .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
                 )
                 day.tasks.forEach { task ->
@@ -93,6 +96,7 @@ fun SearchScreen(
                         textDecoration = TextDecoration.LineThrough,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable { onOpenDay(day.date) }
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                     )
                 }

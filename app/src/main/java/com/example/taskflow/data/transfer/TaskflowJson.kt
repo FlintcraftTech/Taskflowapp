@@ -71,6 +71,7 @@ object TaskflowJson {
                     .put("completedAt", task.completedAt ?: JSONObject.NULL)
                     .put("completedInstances", task.completedInstances)
                     .put("recurrence", task.recurrence ?: JSONObject.NULL)
+                    .put("roster", task.roster)
                     .put("projectSuggestionDeclined", task.projectSuggestionDeclined)
                     .put("slotSortOrder", task.slotSortOrder)
                     .put("projectSortOrder", task.projectSortOrder),
@@ -127,6 +128,8 @@ object TaskflowJson {
         completedAt = if (isNull("completedAt")) null else optLong("completedAt"),
         completedInstances = optString("completedInstances", ""),
         recurrence = if (isNull("recurrence")) null else optString("recurrence").takeIf { it.isNotBlank() },
+        // Absent in an export taken before rotations existed, which reads as a task with no roster.
+        roster = optString("roster", ""),
         projectSuggestionDeclined = optBoolean("projectSuggestionDeclined", false),
         slotSortOrder = optInt("slotSortOrder", 0),
         projectSortOrder = optInt("projectSortOrder", 0),

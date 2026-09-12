@@ -1,4 +1,4 @@
-# [HASH] — /plan [rotating-roster-recurrence]: four questions settled, the roster advancing on completion rather than on the calendar, and the free-choice half split off
+# d6ac7e8 — /plan [rotating-roster-recurrence]: four questions settled, the roster advancing on completion rather than on the calendar, and the free-choice half split off
 
 Alex's idea, raised 2026-09-06: one repeating task whose subject advances through
 an ordered list each time it comes round, instead of repeating unchanged. The

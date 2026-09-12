@@ -1,4 +1,4 @@
-# [HASH] — /plan [runs-in-android-studio-decision]: sessions stay in the desktop app, and the item became a CLAUDE.md build carrying three rules
+# d6ac7e8 — /plan [runs-in-android-studio-decision]: sessions stay in the desktop app, and the item became a CLAUDE.md build carrying three rules
 
 Alex raised the underlying question on 2026-09-05: compiling mid-run is only
 possible in a Claude session started from Android Studio's terminal, so having that

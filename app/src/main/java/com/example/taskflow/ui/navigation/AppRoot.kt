@@ -1,6 +1,7 @@
 package com.example.taskflow.ui.navigation
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.rememberPagerState
@@ -26,9 +27,11 @@ import com.example.taskflow.ui.onboarding.OnboardingScreen
 import com.example.taskflow.ui.onboarding.OnboardingViewModel
 import com.example.taskflow.ui.edit.EditTarget
 import com.example.taskflow.ui.edit.EditTaskScreen
+import com.example.taskflow.ui.history.DayCardLayer
 import com.example.taskflow.ui.schedule.ScheduleScreen
 import com.example.taskflow.ui.settings.SettingsScreen
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 /**
  * Top-level navigation host. Wraps the app in a left-edge drawer (SPEC §Side menu) over the
@@ -68,6 +71,11 @@ fun AppRoot(modifier: Modifier = Modifier) {
     // returns to whatever was underneath rather than the bare spine.
     var editTarget by remember { mutableStateOf<EditTarget?>(null) }
 
+    // The day the card layer is open on, or null when it is closed (SPEC §Day-detail card layer).
+    // It sits above the spine and below the edit dialogue, so tapping a completed task inside a card
+    // opens the editor over it and closing the editor returns to the card.
+    var dayCardDate by remember { mutableStateOf<LocalDate?>(null) }
+
     // Which Project the user is temporarily focused on (SPEC §Focus on one Project temporarily).
     // Held in a plain remember, not rememberSaveable, deliberately: focus must not survive the app
     // closing, and saved state is exactly what would carry it across a process death. It lives here
@@ -82,11 +90,16 @@ fun AppRoot(modifier: Modifier = Modifier) {
     //
     // Written as a list of cases rather than an if/else pair so a further layer above the spine —
     // the day-detail card — can be added as another case rather than by restructuring this.
-    val offTodayOnSpine = editTarget == null && overlay == null &&
+    val offTodayOnSpine = editTarget == null && overlay == null && dayCardDate == null &&
         pagerState.currentPage != SpinePage.TODAY.ordinal
-    BackHandler(enabled = editTarget != null || overlay != null || offTodayOnSpine) {
+    BackHandler(
+        enabled = editTarget != null || dayCardDate != null || overlay != null || offTodayOnSpine,
+    ) {
         when {
             editTarget != null -> editTarget = null
+            // Back closes the card and returns to the page it was opened from — the same "up one
+            // level" meaning the edit dialogue and the menu overlay already have.
+            dayCardDate != null -> dayCardDate = null
             overlay != null -> overlay = null
             // Animated rather than jumped, so back reads as travel along the spine and the user can
             // see which direction they came from.
@@ -164,14 +177,33 @@ fun AppRoot(modifier: Modifier = Modifier) {
                     modifier = contentModifier,
                 )
             } else if (currentOverlay == null) {
-                ScheduleScreen(
-                    pagerState = pagerState,
-                    onMenuClick = { scope.launch { drawerState.open() } },
-                    onTaskClick = openEditor,
-                    modifier = contentModifier,
-                    focusedProjectId = focusedProjectId,
-                    onFocusProject = { focusedProjectId = it },
-                )
+                Box(modifier = contentModifier) {
+                    ScheduleScreen(
+                        pagerState = pagerState,
+                        onMenuClick = { scope.launch { drawerState.open() } },
+                        onTaskClick = openEditor,
+                        modifier = Modifier.fillMaxSize(),
+                        focusedProjectId = focusedProjectId,
+                        onFocusProject = { focusedProjectId = it },
+                        onOpenDay = { dayCardDate = it },
+                    )
+                    val currentDay = dayCardDate
+                    if (currentDay != null) {
+                        DayCardLayer(
+                            date = currentDay,
+                            onTaskClick = openEditor,
+                            // Swiping left past the newest card carries the card layer and the
+                            // Search page off together, landing on Yesterday.
+                            onExitToYesterday = {
+                                dayCardDate = null
+                                scope.launch {
+                                    pagerState.animateScrollToPage(SpinePage.YESTERDAY.ordinal)
+                                }
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
             } else if (currentOverlay is Overlay.Settings) {
                 SettingsScreen(
                     onBack = { overlay = null },

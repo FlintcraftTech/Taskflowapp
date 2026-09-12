@@ -1,4 +1,4 @@
-# [HASH] — /plan [session-start-clock-eleven-hours-out]: deleted, premise false — the clock line was right when written and the session was resumed days later
+# d6ac7e8 — /plan [session-start-clock-eleven-hours-out]: deleted, premise false — the clock line was right when written and the session was resumed days later
 
 The capture reported that on 2026-09-06 the session opening stated 00:37 while the
 machine's clock and a phone both read 11:31, and proposed sending it to the method's

@@ -83,8 +83,21 @@ data class Task(
     // rest of the tail untouched (SPEC §Recurring tasks). Meaningless — and always empty — on a
     // one-off task, whose completion is the plain `is_completed` flag.
     @ColumnInfo(name = "completed_instances")
-    val completedInstances: String = ""
+    val completedInstances: String = "",
+
+    // An ordered roster for a recurring task: one label per line, empty for a task with no rotation
+    // (SPEC §Recurring tasks). Where it has one, each instance shows the task's title with the next
+    // name from the list, and the list advances when an instance is completed rather than when its
+    // date passes — so a week the user does not get to costs that occasion but not that person's
+    // turn. The roster lives on the task rather than on the Project: a Project is an area of the
+    // user's life, not a thing with members.
+    @ColumnInfo(name = "roster", defaultValue = "")
+    val roster: String = ""
 ) {
+    /** The roster's labels, in order. Empty for a task with no rotation. */
+    val rosterLabels: List<String>
+        get() = roster.lines().map { it.trim() }.filter { it.isNotEmpty() }
+
     /** The completed instance dates, parsed. Empty for a one-off task. */
     val completedInstanceDates: Set<java.time.LocalDate>
         get() = completedInstances.split(',')

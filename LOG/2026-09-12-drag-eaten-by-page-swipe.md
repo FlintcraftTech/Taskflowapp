@@ -1,4 +1,4 @@
-# [HASH] — /plan [drag-eaten-by-page-swipe]: the pager was not eating the drag — Taskflow turns the page itself, so the target row's own area now suspends it
+# d6ac7e8 — /plan [drag-eaten-by-page-swipe]: the pager was not eating the drag — Taskflow turns the page itself, so the target row's own area now suspends it
 
 The capture blamed Compose's horizontal pager for swallowing the drag that should
 carry a lifted task to the bin. Reading `ScheduleScreen.kt` showed otherwise:
