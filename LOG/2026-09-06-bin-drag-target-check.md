@@ -1,4 +1,4 @@
-# PENDING — /next [bin-drag-target-check]: halted mid-drive, because the gesture it tests is broken for a human thumb too
+# 6d6267c — /next [bin-drag-target-check]: halted mid-drive, because the gesture it tests is broken for a human thumb too
 
 **Outcome: halted mid-drive at step 2.** The check cannot be performed: dragging a lifted task navigates to
 the next page instead of dragging it, so no target can be reached. Filed as [drag-eaten-by-page-swipe].

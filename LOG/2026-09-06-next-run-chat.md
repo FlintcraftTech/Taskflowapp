@@ -1,4 +1,4 @@
-# PENDING — /next chat-level record: three fixes shipped and an audit run, then five user steps that put Supabase live, overturned a belief the queue had held for three sessions, and proved Claude's shell was never the problem
+# 6d6267c — /next chat-level record: three fixes shipped and an audit run, then five user steps that put Supabase live, overturned a belief the queue had held for three sessions, and proved Claude's shell was never the problem
 
 Session date and time: 2026-09-06, 22:12. The chat opened in the morning, was resumed in the evening, and
 the plugin was updated between the two halves — 1.22.0-test1 to 1.22.0-test2. The rules and `next.md` were

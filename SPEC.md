@@ -78,6 +78,10 @@ Recurring tasks created in Taskflow appear on whichever Schedule slot each insta
 
 Recurring tasks are capped at **30 days into the future**: instances dated more than a month from today are not shown until the world catches up to within a month of them. A yearly birthday reminder, for example, is invisible until you're within a month of the next instance. Manually-dated one-off tasks are not capped — a task you've manually dated for next year appears in Later normally.
 
+**A recurring task may carry a roster** — an ordered list of names or subjects, written one per line in the edit dialogue. Where it has one, each instance shows the task's title with the next name from the list, and the list advances **when an instance is completed**, not when its date passes. So a week the user does not get to costs that occasion but not that person's turn: the same name is still up next time. A rotation nobody completes therefore stops advancing, which is the accepted cost of never skipping anyone. A task with no roster is unchanged.
+
+The user needs this because a rotation held in the user's own head — four people to stay in touch with, evenly — is exactly the executive-function load this app exists to absorb, and because advancing on the calendar rather than on completion would quietly drop someone from the user's life because of one bad week (UX principle 4).
+
 The user needs this because recurring tasks generate an indefinite tail of future instances. Showing all of them would flood Later; showing only the next would lose the rhythm the user actually wants to see (every week's "water plants," for example, sitting there as a checklist of the coming month). The 30-day cap is the compromise.
 
 ### Tasks dated before today
@@ -170,6 +174,8 @@ Whenever the user picks up a task by drag (whether from a Schedule screen, inclu
 
 - **From a Schedule screen (including a Project's card on Later):** a **bin** target (delete the task) and a **cut** target (remove the task from Taskflow and place its content on the device clipboard).
 - **From inside an edit dialogue (subtask only):** **bin**, **cut**, and **promote** targets. Promote behaviour is described above.
+
+**The target row's own area does not turn the page.** Dragging a held task sideways across a Schedule screen turns the page under it, which is how drag-to-reschedule works (see *Drag a task between Schedule screens to reschedule*) — but while the finger is within the row of target icons, that page-turn is suspended and the drag belongs to the targets. Without this the two gestures share one axis and the page turn always wins, leaving every target unreachable.
 
 The cut/paste flow uses the **device's OS clipboard**, not a Taskflow-internal one. Cutting a task removes it from Taskflow and writes its content to the clipboard as plain text; a parent and its children go as a single indented block. Pasting happens inside the edit dialogue through the device's normal paste, and the outliner restores the parent/child hierarchy from the indentation — so a Taskflow-to-Taskflow cut and paste round-trips its structure, and pasted non-Taskflow text comes in as new lines by the same rule.
 
@@ -272,7 +278,7 @@ The doc is reachable from the side menu — a single calm row at the spine's rig
 
 **On the paid tier**, the same editor is used. On the user's first opening of the Strategy doc area after switching to the paid tier (e.g., starting a trial), Claude reads the existing content and looks for tasks that contradict the Strategy or seem missing from it; it presents what it finds in groups and asks the user what to do — never silently editing. After the initial pass, every time the user submits an edit, Claude reconciles downstream tasks the same way.
 
-A **share button** in the Strategy doc area lets the user share the doc (or a portion of it) via Android's standard share sheet — to a partner, parent, friend, or another app. Sharing the strategic picture with the people in the user's life is part of what gives a Strategy doc its function.
+A **share button** in the Strategy doc area lets the user share the doc (or a portion of it) via Android's standard share sheet — to a partner, parent, friend, or another app. It is unavailable until the user has at least one Project, since until then the doc has no content to send, and the doc's empty state says so rather than leaving a visibly present control unexplained. Sharing the strategic picture with the people in the user's life is part of what gives a Strategy doc its function.
 
 Life areas (e.g. Family, Work, Health) are not in the doc structure or anywhere in the UI. They are an abstract framing layer Claude carries (paid tier only) — see `SYSTEM-PROMPT.md` for how Claude builds and uses that picture.
 
@@ -292,9 +298,9 @@ The user needs this because there is a small set of app-level controls (Day begi
 
 ### Settings → Day begins at
 
-The Settings screen contains a single time picker called **Day begins at**. This is the only time picker in the entire app (UX principle 7). It controls when "today" rolls over for the user — used for the Tomorrow → Today rollover, for the calendar's "today" anchor in the side-scrolling date picker, and for any other place the app needs to know whether the user considers themselves to be in a new day yet. It ships with a default value of **4:00 AM**.
+The Settings screen contains a single boundary setting called **Day begins at**, chosen from a list of whole hours. This is the only place in the entire app where the user picks a time of day at all (UX principle 7), and it deliberately offers hours rather than minutes: a day boundary is a set-once preference, and offering minute precision would reintroduce the clock-time exactness Taskflow exists to leave out. It controls when "today" rolls over for the user — used for the Tomorrow → Today rollover, for the calendar's "today" anchor in the side-scrolling date picker, and for any other place the app needs to know whether the user considers themselves to be in a new day yet. It ships with a default value of **4:00 AM**.
 
-The user needs this because people who stay up past midnight do not consider the day to have ended — a task they meant to do "today" at 1 AM should still be on Today, not Tomorrow. A single, configurable cutoff lets the user define their own day boundary without polluting the rest of the app with time pickers.
+The user needs this because people who stay up past midnight do not consider the day to have ended — a task they meant to do "today" at 1 AM should still be on Today, not Tomorrow. A single configurable cutoff, to the hour, lets the user define their own day boundary without polluting the rest of the app with time pickers — and the hour is granular enough for the person this exists for, whose day turns somewhere in the small hours rather than at a precise minute.
 
 ### Settings → Date format
 
@@ -313,6 +319,8 @@ The user needs this because a calm surface is only calm if it matches the room t
 A side menu opens by **tapping the ☰ button in the top bar**, sliding in from the left as a drawer. Swipe-to-open is intentionally disabled — the ☰ is the one opener — so the gesture does not collide with the spine's horizontal-swipe navigation. The menu is a single navigation list that mirrors the spine from top to bottom: **Search**, **Yesterday**, **Today**, **Tomorrow**, **Soon**, **Later**, then a single calm row for the **Strategy doc**. Every page on the spine has a row, in spine order — Search most of all, since it is the page the user reaches for when they have lost something and swiping around hunting for it is the opposite of what they need. Tapping any entry opens that page. Projects are not listed in the menu — they live inside **Later** (see *Schedule view*), which is how the user reaches any Project.
 
 Pinned to the bottom of the drawer, separated from the navigation list, are the **app actions**: **Settings**, **Help**, **Thanks**, and **Report a bug**, plus a **"Turn on AI"** entry that re-triggers the AI choice flow on the free tier. The row names the destination and no more; making the case for the paid tier is the AI choice flow's job, on the screen the row opens.
+
+**Report a bug gives the user an email address to write to, and nothing more** — no form to fill in, no account to create, no issue tracker. Taskflow's users are mostly non-technical people, and an email is the one reporting route that asks nothing of them they do not already have.
 
 The user needs this because the menu gives one-tap reach to every page on the spine, in spine order, while the things that are not spine pages — app-level actions — sit apart at the bottom where Android users expect them, off the task surfaces.
 

@@ -1,4 +1,4 @@
-# PENDING — Subtasks made possible again by moving one rule: blank lines are dropped on save, not on every keystroke
+# 6d6267c — Subtasks made possible again by moving one rule: blank lines are dropped on save, not on every keystroke
 
 Session date and time: 2026-09-06, 22:06.
 

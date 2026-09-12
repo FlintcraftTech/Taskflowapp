@@ -1,4 +1,4 @@
-# PENDING — /next [verify-schedule-date-matrix]: the date matrix verified on a device, and the item's `[user]` tag found to be wrong
+# 6d6267c — /next [verify-schedule-date-matrix]: the date matrix verified on a device, and the item's `[user]` tag found to be wrong
 
 **Outcome: done**, on 2026-09-06 between 12:04 and 12:12, driven by Claude over adb rather than handed to
 Alex. All three slot cases pass.

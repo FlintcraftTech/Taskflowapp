@@ -6,6 +6,14 @@ domain transfers that would otherwise be researched again.
 
 ## What the options actually are
 
+**Netlify registers new domains but cannot RECEIVE a transfer of an existing one.** Corrected on
+2026-09-12 from a message sent by the project that owns the domain, which read Netlify's own
+documentation on 2026-09-09: transfers run outward only, and what Netlify offers for a domain
+registered elsewhere is DNS delegation — the registration stays put and the nameservers point at
+Netlify. Registering a new domain there is a different operation, which is where the confusion came
+from. Nothing else in this file falls: the transfer mechanics below, and the separation of registrar
+from mail provider, are unaffected.
+
 **Email is always a separate provider from the registrar.** Netlify, where the flintcraft.tech site
 is hosted, registers domains but provides no email service at all — no mailboxes and no forwarding.
 So there is no bundle to buy, and the registrar decision and the email decision are independent.

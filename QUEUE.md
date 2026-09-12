@@ -10,18 +10,158 @@
 > item carrying a `Red flag · State: cleared/uncleared` marker. The line below marks
 > how far down is cleared to build; anything below it is decided but not ready yet.
 
-#### Free-tier delete a Project on Later [project-delete-later]
+#### CLAUDE.md rules: handing a compile over mid-run, and ordering the queue for daily use before publishing [runs-in-android-studio-decision]
 
-**Lifted on 2026-09-05.** The drag gesture it waited on exists and has been driven on a real phone:
-[task-reorder-within-list] shipped on 2026-09-02, and the 2026-09-05 device audit dragged a task above
-another within Today and saw the order hold across a relaunch (TEST-LOG row 041), and dragged a task to
-the target row and back (row 043). The bin target itself was not separately hit — the audit says
-steering an adb drag between two adjacent targets is guesswork — so this build adds the Project-card
-case to a gesture that is proven, rather than inventing it.
+Adds a rule to this project's CLAUDE.md saying what a build does when its work needs compiling: it stops,
+hands Alex one command to paste into Android Studio's integrated terminal, and waits for the result
+before ticking the item.
 
-Free tier — long-press a Later Project card and drag it to a delete target in the upper-right, the same gesture used to delete a task. Deleting a Project does not delete its tasks: they reassign to the system Unassigned Project (reassign logic shipped in [unassigned-project-model]). SPEC §Create or delete a Project describes this. Carved from the retired [project-lifecycle-later] during planning on 2026-06-22 — its create half was promoted to [project-create-picker-ui], its three remaining pieces split out by dependency.
+**The decision behind it, settled with Alex on 2026-09-07: sessions stay in the desktop app.** She raised
+the underlying question on 2026-09-05, during the decision step on [gradle-from-ide-terminal], seeing
+what that item's payoff implied before it was written down — compiling mid-run is only possible in a
+Claude session started in Android Studio's terminal, so having the capability would mean moving whole
+runs there. Against that: a terminal session has none of the file viewer and side panel she reads the
+work through, and she is a no-code developer for whom that surface is not a convenience but how the work
+is legible at all. For it: a compile inside the run is what stops code items shipping ticked UNCONFIRMED.
 
-What actually holds it is the general drag + bin/delete drag-target gesture (SPEC §Drag-target icons), which doesn't exist anywhere in the app yet (confirmed 2026-06-22). Any of several items could deliver it — [task-reorder-within-list] builds the first drag primitive, and [0008-drag-task-between-schedule-screens], [0010-outliner-typing-drag-target-icons] or [0011-cut-and-paste-os-clipboard] would each bring the bin target. It is held against [task-reorder-within-list] because that is the one sitting nearest the top; if the bin gesture arrives by another route first, this lifts then instead. Build order doesn't matter — only that the bin gesture exists.
+**Refused: moving whole `/next` runs into that terminal**, on the legibility ground above. **Refused: a
+rule naming which items require it** — the middle option the capture proposed — because handing the
+command over works for every item, so nothing has to be classified. What is taken instead is a fourth
+route: stay in the desktop app and hand the compile over as a paste-in step, which is exactly what
+happened on 2026-09-06 and worked.
+
+**It also disposes of an unverified assumption rather than betting on it.** The capture named a second
+thing nobody had established — whether a Claude session started in that terminal loads the plugin, the
+skills and the hooks at all. Under this decision no session runs there, so the question never has to be
+answered. It is recorded here rather than dropped, in case the decision is ever revisited.
+
+The cost, stated: Alex has to be at the machine when a run wants a compile, so an unattended run still
+cannot confirm a build. That limitation is unchanged by this — it is simply not paid for with her
+working surface.
+
+**A third CLAUDE.md rule was folded in on 2026-09-12, from the look-back over this session.** While Alex
+is using Taskflow for real, no connected instrumentation test run happens on her phone without a JSON
+export taken from Settings first and moved off the device — and any queue item whose observation needs
+such a run says so in its own text, so an unattended session meets the condition before it drives the
+check rather than improvising at the moment it matters. The hazard is recorded in TOOLS.md: a connected
+test run installs the app, runs the tests and then uninstalls both, taking the Room database with it,
+and on AGP 9.2.1 no build setting prevents it. Alex accepted that on 2026-09-06 — but she accepted it
+when the phone held test data, and her month of daily use changes what is at stake rather than what is
+true. [rotating-roster-recurrence], cleared to run in this same session, names a 5 → 6 migration test as
+part of its proof, which is exactly the collision. [emulator-for-instrumented-tests] is the durable fix;
+this rule is what holds until it lands.
+
+**A second CLAUDE.md rule was folded in on 2026-09-12, rather than filed as its own item**, because it
+writes the same file and a build touching one paragraph may as well write both. Alex said she intends to
+use Taskflow daily for about a month, testing it and changing it as she goes, before considering
+publishing — and that the publishing blockers live in another project waiting on her financial and tax
+position. The rule records that as the standing ordering instruction: until she has had that month of
+real use, the queue is worked for what makes daily use good rather than for what gets the app to the
+Play Store, and the publishing chain is parked rather than abandoned. It belongs in CLAUDE.md rather
+than SPEC because it directs how sessions work on the project, not what the product is.
+
+Files:
+- `CLAUDE.md` — a new rule under Project rules, plus the ordering instruction above written as a second
+  one. The first says that Claude's own shell cannot run `gradlew`
+  (the loopback failure recorded in TOOLS.md), that the working route is Android Studio's integrated
+  terminal, and that a build needing a compile stops and hands the command over rather than ticking the
+  item unconfirmed. The handover carries, as typed lines, the `cd` to the project folder, then
+  `$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"`, then
+  `.\gradlew.bat :app:assembleDebug --no-watch-fs --no-daemon` — with `BUILD SUCCESSFUL` named as the
+  thing to look for. The JAVA_HOME line is stated because leaving it out is what failed the first
+  attempt on 2026-09-06, and its absence produces a confusing error that looks like the loopback
+  failure rather than a missing setting.
+
+Observation: CLAUDE.md's Project rules section contains the rule, and a reader following its three typed
+lines from a fresh Android Studio terminal reaches `BUILD SUCCESSFUL`. The check reaches the one file
+named above.
+
+Rests on, read 2026-09-07 from `LOG/2026-09-06-gradle-from-ide-terminal-result.md`: that
+`.\gradlew.bat :app:assembleDebug --no-watch-fs --no-daemon` reached `BUILD SUCCESSFUL` in Android
+Studio's integrated terminal on 2026-09-06, and that it failed first on an unset `JAVA_HOME` until that
+line was supplied.
+
+Filed 2026-09-05 during planning, at the moment the implication was raised.
+
+#### Cloud schema grants no privileges to the authenticated role, so the app itself would be denied every table [cloud-schema-missing-grants]
+
+Found on 2026-09-06 while driving [supabase-apply-cloud-migrations] against the real Supabase project, not
+yet reviewed.
+
+`0001_initial_schema.sql` creates the four tables and enables Row Level Security on each. It issues no
+`grant` statements. `0002_rls_policies.sql` creates sixteen policies scoped `to authenticated`. Neither
+file grants the `authenticated` role any privilege on any table.
+
+**Row Level Security and table privileges are two separate gates, and Postgres checks the privilege first.**
+A policy says which rows a role may touch; it does not give the role permission to touch the table at all.
+So with the migrations exactly as they stand, the first real query from a signed-in Taskflow user fails
+before any policy is consulted.
+
+Observed rather than reasoned. Impersonating a test user in the SQL editor —
+`set local role authenticated`, with the user's id set as the JWT claim — and selecting from `public.tasks`
+returned:
+
+```
+ERROR: 42501: permission denied for table tasks
+HINT: Grant the required privileges to the current role with:
+      GRANT SELECT ON public.tasks TO authenticated;
+```
+
+The database's own hint names the fix. Every one of the four tables needs it, for select, insert, update
+and delete, and the sequence-free UUID keys mean no sequence grants are needed alongside.
+
+**This fails closed, so it is a functionality defect and not a data-exposure risk.** Nothing is readable
+that should not be; the tables are simply unreachable. Recording that explicitly because the words
+"missing grants" read like a hole, and here the hole is in the other direction.
+
+Why it was not caught before: the SQL editor connects as `postgres`, which holds `bypassrls` and owns the
+tables, so every check run there succeeds regardless. Nothing had queried these tables as the role the app
+will actually use until this drive. The impersonation technique that exposed it is written up in
+`workshop/resources/research/supabase-rls-and-edge-function-identity.md`, so any later check of these
+policies starts from a method that can tell a pass from a fail.
+
+**The three open questions were settled on 2026-09-07, both migration files read that day.**
+
+- *A new `0003_grants.sql`, not an edit to `0001` or `0002`.* Both have already been applied to the live
+  project. Editing an applied migration makes the file stop describing what actually ran, and a fresh
+  project would then be built by a sequence nobody has exercised.
+- *Per-table grants, written out; refused: `alter default privileges` on the schema.* Default privileges
+  reach only tables created after they are set, so they would do nothing for four tables that already
+  exist and the explicit grants would be needed anyway — and they would silently open future tables,
+  which is the opposite of the closed-by-default posture `0001` deliberately takes.
+- *Re-runs: `grant` is idempotent in Postgres, so `0003` is safe to run repeatedly.* That is also what
+  makes it the repair for the live database rather than a change to it — the grants are already there by
+  hand, applied during the 2026-09-06 drive, so applying `0003` proves the file and the project agree.
+- *Refused: adding `if not exists` guards to `0001` and `0002`.* A migration series is applied once in
+  order, so re-running an applied file is not something to make safe — doing so invites it. On an empty
+  project both run cleanly, which is the case that matters. `0003`'s header says so, so this is not
+  re-opened.
+
+This closes the one gap between the repository and the working Supabase project: the grants exist on the
+live database and in no file.
+
+Files:
+- new `supabase/migrations/0003_grants.sql` — `grant select, insert, update, delete` on
+  `public.projects`, `public.tasks`, `public.strategy_entries` and `public.life_areas` to
+  `authenticated`, and nothing to `anon`, matching `0002`'s stance that a request with no session
+  matches no policy at all. No sequence grants: the keys are UUIDs. A header comment carrying the four
+  decisions above.
+
+Reads but does not change: `supabase/migrations/0001_initial_schema.sql` and
+`supabase/migrations/0002_rls_policies.sql`.
+
+Observation: applying `0003` to the Supabase project completes without error, and completes again on a
+second run; then, in the SQL editor, `set local role authenticated` with a test user's id as the JWT
+claim selects from each of the four tables and returns that user's rows rather than `42501`. Touching
+the live database needs Alex's go-ahead in the moment, as the 2026-09-06 drive did.
+
+Rests on, read 2026-09-07 in the files: that `0001` issues no `grant` statement and enables Row Level
+Security on all four tables; that `0002` scopes all sixteen policies `to authenticated` and grants
+nothing; and that every primary key is a UUID default, so no sequence exists to grant on. The testing
+method it will be verified with is in
+`workshop/resources/research/supabase-rls-and-edge-function-identity.md`, read the same day.
+
+Filed 2026-09-06, 12:22, mid-run, read from the device clock.
 
 #### Free-tier reorder Projects in the Strategy-doc editor [project-reorder-strategy]
 
@@ -31,47 +171,110 @@ confirmed the doc renders one heading per Project with Unassigned excluded (TEST
 row did not exercise is edit persistence across a relaunch or the share sheet — neither of which this
 item touches, since it adds heading drag rather than paragraph editing.
 
-Free tier — drag Project headings in the Strategy-doc editor to set Project order; the Strategy doc owns Project order app-wide, including the Later card order. SPEC §Strategy doc describes this. Carved from the retired [project-lifecycle-later] during planning on 2026-06-22. Held because the Strategy-doc editor must exist before headings can be dragged in it.
+Free tier — drag Project headings in the Strategy-doc editor to set Project order; the Strategy doc owns Project order app-wide, including the Later card order. SPEC §Strategy doc describes this. Carved from the retired [project-lifecycle-later] during planning on 2026-06-22. Held until 2026-09-05 because the Strategy-doc editor had to exist before headings could be dragged in it.
 
-#### [user] Check the bin drag target deletes a task [bin-drag-target-check]
+**Designed on 2026-09-06**, because it had been cleared to run since 2026-09-05 while naming no files —
+a /next run reached it that day, could not scope it, and stopped. The design is wiring rather than
+invention: everything it needs already exists and nothing in the app calls it yet.
 
-Confirms that dragging a task to the **bin** target deletes it. SPEC §Drag-target icons says picking up a task
-on a Schedule screen raises a row of targets — a bin that deletes it and a cut that removes it and puts its
-text on the device clipboard. The cut half is proven (TEST-LOG row 043). The bin has never been hit.
+**The drag handle is the heading alone, settled with Alex on 2026-09-06.** Refused: making the whole
+section draggable, paragraph included — a bigger target, but a long-press meant to select a word in the
+paragraph would start a drag instead, and heading-only is what SPEC §Strategy doc's wording implies.
 
-Split out of [verify-run-2026-08-31-remainder] on 2026-09-05, because it is the one check in that audit a
-session cannot drive. The two targets sit side by side, and steering a long-press drag between them over adb
-is guesswork: the 2026-09-05 audit declined the attempt for that reason, and a later session that day tried
-twice while clearing up a test task — both attempts were read as a page swipe and navigated instead of
-dragging. Two independent failures, so this is a capability limit rather than bad luck.
+Files:
+- `app/src/main/java/com/example/taskflow/ui/strategy/StrategyScreen.kt` — the sections list becomes a
+  `ReorderableColumn` (the existing primitive in `ui/common/Reorderable.kt`, already used by the
+  Schedule pages and the Later cards), with the heading `Text` as the drag handle and the paragraph's
+  `OutlinedTextField` left alone.
+- `app/src/main/java/com/example/taskflow/ui/strategy/StrategyViewModel.kt` — a `reorderProjects`
+  taking the new ordered list of Project ids and writing each one's position through
+  `ProjectRepository.updateSortOrder`, rewriting the whole sequence to 0..n-1 rather than nudging the
+  moved row, which is the pattern `ScheduleViewModel.reorderSlot` and `reorderCard` already use because
+  positions drift as Projects come and go.
 
-Walkthrough:
+Reads but does not change: `data/repository/ProjectRepository.kt` and `data/local/ProjectDao.kt`, which
+already carry `updateSortOrder` and `getAllOrdered`; and `ui/schedule/LaterPage.kt`, which needs no edit
+because the Later cards already read Project order from `getAllOrdered`, so setting the order here moves
+the cards for free — which is what SPEC means by the Strategy doc owning Project order app-wide.
 
-1. On Today, add a throwaway task — something obviously disposable, like "bin-test". Look for: the new task
-   in the list. **If a task named `AUDIT-completed-check` is already sitting there, use that one instead of
-   making a new one** — a session left it behind on 2026-09-06 while testing search, having failed to delete
-   it over adb, which is the same failure this item exists for.
-2. Press and hold that task until it lifts, and keep holding. Look for: a row of target icons appearing at
-   the top of the screen, one of them a bin.
-3. Drag it onto the **bin** icon specifically — not the one beside it — and let go. Look for: the task gone
-   from Today.
-4. Check your device clipboard by long-pressing in any text field and choosing paste. Look for: **not** the
-   task's text. If the task's text pastes, you hit the cut target rather than the bin, and the check has not
-   been done — try again from step 1.
-5. Tell a planning session what happened, including whether the task's text turned up on the clipboard.
+Observation: on a device, dragging a Project heading in the Strategy doc moves it, the new order
+survives a relaunch, and swiping back to Later shows the cards in that same order with Unassigned still
+pinned to the bottom. Long-pressing inside a paragraph selects text as before rather than starting a
+drag. The check reaches the two files named above.
 
-Observable: the task is absent from Today and its text is absent from the clipboard. Step 4 is what
-distinguishes a real pass from hitting the neighbouring target, which is the exact confusion that has left
-this unchecked twice.
+Rests on, read 2026-09-06 in the source: that `Project` carries a `sortOrder` column and
+`ProjectRepository.updateSortOrder` writes it; that no UI calls it today; and that `ReorderableColumn`
+exists in `ui/common/Reorderable.kt` and takes an ordered-ids callback.
 
-Rests on, read 2026-09-05: that the target row appears on a long-press drag from a Schedule screen and
-carries both a bin and a cut, per SPEC §Drag-target icons and TEST-LOG row 043, which exercised the cut
-target on a device.
+#### Drag targets are unreachable because the page turns first — the target row's area stops turning it [drag-eaten-by-page-swipe]
 
---- Cleared to run above this line ---
+The row of bin and cut targets that appears when a task is picked up cannot be reached: moving the finger
+toward it turns the page instead. So the bin, the cut and the promote targets are all unreachable by the
+gesture SPEC gives for reaching them (SPEC §Drag-target icons).
+
+Found on 2026-09-06 by Alex, on a real phone with her own thumb, while being walked through
+[bin-drag-target-check]: a long-press on Today lifted the task and raised the targets, and the next
+movement navigated to Tomorrow.
+
+**The mechanism was misdiagnosed when this was captured, and the correction is the whole design.** The
+capture suspected Compose's horizontal pager was swallowing the drag before the task's own handler saw
+it. Reading `ScheduleScreen.kt` on 2026-09-06 shows otherwise: Taskflow turns the page itself, on
+purpose. `onTaskDragHorizontal` accumulates the sideways distance of a held task and calls
+`animateScrollToPage` once it passes `DRAG_PAGE_THRESHOLD` — 140 pixels. That is
+[0008-drag-task-between-schedule-screens] working as built. So this is not a library defect but two
+wanted features sharing one axis: reaching a target and turning a page are the same motion, and the page
+turn fires first.
+
+**The fix, settled with Alex on 2026-09-06: the target row's own area does not turn the page.** While the
+drag position sits within the bounds the row has already laid itself out into, the page-turn accumulator
+is skipped and the drag belongs to the targets; below the row, sideways still reschedules exactly as it
+does now. No new affordance and no new tuned distance — the row already measures its icons for hover
+detection, so all that is added is reporting where it ended up.
+
+Refused: moving the targets to the bottom of the screen so reaching them is a downward motion — it
+separates the axes cleanly but fights the "drag it away to get rid of it" instinct and contradicts SPEC's
+"upper-right corner". Refused: raising `DRAG_PAGE_THRESHOLD` or making the page turn wait — it degrades
+rescheduling, which works, to fix something else. Refused too is Alex's own first reading of the
+recommendation, that a band be reserved at the top: her correction is that the row already occupies one,
+so the band is its own footprint rather than something new.
+
+**The second symptom is not a fault.** `DragTargetRow` is aligned to the top-end of the content area
+below the header, and `BIN` is the first of the two icons, so it renders at the upper-right of the task
+area with the bin on its left — which is what Alex saw and what SPEC §Drag-target icons and §Create or
+delete a Project describe. It is [bin-drag-target-check]'s walkthrough that loosely says "at the top of
+the screen"; nothing needs changing in the app for it.
+
+**Its filing also corrected the record.** Three adb attempts across two sessions had each registered as a
+page swipe and been written up as a limit of driving a device over adb — a line since removed from
+TOOLS.md. They were reproducing a broken gesture faithfully, not failing to reproduce a working one.
+
+Consequence for the queue: [bin-drag-target-check] cannot pass while this stands, and neither can the
+promote target, the cut target from a Schedule screen, or free-tier Project deletion
+([project-delete-later]), which was re-held against this item on 2026-09-06 for that reason.
+
+Files:
+- `app/src/main/java/com/example/taskflow/ui/common/DragTargets.kt` — `DragTargetRow` reports its own
+  laid-out bounds upward through a new callback, alongside the hover it already reports.
+- `app/src/main/java/com/example/taskflow/ui/schedule/ScheduleScreen.kt` — `onTaskDragHorizontal` skips
+  the accumulate-and-turn step while `dragPosition` falls inside those bounds.
+
+Observation: on a device, long-pressing a task on Today and dragging up into the icon row leaves the page
+on Today and highlights the icon under the finger; dragging sideways below the row still turns the page
+and still reschedules the task. The check reaches the two files named above.
+
+Rests on, read 2026-09-06 in the source: that `ScheduleScreen.kt` turns the page from
+`onTaskDragHorizontal` at a 140-pixel threshold, and that `DragTargetRow` already records each icon's
+`boundsInWindow` for hover.
+
+Filed 2026-09-06, 12:58, mid-run, read from the device clock.
 
 #### Day-detail card layer, opened from a search result [nav-day-card-layer]
-Blocked by: [nav-search-completed-history]
+
+**Lifted on 2026-09-06.** The Search page it waited on exists and has been seen working on a phone:
+[nav-search-completed-history] shipped on 2026-09-05, and the [verify-run-2026-08-31-remainder] audit on
+2026-09-06 confirmed search narrowing the completed history in both directions. That build also recorded
+that tapping a completed result is deliberately inert until this item ships, so the tap target this item
+adds is the piece that was left out rather than a change to what is there.
 
 Tapping a search result, a group or a date header opens that single day as a **card in the foreground**,
 moving on its own left-right axis rather than along the row of pages. It is the only place a completed
@@ -115,6 +318,483 @@ tappable list of completed tasks does not become a second place to change things
 Rests on, read 2026-09-03: that `AppRoot.kt` owns the pager state and the `BackHandler`, and gates that
 handler on `editTarget` and `overlay`.
 
+#### Rotating-roster repeats — a recurring task that cycles through a list rather than repeating identically [rotating-roster-recurrence]
+
+Raised by you on 2026-09-06, describing how you actually want to use a Project for keeping up with your
+immediate family.
+
+A recurring task whose *subject* advances through an ordered list each time it comes round, rather than
+repeating unchanged. Taskflow cannot express it: `Recurrence` holds an interval and every generated
+instance is identical, with no per-instance content and no ordered list. The failure that fixes is the
+one the app exists for — keeping in touch with four people evenly means holding the rotation in your
+head, which is the executive-function load Taskflow is meant to absorb. The workaround, four staggered
+recurring tasks, drifts the moment one is completed late.
+
+**The four open questions were settled with Alex on 2026-09-12.**
+
+- **The roster lives on the task** — an ordered list of labels the repeat rule steps through, stored
+  alongside the rule itself. **Refused: putting it on the Project.** That would make a Project a thing
+  with members, where a Project is an area of the user's life (SPEC §Strategy doc), and it is a much
+  larger change to what a Project is than this one task feature warrants.
+- **The free-choice position is split off** into [rotating-roster-free-choice] and is not part of this
+  item. A rotation is deterministic — the app knows what comes next — while a position offering two
+  names and waiting for the user to pick has to interrupt them and needs an answer for what happens if
+  they never reply. Bundling them would make the straightforward half wait on the awkward one.
+- **The free tier gets it.** The rotation is data, not intelligence: an ordered list and a position in
+  it. **Refused: making it paid-only.** Claude arranging a roster conversationally is a separate thing
+  built on top — Claude *setting* the list — rather than a substitute for the list existing.
+
+**The roster advances by COMPLETION, settled with Alex on 2026-09-12.** Names are handed out in order
+to the instances still to come, starting from however many the user has already completed: the nearest
+upcoming instance takes `roster[completions mod size]`, the one after it the next name. An occurrence
+nobody ticked adds no completion, so the same name is still up.
+
+**Refused: advancing by date** — the third occurrence always the third name, whether or not the earlier
+two were done. `instancesOf` never re-shows a missed instance, so that would lose the occasion *and*
+skip the person's turn, against SPEC UX principle 4. **Accepted cost:** a rotation nobody does stops
+advancing and keeps showing one name; advancing by date never stalls.
+
+Names of the people in the roster are deliberately not recorded here — third parties who have published
+nothing, described by relationship per this project's scrub checklist. The concrete roster is Alex's.
+
+Files:
+- `app/src/main/java/com/example/taskflow/data/model/Task.kt` — a `roster` column, `TEXT NOT NULL
+  DEFAULT ''`, holding one label per line, empty for a task with no rotation; plus a `rosterLabels`
+  accessor splitting it, alongside the existing `completedInstanceDates`.
+- `app/src/main/java/com/example/taskflow/data/local/TaskflowDatabase.kt` — `version = 6` and a
+  `Migration(5, 6)` adding that column. The existing destructive-migration range (1–4) is untouched:
+  [durable-local-data] made 5 a floor, so 5 → 6 is a real migration.
+- `app/schemas/com.example.taskflow.data.local.TaskflowDatabase/6.json` — the schema the Room compiler
+  exports for version 6, committed beside the existing `5.json`.
+- `app/src/main/java/com/example/taskflow/ui/schedule/ScheduleViewModel.kt` — `instancesOf` carries a
+  label on each `Instance`: over the list it already builds (completed dates filtered out, window
+  starting at the current day), the Nth entry takes `roster[(completedCount + N) mod roster.size]`, N
+  counted from zero. A task with an empty roster is unchanged. The row renders `<title> — <label>`.
+- `app/src/main/java/com/example/taskflow/ui/edit/EditTaskScreen.kt` — a roster field in the edit
+  dialogue, one name per line, shown only when the task carries a repeat rule.
+- `app/src/main/java/com/example/taskflow/ui/edit/EditTaskViewModel.kt` — reads and writes that field.
+- `app/src/main/java/com/example/taskflow/data/transfer/TaskflowJson.kt` — `roster` carried through
+  export and import, since SPEC §JSON export and import promises the full database.
+- `app/src/androidTest/java/com/example/taskflow/data/local/MigrationTest.kt` — a 5 → 6 case, existing
+  rows arriving with an empty roster.
+
+Reads but does not change: `app/src/main/java/com/example/taskflow/domain/Recurrence.kt`, which supplies
+the instance dates and needs no change — the roster is a property of the task, not of the repeat rule,
+so `serialize()` and its stored format stay exactly as they are.
+
+Observation: on a device, a weekly task carrying four names shows the first name on its nearest
+upcoming instance and the second on the one after, in Later; completing the nearest one moves the list
+on; letting an occurrence pass without completing it leaves the same name up rather than moving on.
+`MigrationTest` passes 5 → 6 with an existing task arriving with an empty roster and its repeat rule
+intact. A JSON export and re-import round-trips the roster. The check reaches the eight files named
+above.
+
+**The migration half of that observation needs a connected instrumentation run, which destroys the
+database it runs against.** Run it on the emulator from [emulator-for-instrumented-tests] where that
+exists; otherwise take a JSON export from Settings and move it off the device before starting, per the
+CLAUDE.md rule in [runs-in-android-studio-decision]. Written here on 2026-09-12 because an unattended
+run reads the item, not the rule, and this item was cleared before the rule existed.
+
+Rests on, read 2026-09-12 in the source: that the schema is at version 5 with `5.json` the only
+exported schema; that `Recurrence` derives instance dates and stores none, so the roster needs no change
+to the rule format; that `ScheduleViewModel.instancesOf` filters completed instances out and starts its
+window at the current day, so a missed instance is never re-shown; and that `Task.completedInstances`
+already stores completed dates as a joined string.
+
+Filed on 2026-09-06 at 12:40, mid-run, read from the device clock.
+
+#### TEST-LOG.md owes rows for the 2026-09-06 run, which produced more test outcomes than any session so far [test-log-owes-2026-09-06-rows]
+
+This project's CLAUDE.md carries a standing rule: TEST-LOG.md is the running test history, and material
+test outcomes are reflected there as well as in the session's LOG entry. The /next run of 2026-09-06
+produced a large number and wrote none of them; the file's last rows predate the session entirely.
+
+What is owed, from that run's records:
+
+- The device audit's passes — search narrowing the completed history in both directions, a manually-dated
+  one-off at five months out appearing in Later, the side menu matching SPEC's spine order, a past-dated
+  task sitting on Today with no overdue marking.
+- Its failures and blocks — the Strategy Share button doing nothing on an empty doc, the day boundary
+  offering whole hours only, the rollover check unrun, Strategy edit persistence unreachable, the Yesterday
+  page untested with content.
+- The date matrix, all three slots: 2–7 days to Soon, exactly eight days to Later, a past date staying on
+  Today, each with its DD/MM label.
+- The far-future task inside a real user Project's card.
+- The three Supabase checks — cross-account read denied, no-session denied at the grant, null identity
+  denied by the policy — and the `42501` failure that preceded them, which is the row that matters most
+  because it found [cloud-schema-missing-grants].
+- The compile: BUILD SUCCESSFUL from Android Studio's terminal, covering four changed files.
+
+**Why this was missed, and what was settled about it on 2026-09-12.** The rule's trigger is a build
+running tests; that run's testing happened inside an `[audit]` item and inside `[user]` walk-throughs,
+so the trigger and the run's shape never met. **Settled with Alex: the table records a test outcome
+whoever produced it** — a build, a review pass, or a step the user performed on the device. The value
+of a running history is being the one place that says what has actually been exercised, and one that
+silently omits the checks a person ran is worse than none, because it reads as complete.
+**Refused: leaving the rule narrow and backfilling the rows anyway** — that moves the ambiguity into
+the file, where the next session guesses again.
+
+Everything needed is already recorded in the session's LOG entries, so nothing has to be re-run.
+
+Files:
+- `CLAUDE.md` — the TEST-LOG paragraph's last sentence, currently "reflect material test outcomes
+  (pass/fail/skip) in TEST-LOG.md too when a build runs tests", widened to cover an outcome from any
+  source: a build's tests, an `[audit]` run's device checks, and a `[user]` walkthrough's steps alike.
+- `TEST-LOG.md` — the rows listed above, appended in the table's existing eleven-column shape,
+  numbered on from its last row, with Verifier naming who produced each outcome (Claude for the
+  adb-driven checks, Alex for anything she performed) and Confirmed Explicitly left No until she
+  reviews them.
+
+Reads but does not change: the `LOG/2026-09-06-*.md` entries, which hold every outcome the rows are
+written from.
+
+Observation: `CLAUDE.md`'s TEST-LOG paragraph no longer conditions recording on a build, and a grep of
+`TEST-LOG.md` for `2026-09-06` returns rows covering each outcome listed above. The check reaches the
+two files named above.
+
+Rests on, read 2026-09-12: `TEST-LOG.md`'s eleven-column table shape and its numbering running from
+001; and `CLAUDE.md`'s TEST-LOG paragraph as quoted.
+
+Filed on 2026-09-06 by the look-back over the /next run's own conversation, and stamped by the queue
+tool the same evening.
+
+#### Say why the Strategy doc cannot be shared while it is empty [strategy-share-silent-when-empty]
+
+The Strategy page's empty state gains a sentence telling the user the doc can be shared once it has
+something in it. The Share button stays disabled.
+
+Came out of the [verify-run-2026-08-31-remainder] audit on 2026-09-06, which tapped Share twice on a
+device with no Projects in the database: no share sheet opened, the focused window stayed on Taskflow's
+own MainActivity, and a cleared logcat caught nothing at all. The audit read that as a visible control
+silently doing nothing, and left two dispositions open — open the sheet anyway, or disable the button and
+say why.
+
+**The premise was corrected on 2026-09-12 by reading `ScheduleScreen.kt`.** The button already carries
+`enabled = strategySections.isNotEmpty()`, so with no Projects it is genuinely disabled and the tap fired
+nothing — which is why the logcat was empty. The second of the audit's two dispositions is therefore
+already the implemented behaviour, and a build following the capture as written would add a guard that
+exists. What is missing is only the visible half: a disabled `TextButton` in a top bar is muted rather
+than obviously unavailable, and the empty state says nothing about sharing.
+
+**Refused: enabling the button so it shares an empty document.** Handing someone a blank share sheet is
+a worse answer than a control that is visibly not available yet.
+
+Files:
+- `app/src/main/java/com/example/taskflow/ui/strategy/StrategyScreen.kt` — the empty-state text, which
+  currently reads that Projects appear here as headings with room to write about each one, gains a
+  closing sentence saying the doc can be shared once it holds something.
+
+Reads but does not change: `app/src/main/java/com/example/taskflow/ui/schedule/ScheduleScreen.kt`, which
+owns the Share button and its `enabled` guard — the guard is correct and stays as it is.
+
+Observation: on a device with no Projects, the Strategy page's empty state names sharing, and the Share
+action in the header is visibly unavailable rather than looking ordinary. The check reaches the one file
+named above.
+
+Rests on, read 2026-09-12 in the source: that `ScheduleScreen.kt` renders the Strategy header's Share
+action with `enabled = strategySections.isNotEmpty()`, and that `StrategyScreen.kt` owns the empty-state
+sentence.
+
+**The audit's other half rides elsewhere.** Whether the share sheet opens at all was unverifiable while
+this button was the only route to it. A Project named Family now exists, so the doc has content and the
+button is live; that check belongs with [strategy-edit-persistence-blocked], which already drives this
+page on a device.
+
+Filed on 2026-09-06 at 11:35, mid-run, read from the device clock.
+
+#### [audit] Verify on the phone that Enter creates a subtask that survives a save [verify-edit-outliner-fix]
+
+Confirms that the fix shipped by [edit-outliner-missing] works on a device. Pressing Enter at the end of
+a task's title in the edit dialogue is meant to open an indented subtask line beneath it (SPEC §Edit
+dialogue: outliner-style typing for subtasks). On 2026-09-06 the [verify-run-2026-08-31-remainder] audit
+found no subtask could be created anywhere in the app: `onNext` appended an empty child line and
+`Outline.parse` discarded it immediately. [edit-outliner-missing] moved the blank-dropping rule to the
+save path and compiles, and its own record says the on-device observation is still unrun.
+
+**Filed on 2026-09-12, raised by Claude during planning and taken up on Alex's word.** Nothing in the
+queue was tracking this verification, while two items waited behind it —
+[subtask-affordance-in-edit-dialogue], which advertises the feature, and [first-end-to-end-test], which
+Alex deferred on her own condition that subtasks work first. Shipped-but-unverified work with nothing
+naming the check is what this closes.
+
+**Claude drives it, not the user.** The capability check on 2026-09-12 found adb sufficient: a session
+drove the date-behaviour checks the same way on 2026-09-06 after finding a `[user]` tag wrong on
+similar work. What is needed from Alex is the phone unlocked and connected, and the phone re-locks
+after a few minutes (TOOLS.md), so possibly more than once.
+
+Steps:
+
+1. Establish what is on the phone before anything else. Read the install time with
+   `adb shell dumpsys package com.example.taskflow | findstr lastUpdateTime` and compare it against
+   2026-09-06, when the fix was written. Look for: an install time at or after that date.
+   **If it is older, stop and hand the build back to Alex** — Claude cannot compile from its own shell
+   (TOOLS.md), so she runs, in Android Studio's integrated terminal, `cd` to the project folder, then
+   `$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"`, then
+   `.\gradlew.bat :app:assembleDebug --no-watch-fs --no-daemon`, looking for `BUILD SUCCESSFUL`. Claude
+   then installs it with `adb install -r -t` on the path in TOOLS.md.
+2. Open any existing task's edit dialogue on Today. Screenshot before typing, since `adb shell input
+   text` can silently fail into a dialogue field (TOOLS.md). Look for: the outliner with the title on
+   its first line.
+3. Press Enter at the end of the title line, then type a short child line. Screenshot before committing.
+   Look for: an indented line beneath the title carrying that text.
+4. Save, leave the dialogue, and reopen the same task. Look for: the child line still there, indented
+   under its parent.
+5. On Today, look at the parent row. Look for: an expand control where its checkbox was, and the child
+   nested beneath it when expanded (SPEC §Parent tasks expand/collapse instead of having a checkbox).
+6. Leave the database as it was found: tick the subtask off, which completes the parent and sends it to
+   the Completed tray. Look for: the parent gone from the list. **Do not attempt to delete anything** —
+   deleting is a drag onto the bin target, which does not work at all until [drag-eaten-by-page-swipe]
+   ships.
+
+Report: whether a subtask can be created, whether it survives a save and reopen, and whether the parent
+renders as a parent. A failure at step 3 or 4 is a finding and goes back to the queue as a capture
+rather than being fixed here.
+
+Observation: on the device, a task that had no subtasks has one after step 4, still present after the
+dialogue is closed and reopened. The check reaches no files — it reads the running app.
+
+Rests on, read 2026-09-12: `LOG/2026-09-06-edit-outliner-missing-build.md`, which records the fix as
+compiling with the on-device observation unrun; and TOOLS.md's adb, install and locking facts, each
+carrying its own date there.
+
+Filed on 2026-09-12 at 11:25, read from the clock.
+Filed 2026-09-12 11:28, stamped by the queue tool.
+
+#### [audit] Check a Strategy doc paragraph survives a relaunch [strategy-edit-persistence-blocked]
+
+Confirms that text typed under a Project's heading in the Strategy doc is still there after the app is
+closed and reopened. SPEC §Strategy doc says the user writes the paragraphs while the headings are
+generated from their Projects; nothing has ever checked that what they write is kept.
+
+**Its blocker resolved itself between the filing and the planning, and the item is rewritten for that.**
+It was captured on 2026-09-06 by the [verify-run-2026-08-31-remainder] audit, which could not run the
+check: the database held no Projects, so the doc showed its empty state and there was no paragraph to
+type into. Creating one would have left a Project behind that no session could remove, since deleting a
+Project is a drag onto a target and that gesture does not work ([drag-eaten-by-page-swipe]) — a worse
+outcome than the check was worth. Later the same day a run created **Family**, a Project Alex named
+because she wanted it rather than accept a throwaway, and its creation wrote a Strategy heading. So a
+heading with an empty paragraph now exists and the check is simply available.
+
+**Refused: the two ways out the capture named** — making this a `[user]` item run alongside a Project the
+user wants anyway, and waiting until deleting a Project is reachable. The first has already happened by
+accident of sequence, and the second is no longer the price of running the check.
+
+This also closes the capture's closing note: the same blockage was said to sit under
+[verify-far-future-project-card], and that check passed against Family on 2026-09-06.
+
+Steps:
+
+1. On the phone, swipe to the Strategy page and find the **Family** heading. Look for: the heading with
+   a text box beneath it.
+2. Type a sentence into that box. Read it back off the screen rather than assuming it arrived — a run on
+   2026-09-06 recorded that `adb input text` can silently fail into a field. Look for: the exact
+   sentence rendered in the box.
+3. Force-stop Taskflow and reopen it on the Strategy page. Look for: the same sentence still under
+   Family.
+4. Tap **Share** in the page header, while the doc still has content. Look for: Android's own share
+   sheet opening over Taskflow, listing apps to send to.
+5. Back out of the share sheet without choosing anything. Look for: the Strategy page again, and
+   nothing sent. **Do not pick a target** — this checks that the control works, not that sharing works
+   end to end, and nothing should leave the phone.
+6. Clear the box, leaving the doc as it was found, and read the empty box back.
+
+**Steps 4 and 5 were added on 2026-09-12**, carrying the other half of the 2026-09-06 audit that
+[strategy-share-silent-when-empty] hands over. That audit could not tell whether the share sheet opens
+at all, because the only route to it was a button that is disabled while the doc is empty — and a
+Project named Family now makes the doc shareable. Written into this item as well as into the one that
+hands it over, because a relationship recorded on one side only is a relationship a driving session
+never sees.
+
+Report: whether the sentence survived, whether the share sheet opened, and whether the field was left
+empty. If step 2 cannot get text into the box at all, that is the finding and the steps after it do not
+run.
+
+Rests on, read 2026-09-07 in `LOG/2026-09-06-verify-far-future-project-card.md`: that a Project named
+Family exists in the database and that creating it wrote a Strategy heading.
+
+Filed 2026-09-06, 11:38, mid-run, read from the device clock.
+
+#### [user] Watch a Tomorrow task roll into Today at the day boundary [day-begins-at-rollover-still-unrun]
+
+Watching a Tomorrow task cross the day boundary onto Today, and checking it arrives unlabelled and
+unmoved. Came out of the [verify-run-2026-08-31-remainder] audit on 2026-09-06 and was weighed on
+2026-09-07.
+
+The one check that audit could not run. SPEC §Schedule view says that at the day-begins-at boundary
+Tomorrow's tasks roll into Today with no label, no reordering and no shame, and that Today's uncompleted
+tasks stay where the user put them. The picker was confirmed present at its 4:00 AM default on 2026-09-05
+and again on 2026-09-06; what nobody has watched is the rollover itself.
+
+Why it did not run this time. The check needs the boundary set a short way ahead so the clock crosses it
+while somebody watches. The setting takes whole hours only — settled as deliberate on 2026-09-07 and
+written into SPEC §Settings → Day begins at, so this is a fact to plan around rather than something that
+may change — and the shortest wait available is therefore up to sixty minutes — a wait in the middle of a run, on the user's phone,
+holding the only session there is. It is `[user]` work for that reason rather than because Claude cannot
+perform the steps: a session can drive every one of them, but not the waiting — and not the judging
+either, since whether the task arrived unlabelled and unmoved needs eyes on the screen.
+
+**A session can do the setting-up half on your say-so.** Steps 2 to 5 are ordinary adb work — changing
+the setting, adding the task, reading Today's order back. If a session is open when you start, ask it to
+do those and keep only the looking for yourself. Not split into its own item because the setup and the
+watch are one sitting: separating them would mean two sessions coordinated minutes apart for the sake of
+five taps.
+
+Walkthrough:
+
+1. Note the time on your phone, then work out the next whole hour that is at least ten minutes away —
+   if it is 2:15, that is 3:00. Look for: one specific hour you are going to wait for.
+2. Open the side menu with the ☰ button, tap Settings, and tap the row under Day begins at showing
+   4:00 AM. Look for: a dropdown list of whole hours.
+3. Choose the hour from step 1, then go back. Look for: the Day begins at row now showing that hour.
+4. Swipe to Tomorrow and add a task there called "rollover-test". Look for: it sitting on Tomorrow.
+5. Swipe to Today and note what is already there and in what order. Look for: your existing tasks, in
+   an order you could recognise again.
+6. Wait until the phone's clock has passed the hour you chose, then open Taskflow on Today.
+   Look for: "rollover-test" now on Today.
+7. Check three things about it: that it carries no label of any kind marking it as moved or late, that
+   it did not jump to the top, and that the tasks noted in step 5 are still in the order you saw them.
+   Look for: all three true. Any one of them false is the finding.
+8. Tick "rollover-test" off. Look for: it gone from the list and sitting in the greyed Completed tray at
+   the bottom of Today.
+9. Set Day begins at back to 4:00 AM. Look for: the row reading 4:00 AM again.
+10. Tell a planning session what you saw at step 7.
+
+Observable: "rollover-test" present on Today after the boundary, unlabelled and not reordered. A session
+can read the task's presence off the device; the no-label and no-reorder halves are the user's eyes.
+
+**Completing the test task is how it is cleaned up, decided 2026-09-07.** Deleting a task is a drag onto
+the bin target, and that gesture does not work at all until [drag-eaten-by-page-swipe] ships — so no hand
+can delete it today. Completing needs no drag, and the Completed tray empties itself at the next
+day-begins-at rollover (SPEC §Completed task tray on Today), so the test disposes of its own litter and
+this item does not have to wait on the drag fix. **Refused: the earlier step 9**, which told the user to
+report the task as needing deletion and blamed [bin-drag-target-check] — that reasoning rested on the
+retired belief that the failure was a limit of driving a device over adb.
+
+Rests on, read 2026-09-06 on the phone: that Day begins at is a whole-hour dropdown defaulting to 4:00 AM,
+and that a task added from Tomorrow is dated tomorrow (SPEC §Add a new task). And, read 2026-09-07 in
+SPEC: that the Completed tray clears at the day-begins-at rollover.
+
+Filed 2026-09-06, 11:37, mid-run, read from the device clock.
+
+#### [user] Create an emulator so instrumented tests never run on Alex's phone [emulator-for-instrumented-tests]
+
+Creates a virtual Android device on this PC, so the app's instrumentation tests have somewhere to run
+that is not the phone holding Alex's real tasks.
+
+**Why it is worth an errand.** A connected instrumentation test run installs the app, runs the tests and
+then uninstalls both, taking the Room database with it, and on AGP 9.2.1 no build setting prevents that
+— recorded in TOOLS.md and in
+`workshop/resources/research/instrumented-test-uninstall-after-run.md`. Alex intends to use Taskflow
+daily for about a month, changing it as she goes, so tests will keep being run while her own tasks are
+on the phone. [rotating-roster-recurrence] already names a 5 → 6 migration test as part of its proof.
+The CLAUDE.md rule in [runs-in-android-studio-decision] holds the line meanwhile by requiring an export
+first; this removes the hazard instead of managing it.
+
+**It is `[user]` work because nothing here can do it.** The capability check on 2026-09-12 established
+what is actually on the machine: `emulator.exe` is present under the SDK, but `emulator -list-avds`
+returns nothing, no `avd` folder exists under either user profile, there is no `system-images` directory,
+and `cmdline-tools` is not installed. So there is no image to build a device from and no command-line
+route to fetch one — it is Android Studio's Device Manager, and the download is Alex's to start and
+her disk it lands on. Claude can drive the emulator once it exists, the same way it drives the phone.
+
+Walkthrough:
+
+1. In Android Studio, open the Device Manager — the phone icon in the right-hand toolbar, or
+   View → Tool Windows → Device Manager. Look for: a panel listing devices, with none under Virtual.
+2. Click the **+** (Create Virtual Device). Look for: a hardware picker listing phone models.
+3. Pick any recent phone (a Pixel is the obvious choice) and continue to the system-image step. Look
+   for: a list of Android versions, most with a download arrow beside them.
+4. Choose an image whose API level is at or above the app's minimum and start its download. Look for:
+   the download completing, and the arrow turning into a selectable entry. Expect this to be large and
+   to take a while.
+5. Finish the wizard, then press the play button beside the new device. Look for: a phone window
+   opening on your screen and reaching the Android home screen.
+6. Tell a planning session the emulator exists and what it is called.
+
+Observable: `emulator -list-avds` from the SDK's `emulator` folder prints the device's name, and
+`adb devices` lists it while it is running. A later session checks that rather than asking.
+
+Rests on, read 2026-09-12 on this machine: that `emulator.exe` exists at
+`…/Android/Sdk/emulator/emulator.exe` and lists no AVDs; that neither `…/Android/Sdk/system-images/` nor
+`…/Android/Sdk/cmdline-tools/` exists; and that no `.android/avd` folder exists under either user
+profile. Android Studio's Device Manager wording is amended between releases, so read the step against
+what is on screen rather than expecting an exact match.
+
+Filed on 2026-09-12 during planning, from the look-back over this session.
+Filed 2026-09-12 11:48, stamped by the queue tool.
+
+--- Cleared to run above this line ---
+
+#### Free-tier delete a Project on Later [project-delete-later]
+Blocked by: [drag-eaten-by-page-swipe]
+
+**Re-held on 2026-09-06, because the sentence that cleared it was wrong.** It was lifted on 2026-09-05
+on the argument that the drag gesture it needs "exists and has been driven on a real phone", citing
+[task-reorder-within-list] and two TEST-LOG rows from the 2026-09-05 device audit. That argument does
+not survive: what those rows proved is a *vertical* drag reordering within a list, while this item needs
+delivery of a card *onto a target* — a different motion, and the one that fails. On 2026-09-06 Alex
+long-pressed a task on her own phone and the page navigated instead of the task dragging. Row 043,
+cited above as evidence of a drag to the target row, is in doubt for the same reason.
+
+The gesture question is settled rather than open: it is a known defect with a designed fix,
+[drag-eaten-by-page-swipe], which this now waits on. The design of this item is untouched by that —
+long-press-and-drag-to-a-target is SPEC's deletion gesture throughout, and what failed was the target
+row sharing an axis with the page turn, not the route to deletion. Reconsidering how a Project is
+deleted was weighed on 2026-09-06 and refused on that ground: it would be redesigning around a bug that
+is already being fixed.
+
+**It needs designing before it can be built, separately from the hold.** It carries no file list and
+does not say what changes inside any file, so lifting it once the drag fix ships is not enough on its
+own — the design work comes first. That was deliberately left until then on 2026-09-06: where the
+drag-target row ends up affects what this item's own file list has to name, and its sibling
+[project-reorder-strategy] was designed the same day because nothing about it waits on the drag.
+
+Free tier — long-press a Later Project card and drag it to a delete target in the upper-right, the same gesture used to delete a task. Deleting a Project does not delete its tasks: they reassign to the system Unassigned Project (reassign logic shipped in [unassigned-project-model]). SPEC §Create or delete a Project describes this. Carved from the retired [project-lifecycle-later] during planning on 2026-06-22 — its create half was promoted to [project-create-picker-ui], its three remaining pieces split out by dependency.
+
+What actually holds it is the general drag + bin/delete drag-target gesture (SPEC §Drag-target icons), which doesn't exist anywhere in the app yet (confirmed 2026-06-22). Any of several items could deliver it — [task-reorder-within-list] builds the first drag primitive, and [0008-drag-task-between-schedule-screens], [0010-outliner-typing-drag-target-icons] or [0011-cut-and-paste-os-clipboard] would each bring the bin target. It is held against [task-reorder-within-list] because that is the one sitting nearest the top; if the bin gesture arrives by another route first, this lifts then instead. Build order doesn't matter — only that the bin gesture exists.
+
+#### [user] Check the bin drag target deletes a task [bin-drag-target-check]
+Blocked by: [drag-eaten-by-page-swipe]
+
+**Held below the line on 2026-09-06.** Its drive on 2026-09-06 halted at step 2: the targets appeared but
+the page turned instead of the task dragging, so no target was reachable. That is
+[drag-eaten-by-page-swipe], and until it ships this walkthrough cannot get past its second step — a /next
+run reaching it would stop in the same place a second time. Step 2's look-for should say the page must
+stay put as well as that the targets appear, when this is next driven.
+
+Confirms that dragging a task to the **bin** target deletes it. SPEC §Drag-target icons says picking up a task
+on a Schedule screen raises a row of targets — a bin that deletes it and a cut that removes it and puts its
+text on the device clipboard. The cut half is proven (TEST-LOG row 043). The bin has never been hit.
+
+Split out of [verify-run-2026-08-31-remainder] on 2026-09-05, because it is the one check in that audit a
+session cannot drive. The two targets sit side by side, and steering a long-press drag between them over adb
+is guesswork: the 2026-09-05 audit declined the attempt for that reason, and a later session that day tried
+twice while clearing up a test task — both attempts were read as a page swipe and navigated instead of
+dragging. Two independent failures, so this is a capability limit rather than bad luck.
+
+Walkthrough:
+
+1. On Today, add a throwaway task — something obviously disposable, like "bin-test". Look for: the new task
+   in the list. **If a task named `AUDIT-completed-check` is already sitting there, use that one instead of
+   making a new one** — a session left it behind on 2026-09-06 while testing search, having failed to delete
+   it over adb, which is the same failure this item exists for.
+2. Press and hold that task until it lifts, and keep holding. Look for: a row of target icons appearing at
+   the top of the screen, one of them a bin.
+3. Drag it onto the **bin** icon specifically — not the one beside it — and let go. Look for: the task gone
+   from Today.
+4. Check your device clipboard by long-pressing in any text field and choosing paste. Look for: **not** the
+   task's text. If the task's text pastes, you hit the cut target rather than the bin, and the check has not
+   been done — try again from step 1.
+5. Tell a planning session what happened, including whether the task's text turned up on the clipboard.
+
+Observable: the task is absent from Today and its text is absent from the clipboard. Step 4 is what
+distinguishes a real pass from hitting the neighbouring target, which is the exact confusion that has left
+this unchecked twice.
+
+Rests on, read 2026-09-05: that the target row appears on a long-press drag from a Schedule screen and
+carries both a bin and a cut, per SPEC §Drag-target icons and TEST-LOG row 043, which exercised the cut
+target on a device.
+
 #### Share a day, as PNG or Markdown [share-a-day]
 Blocked by: [nav-day-card-layer]
 
@@ -156,7 +836,14 @@ Rests on, each read 2026-09-03: that `StrategyScreen.kt` shares text through `AC
 above, filed 2026-08-21.
 
 #### Subtasks in the edit dialogue have no affordance, so nobody finds them [subtask-affordance-in-edit-dialogue]
-Blocked by: [edit-outliner-missing]
+Blocked by: [verify-edit-outliner-fix]
+
+**Its blocker was repointed on 2026-09-12, from [edit-outliner-missing] to the check that verifies it.**
+That fix shipped on 2026-09-06 but compiles only — nobody has opened the app and tried it — so the
+concern that holds this item back is untouched: a hint advertising a feature that does not work is worse
+than the silence it replaces. The item left the queue on shipping, so this hold was pointing at nothing
+and would never have lifted. [verify-edit-outliner-fix] is the on-device check, and this lifts when it
+passes.
 
 **Its blocker was swapped on 2026-09-05.** It had waited on the [verify-run-2026-08-31] audit, which has
 now run — and which found that pressing Enter produces no subtask at all. So the concern that put this
@@ -361,7 +1048,35 @@ Blocked by: [help-thanks-report-content]
 
 Held below the line on 2026-09-03, with your agreement, for the reason the item's own text already gave: the words for all three screens come from [help-thanks-report-content], which is still an unprocessed capture. Nothing else about it is unready.
 
-Bottom-of-drawer screen content including help and custom instructions. Full original spec: `archive/backlog-specs/0022-help-thanks-report-a-bug-content.md`. The words that go in these screens are still being worked out — see [help-thanks-report-content].
+Bottom-of-drawer screen content including help and custom instructions. Full original spec: `archive/backlog-specs/0022-help-thanks-report-a-bug-content.md`.
+
+**Two of the screens' words were settled on 2026-09-12 and are written below**, folded in from
+[help-thanks-report-content] rather than left to be fetched from it. That capture had been set aside
+three times over for topics that cannot be written yet, and the writable parts were going round with
+them; it now carries only what is genuinely undecided. Alex can change any of this wording.
+
+*Report a bug — the whole screen:*
+
+> Found something wrong? Email **bugs@flintcraft.tech** and tell us what happened — what you were
+> doing, what you expected, and what the app did instead. A screenshot helps if you have one.
+> There's no form to fill in and no account to make.
+
+The address was settled on 2026-08-31 as a dedicated email rather than a web form or a GitHub issue,
+and created and tested on 2026-09-05. **Refused: pointing users at flintcraft.tech/report** — that
+page exists and lists TaskFlow, but it carries a note telling non-automated visitors not to complete
+it, and Taskflow's users are mostly non-technical people with no Claude in the loop.
+
+*Help — the "tasks dated before today" topic:*
+
+> Tasks dated before today stay on Today, in the order you placed them, until you do them or move
+> them. The date on the right is the only thing that changes — nothing is highlighted, counted, or
+> moved to the top.
+
+Written without naming the behaviour as a category, which SPEC §Tasks dated before today requires:
+the app has no "overdue" label anywhere, and the help text must not invent one.
+
+Help's other two topics — Claude setup, and the suggested custom-instruction text — and the Thanks
+paragraph are still to come from [help-thanks-report-content].
 
 --- Build block ---
 Changes: fill the three remaining bottom-of-drawer screens — Help, Thanks and Report a bug — with real content. Help covers MCP setup, the production version of the suggested custom-instruction text, and the "tasks dated before today stay on Today" behaviour described without naming the category. The words themselves come from [help-thanks-report-content], which waits on [custom-instruction-production-text] and the MCP setup design. Full original spec: `archive/backlog-specs/0022-help-thanks-report-a-bug-content.md`.
@@ -418,7 +1133,14 @@ Walkthrough, once the script and the Claude integration exist:
 6. Say whether it ships or what needs re-shooting.
 
 #### [user] First end-to-end test of Taskflow on a device [first-end-to-end-test]
-Blocked by: [edit-outliner-missing]
+Blocked by: [verify-edit-outliner-fix]
+
+**Its blocker was repointed on 2026-09-12, from [edit-outliner-missing] to the check that verifies it.**
+Alex's condition was that subtasks *work*, and the fix shipped on 2026-09-06 compiles without anyone
+having opened the app and tried it — so shipping alone does not meet the condition she set. The item
+also left the queue when it shipped, leaving this hold pointing at nothing. [verify-edit-outliner-fix]
+is the on-device check, and this lifts when it passes. Raised on 2026-09-12 by Alex asking whether the
+app is yet safe to use for real, which is the question this item exists to answer.
 
 **Held below the line on 2026-09-05, on your own condition** — given when you deferred this item during a
 /next run: not until subtasks exist. The 2026-09-05 device audit had just established that no subtask can
@@ -458,6 +1180,48 @@ Walkthrough:
 6. Note anything that felt slow, confusing, ugly or surprising — one line each, no need to diagnose it. Roughness you would normally push past is exactly what to write down.
 7. Bring the notes to a planning session and say the test has been done.
 
+#### [audit] Check the Yesterday page draws a real list, not just its empty state [yesterday-page-with-content-untested]
+Blocked by: [first-end-to-end-test]
+
+Confirms that the Yesterday page renders what the user completed the day before. Came out of the
+[verify-run-2026-08-31-remainder] audit on 2026-09-06 and was weighed on 2026-09-12.
+
+That audit read the page against SPEC §Yesterday page and three of its four claims held on the device:
+one swipe left of Today, a full page rather than a card, and an empty state reading "Nothing completed
+yesterday." The fourth went untested because nothing had been completed the day before — and a page that
+correctly draws its empty state says nothing about how it draws a list, which is this page's entire
+content.
+
+**Held against [first-end-to-end-test] on 2026-09-12, so the check rides real data.** That item has Alex
+using the app for a normal day and completing at least one task, so the day after it runs, this page has
+genuine content and the check costs a swipe. It is deliberately not folded into that item's own
+walkthrough: a walkthrough ends at its own observable rather than growing a step that fires a day later.
+
+**Refused: driving it from a crafted import file.** The route works — `TransferRepository.importAdding`
+copies each incoming task through unchanged apart from its identifiers, so completion state and
+completion date survive, confirmed by reading it on 2026-09-12 — and it would not need anyone to wait.
+It is refused because it would put a fabricated completed task permanently into Alex's real history, and
+nothing can remove it while deleting a task is the drag gesture [drag-eaten-by-page-swipe] fixes. Kept
+here as the fallback if her first real day somehow produces no completion.
+
+Steps:
+
+1. On the phone, swipe left from Today to Yesterday. Look for: the page's own header, and a list rather
+   than the "Nothing completed yesterday" empty state.
+2. Read the list against what Alex completed during [first-end-to-end-test]. Look for: each of those
+   tasks present, and nothing else.
+3. Check how the list is presented — completion order, and whatever dating the page carries. Look for:
+   agreement with SPEC §Yesterday page, and anything it does that SPEC does not describe.
+
+Report: whether the page listed the right completions, and whether its presentation matches what SPEC
+says. A mismatch is a finding and goes back as a capture rather than being fixed here.
+
+Rests on, read 2026-09-12 in the source: that `TransferRepository.importAdding` preserves `isCompleted`
+and `completedAt` on an added task, which is what makes the refused route a real alternative rather than
+a guess.
+
+Filed 2026-09-06, 11:39, mid-run, read from the device clock.
+
 #### [audit] Post-first-test polish review [post-first-test-polish-review]
 Blocked by: [first-end-to-end-test]
 
@@ -474,22 +1238,79 @@ Flavored `[audit]` because it reads and reports rather than editing: it takes th
 > Processed) or drop it. Each is filed as its own `#### ` heading, so the list shows
 > up in an editor's outline.
 
-#### Help, Thanks and Report-a-bug content [help-thanks-report-content]
+#### Last session advises processing [verify-edit-outliner-fix] next [forward-advisory]
+
+**Open on [verify-edit-outliner-fix], and treat the queue as ordered for daily use
+rather than for publishing.** Alex decided on 2026-09-12 that she wants about a
+month of using Taskflow for real, changing it as she goes, before considering
+publishing at all — and that the publishing blockers sit in another project waiting
+on her financial and tax position. The whole paid-tier chain is parked behind that.
+
+The condition, stated as a condition: nothing verifies that subtasks can be created
+on a device. The fix shipped on 2026-09-06 and compiles; nobody has opened the app
+and tried it. Two items wait on that check — the hint advertising the feature, and
+[first-end-to-end-test], which is Alex's first real day of use and the thing her
+month starts with. So this one check is what releases the run of work she actually
+wants.
+
+**Two things a run should reach early for the same reason.**
+[drag-eaten-by-page-swipe] is the fix that makes deleting a task possible at all —
+for a month of daily use with her own tasks, that is not cosmetic, and its absence
+has already forced three separate checks in this session to tick things off instead
+of removing them. [emulator-for-instrumented-tests] is her own errand, and until it
+lands, any run whose work needs an instrumented test has to take a JSON export off
+the phone first or it will delete her tasks.
+
+**The overlap scan found nothing waiting that touches this.** Unprocessed holds four
+entries and every one is set aside: two on dates Alex approved (2026-10-12 and
+2026-11-25), and two on other entries — the Help wording, and the free-choice roster
+slot filed in that session. So nothing unprocessed contradicts or would benefit the
+cleared work, and there is no reason to plan before building.
+
+One thing to carry rather than rediscover: five of the sixteen entries processed on
+2026-09-12 had premises that did not survive contact with the code or the record —
+a guard that already existed, a blocker that had resolved itself, work already done,
+a defect that never happened, and a mechanism blamed on the wrong thing. Reading the
+mechanism before describing the build is what caught each one.
+
+Filed on 2026-09-12 at the close of that planning session.
+Filed 2026-09-12 12:02, stamped by the queue tool.
+
+#### Help's Claude topics, and what the Thanks screen says [help-thanks-report-content]
 Blocked by: [0019-ai-choice-flow-and-mcp-setup], [0020-remote-mcp-server]
 
-**Held from further offers on 2026-09-03, with your agreement, after a third session reached it and found nothing had changed.** It had been skipped on 2026-08-25 and again on 2026-08-31 for the same reason both times: two of Help's three topics describe a setup path and a Claude behaviour that do not exist. Rather than re-read that explanation every session, the capture now names what it waits on and returns by itself once both have shipped. Splitting the writable third out was refused twice, on the reasoning recorded below, and was not re-proposed.
+What is left of the words for the bottom-of-drawer screens that
+[0022-help-thanks-report-a-bug-content] builds, after the writable parts were folded into that item on
+2026-09-12. Three things remain, and they are stuck for two different reasons.
 
-The user-only step this item had buried in its prose — creating the bug-report email address — was lifted out on 2026-09-03 into [bug-report-email-address], which is cleared to run. The reasoning for choosing an email address stays below; what left is the doing of it.
+**Two wait on the Claude work.** Help must explain how to set Claude up, and must carry the production
+version of the suggested custom-instruction text — the wording a user pastes into their own Claude
+preferences. Neither can be written before [0019-ai-choice-flow-and-mcp-setup] and
+[0020-remote-mcp-server] define the path. The custom-instruction drafting was folded in here on
+2026-08-25 from [custom-instruction-production-text], which kept only the live test; that test reads
+the draft this item produces and reports back what to change.
 
-The words for the three bottom-of-drawer screens that [0022-help-thanks-report-a-bug-content] builds. Help should cover MCP setup, the production custom-instruction text, and the "tasks dated before today" behaviour described without naming the category — the SPEC §Tasks dated before today wording is ready. **This item also drafts the custom-instruction text itself**, folded in on 2026-08-25 from [custom-instruction-production-text]: that text is one of Help's three topics, so the words belong with the rest of Help's words rather than in an item of their own. What stayed behind there is only the live test, which reads the draft this item produces and reports back the wording changes that follow. Two of its inputs aren't ready: the live-tested wording of that custom-instruction text ([custom-instruction-production-text]) and the MCP setup design ([0019-ai-choice-flow-and-mcp-setup], [0020-remote-mcp-server]). Write the content when those have landed.
+**One waits on a decision, not a dependency: what the Thanks screen actually says.** Nobody has settled
+who or what the app is thanking. Recorded as a distinct blocker on 2026-09-12, because it had been
+travelling with the two above as though it were waiting on the same thing — it is one question for
+Alex, answerable at any time.
 
-**Skipped in planning on 2026-08-25**, with the design progress made there recorded here. The item is mixed and mostly not writable yet: Help's MCP-setup instructions would have to be invented before [0019-ai-choice-flow-and-mcp-setup] and [0020-remote-mcp-server] define the path, and the custom-instruction text this item now drafts is in the same position. Thanks is writable today but is a single paragraph [0022-help-thanks-report-a-bug-content] will write when it builds, so splitting it out would produce a fragment rather than a piece of work.
+**Why this was set aside three times** — 2026-08-25, 2026-08-31, 2026-09-03 — and why that is no longer
+the whole story. The reason each time was the two Claude topics, and it still holds. What also happened
+each time is that the writable parts went round with them: the Report-a-bug words and the
+tasks-dated-before-today explanation were re-read and re-deferred at every pass. Those are now written
+into [0022-help-thanks-report-a-bug-content], with the reasoning that chose an email address over a web
+form or a GitHub issue, and the note that flintcraft.tech/report exists but tells non-automated visitors
+not to use it. **Refused: splitting the writable parts into an item of their own** — they produce no
+file of their own, so they are design belonging inside the build that consumes them, not work.
 
-**Where a bug report goes — settled 2026-08-31, the user's call: a dedicated email address.** A web form (buildable later on flintcraft.tech, replaceable without redesign) and a GitHub issue (requires an account most of Taskflow's non-technical users won't have) were the alternatives and lost on audience fit and cost to stand up.
+**One limit carried forward rather than filed:** `bugs@flintcraft.tech` is a Google Workspace alias, so
+it receives but cannot send. Replying to a bug report from that address would need a send-as configured
+in Gmail, which nobody has done. Not needed for a screen to print an address; if replying-as-bugs is
+ever wanted, that becomes its own item.
 
-**The address is `bugs@flintcraft.tech`, recorded here on 2026-09-05.** Created and tested on 2026-09-05 during a /next run and working: a message sent from an outside account arrived in the Workspace inbox, labelled External. It is a Google Workspace **alias** on the flintcraft.tech domain rather than a separate mailbox — free, no extra licence, and mail to it lands in the inbox the user already reads. Both choices [bug-report-email-address] left open are therefore settled: the domain, and the alias-not-mailbox shape. One limit to carry: an alias **receives** but does not **send**, so replying to a bug report from that address rather than a personal one would need a send-as configured in Gmail, which nobody has done. Not needed for the screen to print an address, so it is noted rather than filed — if replying-as-bugs is ever wanted, it becomes its own item.
-
-**One half of the 2026-08-31 rejection is now spent, checked on 2026-09-05.** A bug-report form does exist at flintcraft.tech/report, and its project dropdown already lists TaskFlow alongside Throughliner. So "it would cost something to stand up" is no longer true and must not be reached for again. What still decides it is the other half, and the page strengthens it: the form carries a note telling non-automated visitors not to complete it, because it is built for reports Claude has captured and handed over. Taskflow's users are mostly non-technical people with no Claude in the loop, so an in-app Report-a-bug screen pointing at that form would send them to a page that says it is not for them. The email address stands. The Report-a-bug words stay in this item rather than splitting off — they are one sentence from writable and a split would produce a fragment. Skipped again 2026-08-31: the other two inputs ([0019-ai-choice-flow-and-mcp-setup]/[0020-remote-mcp-server] setup design, and the custom-instruction text) still haven't landed.
+The user-only step this item once had buried in its prose — creating the address — was lifted out on
+2026-09-03 into [bug-report-email-address] and has since been done.
 
 #### Personal strategy and memory dogfood — an early preview of Taskflow's Strategy-doc experience [personal-strategy-preview]
 Not before: 2026-11-25
@@ -505,7 +1326,17 @@ Privacy note to carry into any revival: if the personal strategy and real tasks 
 **Dated in planning on 2026-08-25, with the user's approval.** It waits on multi-spec support in the method, which no item in this queue can deliver and which belongs to the No code method project. It cannot be held below the readiness line either, because held work has to be specific enough to build and this is not. Left as a plain capture it returned to the top every session and was set aside again, which is what had been happening. Three months was chosen as long enough not to re-read it every session and short enough that it comes back while still fresh if multi-spec support lands sooner. It is not offered again before that date.
 
 #### [user] Business registered far enough to open an organization Play account [business-registration-for-play-account]
-Not before: 2026-09-10
+Not before: 2026-10-12
+
+**Dated a month out on 2026-09-12, with Alex's approval, and the week she first proposed the same day
+was withdrawn as too short.** She had said the registration was not yet far enough along to lodge the
+D-U-N-S request, and a week was written on the earlier pattern of expecting movement. She then said
+what it actually waits on: her financial and tax position, tracked in another project, and her own
+intention to use Taskflow daily for about a month before considering publishing at all. Against that, a
+week would simply re-ask the same question every Saturday. A month is her figure, and the item is not
+offered again before the date — she can pull it back sooner by saying so if her tax position resolves
+first. Nothing is held up by the wait; [play-console-subscription-product] is parked behind this either
+way, and the whole publishing chain behind that.
 
 **Dated 2026-09-03 with your approval, a week out, on your word that the registration is actively being
 worked on.** It waits on something no item in this queue can deliver — the business existing — and it
@@ -542,508 +1373,30 @@ Filed 2026-09-03 during planning, at the moment the account-type choice was sett
 held that choice was deleted in the same move, its facts folded into
 [play-console-subscription-product], which is where they are used.
 
-#### Decide whether some runs move into Android Studio's terminal, and which [runs-in-android-studio-decision]
-Blocked by: [gradle-from-ide-terminal]
-
-Whether `/next` runs that need a compile should happen in a Claude session started from Android Studio's
-integrated terminal instead of the desktop app — and, if so, what rule in CLAUDE.md says which work items
-require it.
-
-Raised by Alex on 2026-09-05, during the decision step on [gradle-from-ide-terminal]. She saw what that
-item's payoff actually implies before it was written down: compiling mid-run would only be possible in a
-session started in that terminal, so realising it means moving whole runs there, and that is a departure from
-how she works rather than a free capability.
-
-**The trade, as far as it is understood today.** Against: a terminal session has none of the file viewer and
-side panel she reads the work through, and she is a no-code developer for whom that surface is not a
-convenience but how the work is legible at all. For: a compile inside the run is what would stop code items
-shipping ticked UNCONFIRMED, and would take the `[user]` flavor off the test runs. The middle option is that
-only some items — the ones where an unverified build genuinely holds something up — carry the requirement,
-which is what a CLAUDE.md rule would have to name.
-
-Held against [gradle-from-ide-terminal] because there is nothing to decide unless `gradlew` actually works in
-that terminal. If it fails, this entry is deleted unread.
-
-A second thing to establish before deciding, and it is not established now: whether a Claude session started
-in that terminal loads the plugin, the skills and the hooks at all. Same CLI, same configuration, so it is
-expected — but nobody has run one, and the whole point of this entry is not to presuppose things nobody has
-checked.
-
-Filed 2026-09-05 during planning, at the moment the implication was raised.
-
-#### The Strategy doc's Share button does nothing when the doc is empty [strategy-share-silent-when-empty]
-
-From the [verify-run-2026-08-31-remainder] audit on 2026-09-06, not yet reviewed.
-
-Tapped Share in the Strategy page's trailing slot on a device, twice, with no Projects in the database. No
-share sheet opened, the focused window stayed on Taskflow's own MainActivity, and a cleared logcat caught
-nothing at all — no chooser intent, no ActivityNotFound, no error. The button is drawn in the normal enabled
-style, so from the user's side a visible control simply does not respond.
-
-Why it matters. SPEC §Strategy doc says a share button lets the user share the doc via Android's standard
-share sheet, and names no exception for an empty doc. A new user's Strategy doc is empty by definition —
-it fills as they make Projects — so the first person to press this button is exactly the person for whom it
-does nothing, and they have no way to tell a deliberate no-op from a broken app.
-
-Two dispositions are open and the audit does not choose between them: either the sheet should open with
-whatever the doc holds, or the button should render as disabled with the empty state saying why. What is
-not open is leaving an enabled-looking button silent.
-
-It also leaves half of the audit's Strategy check unrun: whether the share sheet opens at all is still
-unverified, because the only route to it was this button.
-
-Filed 2026-09-06, 11:35, mid-run, read from the device clock.
-
-#### Day begins at offers whole hours only, so the day boundary cannot be set to a half hour [day-begins-at-hour-granularity]
-
-From the [verify-run-2026-08-31-remainder] audit on 2026-09-06, not yet reviewed.
-
-Opening Settings → Day begins at on a device shows a dropdown list of whole hours — 12:00 AM, 1:00 AM,
-2:00 AM and so on through the day. There is no minute field and no minute steps. The control is a picker
-of twenty-four values rather than a time picker.
-
-Why it matters, in two ways.
-
-For the user: a person whose day genuinely turns at 4:30 AM cannot say so. SPEC §Settings → Day begins at
-justifies the setting by the person who stays up past midnight and does not consider the day ended, and
-says it lets the user define their own day boundary — a claim hour granularity only partly delivers.
-Whether that matters enough to change is a decision, not a defect, which is why this is filed rather than
-fixed: hours may well be the right simplicity for a setting most people set once.
-
-For testing: it is what stopped this audit running the day-begins-at rollover check. That check needs the
-boundary set a few minutes ahead so the clock crosses it while somebody is watching. With whole hours the
-shortest possible wait is up to sixty minutes, on the user's own phone, in the middle of a run — see
-[day-begins-at-rollover-still-unrun].
-
-Observed on 2026-09-06 at 11:32 on the phone, on the 2026-09-05 build. The setting was left at its 4:00 AM
-default; the dropdown was dismissed without selecting anything.
-
-Filed 2026-09-06, 11:36, mid-run, read from the device clock.
-
-#### [user] Watch a Tomorrow task roll into Today at the day boundary [day-begins-at-rollover-still-unrun]
-
-From the [verify-run-2026-08-31-remainder] audit on 2026-09-06, not yet reviewed.
-
-The one check that audit could not run. SPEC §Schedule view says that at the day-begins-at boundary
-Tomorrow's tasks roll into Today with no label, no reordering and no shame, and that Today's uncompleted
-tasks stay where the user put them. The picker was confirmed present at its 4:00 AM default on 2026-09-05
-and again on 2026-09-06; what nobody has watched is the rollover itself.
-
-Why it did not run this time. The check needs the boundary set a short way ahead so the clock crosses it
-while somebody watches. The setting takes whole hours only ([day-begins-at-hour-granularity]), so the
-shortest wait available is up to sixty minutes — a wait in the middle of a run, on the user's phone,
-holding the only session there is. It is `[user]` work for that reason rather than because Claude cannot
-perform the steps: a session can drive every one of them, but not the waiting.
-
-Walkthrough:
-
-1. Note the time on your phone, then work out the next whole hour that is at least ten minutes away —
-   if it is 2:15, that is 3:00. Look for: one specific hour you are going to wait for.
-2. Open the side menu with the ☰ button, tap Settings, and tap the row under Day begins at showing
-   4:00 AM. Look for: a dropdown list of whole hours.
-3. Choose the hour from step 1, then go back. Look for: the Day begins at row now showing that hour.
-4. Swipe to Tomorrow and add a task there called "rollover-test". Look for: it sitting on Tomorrow.
-5. Swipe to Today and note what is already there and in what order. Look for: your existing tasks, in
-   an order you could recognise again.
-6. Wait until the phone's clock has passed the hour you chose, then open Taskflow on Today.
-   Look for: "rollover-test" now on Today.
-7. Check three things about it: that it carries no label of any kind marking it as moved or late, that
-   it did not jump to the top, and that the tasks noted in step 5 are still in the order you saw them.
-   Look for: all three true. Any one of them false is the finding.
-8. Set Day begins at back to 4:00 AM. Look for: the row reading 4:00 AM again.
-9. Tell a planning session what you saw at step 7, and that "rollover-test" is still on Today needing
-   deleting — a session cannot delete it over adb, which is what [bin-drag-target-check] is about.
-
-Observable: "rollover-test" present on Today after the boundary, unlabelled and not reordered. A session
-can read the task's presence off the device; the no-label and no-reorder halves are the user's eyes.
-
-Rests on, read 2026-09-06 on the phone: that Day begins at is a whole-hour dropdown defaulting to 4:00 AM,
-and that a task added from Tomorrow is dated tomorrow (SPEC §Add a new task).
-
-Filed 2026-09-06, 11:37, mid-run, read from the device clock.
-
-#### Strategy doc edit persistence is unverifiable while no Project exists and none can be deleted [strategy-edit-persistence-blocked]
-
-From the [verify-run-2026-08-31-remainder] audit on 2026-09-06, not yet reviewed.
-
-The audit could not check that a paragraph typed into the Strategy doc survives a relaunch, and the reason
-is worth recording because it will recur.
-
-The Strategy doc's structure is mechanically generated — one heading and paragraph per Project, Unassigned
-excluded (SPEC §Strategy doc). The database holds no Projects, so the page shows its empty state and there
-is no paragraph to type into. Confirmed on the device on 2026-09-06: a single header, the Share action in
-the trailing slot, and the empty-state sentence.
-
-Making a Project would create the paragraph — and would leave a Project behind that no session can remove.
-Deleting one is a long-press drag onto a target (SPEC §Create or delete a Project), and steering a drag
-between adjacent targets over adb has failed three times across two sessions, which is now a recorded
-capability limit in TOOLS.md. So the cost of running this check is a permanent Project in the user's real
-database, which is a worse outcome than the check is worth.
-
-Two ways out, neither chosen here. Either this becomes a `[user]` item run alongside a Project the user
-wants anyway, or it waits until deleting a Project is reachable without the drag. The second is the reason
-this is filed rather than tagged now: which it should be depends on work that has not been planned.
-
-The same blockage sits under [verify-far-future-project-card], which needs a Project of the user's own for
-the same reason — the audit did confirm the far-future case inside the Unassigned card (a task dated
-14/02/2027 showed in Later with its DD/MM label), so what is missing there is specifically the user-Project
-half.
-
-Filed 2026-09-06, 11:38, mid-run, read from the device clock.
-
-#### The Yesterday page was seen empty, so what it holds when there is something to hold is untested [yesterday-page-with-content-untested]
-
-From the [verify-run-2026-08-31-remainder] audit on 2026-09-06, not yet reviewed.
-
-The audit reached Yesterday and read it against SPEC §Yesterday page, which says it sits immediately left
-of Today on the spine, is a page rather than a card, and holds essentially what the user completed
-yesterday. Three of those four hold on the device: it is one swipe left of Today, it is a full page with
-its own header, and its empty state reads "Nothing completed yesterday."
-
-The fourth is untested, because nothing had been completed yesterday. A page that correctly renders its
-empty state tells you nothing about how it renders a list — and this page's whole content is that list.
-
-Getting a completion dated yesterday is not something a session can arrange: the completion timestamp
-comes from the clock, so it can only be made by completing something yesterday, or by an import carrying
-a completed-date. The JSON export format does carry completion state and the date it was completed
-(SPEC §JSON export and import), so an import is the one route that does not require waiting a day, and
-"Add tasks from a file" exists in Settings alongside the replacing import.
-
-Worth deciding at planning which is wanted: fold this into the next device pass that happens to run the
-day after a completion, or build it as a check driven from a crafted import file. The second is more work
-and repeatable; the first is free and depends on luck.
-
-Filed 2026-09-06, 11:39, mid-run, read from the device clock.
-
-#### Fix the RLS test steps in [supabase-apply-cloud-migrations], which as written cannot detect a broken policy [rls-test-steps-bypass-rls]
-
-Found on 2026-09-06 while driving [supabase-apply-cloud-migrations] in a /next run, not yet reviewed.
-
-The item's steps 6 and 7 are the whole point of it — signed in as one test user, query `tasks` and see only
-that user's row; query with no session and see nothing. Both are written as queries run in the Supabase SQL
-editor. **Run there, both return every row whatever the policies say**, because the editor connects as the
-`postgres` role, which carries the `bypassrls` attribute. Confirmed against Supabase's own Row Level
-Security documentation on 2026-09-06.
-
-Why this matters more than a wording slip. The check would not fail loudly — it would return both rows,
-which reads exactly like a policy that is not working. So the likely outcome is someone concluding the RLS
-work is broken when it is fine, or, in the other direction, a later reader taking "we ran the test" as
-evidence the policies hold when nothing was tested at all. A verification step that cannot distinguish a
-pass from a fail is worse than no step, because it produces a record.
-
-The documented fix is to impersonate the role inside the transaction before selecting:
-
-```
-set local role authenticated;
-set local request.jwt.claim.sub = '<the test user uuid>';
-select * from public.tasks;
-```
-
-and for the null-identity case, `set local role anon;` with no claim set. `auth.uid()` reads the claim, so
-the policies then evaluate as they would for a real request.
-
-Two further corrections the same steps need, both hit while driving them:
-
-- **Step 5 cannot insert a task row on its own.** `tasks.project_id` is `not null` and references
-  `public.projects`, so a project row has to exist for each test user before any task row can. The step as
-  written says only to insert one row into `tasks` under each user.
-- **The grant is a separate failure from the policy.** Supabase's documentation notes a missing grant
-  raises error `42501` before any policy is evaluated, so a `42501` during this test means something other
-  than what the item is checking, and the step should say so rather than leaving it to be misread as a
-  policy denial.
-
-The drive on 2026-09-06 applied all of this live rather than following the item, and its record carries what
-actually ran. This item exists so the queue entry itself stops carrying steps that cannot work — the next
-person to run it should not have to rediscover this.
-
-Filed 2026-09-06, 12:04, mid-run, read from the device clock.
-
-#### Cloud schema grants no privileges to the authenticated role, so the app itself would be denied every table [cloud-schema-missing-grants]
-
-Found on 2026-09-06 while driving [supabase-apply-cloud-migrations] against the real Supabase project, not
-yet reviewed.
-
-`0001_initial_schema.sql` creates the four tables and enables Row Level Security on each. It issues no
-`grant` statements. `0002_rls_policies.sql` creates sixteen policies scoped `to authenticated`. Neither
-file grants the `authenticated` role any privilege on any table.
-
-**Row Level Security and table privileges are two separate gates, and Postgres checks the privilege first.**
-A policy says which rows a role may touch; it does not give the role permission to touch the table at all.
-So with the migrations exactly as they stand, the first real query from a signed-in Taskflow user fails
-before any policy is consulted.
-
-Observed rather than reasoned. Impersonating a test user in the SQL editor —
-`set local role authenticated`, with the user's id set as the JWT claim — and selecting from `public.tasks`
-returned:
-
-```
-ERROR: 42501: permission denied for table tasks
-HINT: Grant the required privileges to the current role with:
-      GRANT SELECT ON public.tasks TO authenticated;
-```
-
-The database's own hint names the fix. Every one of the four tables needs it, for select, insert, update
-and delete, and the sequence-free UUID keys mean no sequence grants are needed alongside.
-
-**This fails closed, so it is a functionality defect and not a data-exposure risk.** Nothing is readable
-that should not be; the tables are simply unreachable. Recording that explicitly because the words
-"missing grants" read like a hole, and here the hole is in the other direction.
-
-Why it was not caught before: the SQL editor connects as `postgres`, which holds `bypassrls` and owns the
-tables, so every check run there succeeds regardless. Nothing had queried these tables as the role the app
-will actually use until this drive — which is the argument for the impersonation steps in
-[rls-test-steps-bypass-rls] being fixed rather than dropped.
-
-What the fix has to decide, and why this is a queue item rather than a line typed in during the drive:
-whether the grants live in `0001` beside the table definitions, in `0002` beside the policies, or in a new
-`0003`; and whether to grant per-table or to set default privileges on the schema. A project already
-holding a partly-applied schema also needs the answer to "what does a re-run do" — all three files are
-currently write-once, with no `if not exists` guards, so re-running any of them errors.
-
-Filed 2026-09-06, 12:22, mid-run, read from the device clock.
-
-#### Rotating-roster repeats — a recurring task that cycles through a list rather than repeating identically [rotating-roster-recurrence]
-
-Raised by you on 2026-09-06, describing how you actually want to use a Project for keeping up with your
-immediate family.
-
-The want, in the abstract: a single recurring task whose *subject* advances through an ordered roster each
-time it comes round, rather than a task that repeats unchanged. The rotation you described has six
-positions covering four people, where one position recurs and one is a free choice between two of them at
-the moment it lands, and then the whole cycle restarts.
-
-Taskflow cannot express this. `Recurrence` holds a fixed interval, and every generated instance is
-identical to the last — SPEC §Recurring tasks describes instances of one task appearing on the slots their
-dates fall into, with nothing that varies between them. There is no per-instance content, no ordered list,
-and no notion of an instance the user resolves a choice for.
-
-Why it is worth having rather than a curiosity. The failure it fixes is the one this app exists for: a
-person who wants to stay in touch with four people evenly has to hold the rotation in their head, and
-holding a rotation in your head is exactly the executive-function load Taskflow is meant to absorb. The
-workaround available today is four separate recurring tasks at staggered offsets, which drifts as soon as
-one is completed late and cannot express "either of these two, my choice".
-
-Three things a design would have to settle, none decided here:
-
-- **Where the roster lives.** A list on the task, or something the Project holds? The second is a bigger
-  idea — it starts to make a Project a thing with members — and may be out of scope for what is a task
-  feature.
-- **What a "choose one" position means.** It is not a rotation step; it is a prompt. That may be a
-  different feature wearing the same coat, and worth separating before either is built.
-- **Whether the free tier gets it.** A rotation is exactly the sort of thing the paid tier's Claude
-  integration could arrange conversationally, so this may be a case where the two tiers want different
-  answers rather than the same one.
-
-Names are deliberately not recorded. The people in the roster are third parties who have published
-nothing, so they are described by relationship rather than named, per this project's scrub checklist. The
-concrete roster is Alex's to hold; what the queue needs is the shape.
-
-Filed 2026-09-06, 12:40, mid-run, read from the device clock.
-
-#### Dragging a lifted task navigates to the next page instead of dragging, so no drag target can be reached [drag-eaten-by-page-swipe]
-
-Found on 2026-09-06 by Alex, on a real phone with her own thumb, while being walked through
-[bin-drag-target-check].
-
-Long-pressing a task on Today lifts it and raises the row of drag targets. Moving the finger from there
-does not drag the task: the page navigates to Tomorrow. The task is never delivered to any target, so the
-bin, the cut and the promote targets are all unreachable by the gesture SPEC gives for reaching them
-(SPEC §Drag-target icons).
-
-**This overturns what the record believed until today, and the correction matters more than the defect.**
-Three attempts to drive this over adb — one on 2026-09-05, two on 2026-09-06 — each registered as a
-horizontal page swipe rather than a drag. All three were read as a limit of driving a device over adb, and
-that reading was written into TOOLS.md earlier in this same session and used to justify tagging this check
-as work only a person could do. Alex's thumb produced the identical failure. So the adb attempts were not
-failing to reproduce a working gesture; they were reproducing a broken one, faithfully, three times. The
-TOOLS.md line has been corrected.
-
-The likely mechanism, stated as the obvious suspect rather than as established: the Schedule pages are a
-horizontal pager, and a horizontal drag inside the list area is being consumed by the pager before the
-lifted task's own drag handler sees it. SPEC §Side menu records that swipe-to-open was deliberately
-disabled on the drawer for exactly this reason — "so the gesture does not collide with the spine's
-horizontal-swipe navigation" — so the collision was anticipated in one place and appears not to have been
-handled in this one. Whoever builds this should confirm that before designing around it.
-
-**A second symptom, possibly the same defect and possibly not.** The target row does not render where SPEC
-puts it. SPEC §Create or delete a Project describes dragging to "the delete target in the upper-right
-corner", and this item's own walkthrough says to look for the targets "at the top of the screen". Alex
-reports the icons appearing in the task area instead, with the bin on the left. If the targets are drawn
-inside the scrolling list rather than pinned to the top bar, then the drag that must reach them is a drag
-within the pager's own territory, which would explain the first symptom — but they may equally be two
-faults. Worth checking together.
-
-Consequence for the queue: [bin-drag-target-check] cannot pass while this stands, and neither can the
-promote target, the cut target from a Schedule screen, or free-tier Project deletion
-([project-delete-later]), all of which are reached by this one gesture. That last one was cleared to run
-on the strength of the drag primitive being proven — it was proven for reordering within a list, which is
-a vertical drag, and not for delivery onto a target.
-
-Filed 2026-09-06, 12:58, mid-run, read from the device clock.
-
-#### Give [project-delete-later] and [project-reorder-strategy] file lists, or they block every future run [two-cleared-items-underspecified]
-
-Both sit at the top of the cleared region and neither can be built. A /next run on 2026-09-06 dropped them
-at its self-scoping step: neither carries a `Files:` line, and neither says what changes inside any file.
-They describe the behaviour wanted — drag a Project card onto a delete target, drag Project headings to
-set order — which is a design, not an instruction a build can follow.
-
-Alex agreed to drop them from that run and the queue was left untouched, which is the point of this
-capture: nothing in the queue records why they were skipped, so the next run reaches them, performs the
-same check, and stops in the same place. The cost is not the stop — the stop is correct — it is that the
-stop happens after a user has been asked to approve a run containing them.
-
-What each needs before it is buildable is the ordinary decision-step work: which files change, and what
-changes inside them. For the delete item that means deciding where the drag-target row is built and what
-the reassign-to-Unassigned path touches; for the reorder item, which file owns Project order and how a
-heading drag writes it.
-
-**Read [project-delete-later-premise-may-be-gone] before designing the first of them.** Its gesture may not
-work at all, which would make designing its file list premature.
-
-Filed 2026-09-06, 21:55, by the look-back over the /next run's own conversation.
-Filed 2026-09-06 21:53, stamped by the queue tool.
-
-#### Re-examine [project-delete-later]: the gesture it is built on may not work at all [project-delete-later-premise-may-be-gone]
-
-[project-delete-later] was lifted into the cleared region on 2026-09-05 on an explicit argument, written
-into the item: that the drag gesture it needs "exists and has been driven on a real phone", citing
-[task-reorder-within-list] shipping and two TEST-LOG rows from the 2026-09-05 device audit.
-
-On 2026-09-06 Alex long-pressed a task on her own phone and tried to drag it. The page navigated to
-Tomorrow; the task never moved. Filed as [drag-eaten-by-page-swipe].
-
-**The lifting argument does not survive that, and the reason is a distinction nobody had drawn.** What
-[task-reorder-within-list] proved is a *vertical* drag that reorders within a list. What this item needs is
-delivery of a dragged task *onto a target* — a different gesture, in the pager's own horizontal territory,
-and the one that fails. The two were treated as one primitive, and the row cited as evidence (dragging a
-task to a target row and back) is now in doubt for the same reason.
-
-So this item is not merely blocked; the sentence that cleared it was wrong. That is why this is filed as a
-re-examination rather than as a `Blocked by:` line: adding a blocker would leave the item's own prose still
-asserting the gesture is proven, and a later reader would take that at face value.
-
-Deciding what happens to it belongs to a planning session. The options visible from here: hold it against
-[drag-eaten-by-page-swipe] and correct its prose, or return it to Unprocessed until the gesture question
-settles. Both need the sentence about the drag being proven rewritten either way.
-
-The same doubt reaches anything else reached by that gesture — the promote target, the cut target from a
-Schedule screen, and [bin-drag-target-check], which halted mid-drive on 2026-09-06 for exactly this.
-
-Filed 2026-09-06, 21:56, by the look-back over the /next run's own conversation.
-Filed 2026-09-06 21:53, stamped by the queue tool.
-
-#### TEST-LOG.md owes rows for the 2026-09-06 run, which produced more test outcomes than any session so far [test-log-owes-2026-09-06-rows]
-
-This project's CLAUDE.md carries a standing rule: TEST-LOG.md is the running test history, and material
-test outcomes are reflected there as well as in the session's LOG entry. The /next run of 2026-09-06
-produced a large number and wrote none of them; the file's last rows predate the session entirely.
-
-What is owed, from that run's records:
-
-- The device audit's passes — search narrowing the completed history in both directions, a manually-dated
-  one-off at five months out appearing in Later, the side menu matching SPEC's spine order, a past-dated
-  task sitting on Today with no overdue marking.
-- Its failures and blocks — the Strategy Share button doing nothing on an empty doc, the day boundary
-  offering whole hours only, the rollover check unrun, Strategy edit persistence unreachable, the Yesterday
-  page untested with content.
-- The date matrix, all three slots: 2–7 days to Soon, exactly eight days to Later, a past date staying on
-  Today, each with its DD/MM label.
-- The far-future task inside a real user Project's card.
-- The three Supabase checks — cross-account read denied, no-session denied at the grant, null identity
-  denied by the policy — and the `42501` failure that preceded them, which is the row that matters most
-  because it found [cloud-schema-missing-grants].
-- The compile: BUILD SUCCESSFUL from Android Studio's terminal, covering four changed files.
-
-**Why this was missed, which is worth more than the rows.** The rule says a build "runs tests"; this run's
-testing happened inside an `[audit]` item and inside `[user]` walk-throughs, neither of which reads as a
-build running a test suite. The rule's trigger and the run's shape did not meet. Whoever picks this up
-should decide whether TEST-LOG.md is meant to cover audit and walk-through outcomes at all, or only tests a
-build runs — because writing these rows without settling that just moves the ambiguity into the file.
-
-Everything needed is already recorded in the session's LOG entries, so nothing has to be re-run.
-
-Filed 2026-09-06, 21:57, by the look-back over the /next run's own conversation.
-Filed 2026-09-06 21:53, stamped by the queue tool.
-
-#### Repair the unfillable commit-hash placeholder in LOG/2026-08-25-setup.md [setup-log-entry-malformed-placeholder]
-
-Every session opening reports it: that entry carries a commit-hash placeholder somewhere other than hash
-position — not at the start of a heading, and not on an index line — so the automatic backfill that fills
-placeholders at every session start can never reach it. The backfill is working correctly; the entry is
-malformed.
-
-It has been reported at the opening of session after session and never fixed, which is the actual cost. A
-warning that appears every time and is never actioned trains everyone to read past the whole class of
-opening warnings, including ones that matter. That is the argument for spending five minutes on a cosmetic
-defect in a year-old record.
-
-The fix is to move the placeholder into the entry's heading, per the entry template, so the next session
-start fills it with the real hash. The entry's prose is not otherwise touched — this is a record of what
-happened on 2026-08-25 and its content is not in question.
-
-Filed 2026-09-06, 21:58, by the look-back over the /next run's own conversation.
-Filed 2026-09-06 21:53, stamped by the queue tool.
-
-#### Session-start clock line read 00:37 while the real clock read 11:31 — a method defect to report [session-start-clock-eleven-hours-out]
-
-On 2026-09-06 the session opening stated "Date at session start: 2026-09-06 00:37 — read from the system
-clock." Minutes later, in the same session, `date` on this machine returned 11:31 and the connected phone
-returned 11:31 in the same turn. Two independent clocks agreed with each other and disagreed with the
-opening line by about eleven hours.
-
-**Why it matters more than a cosmetic slip.** That line is presented to every session as the anchor for
-dates and times, and the method's own rules direct sessions to prefer a computed field like it over their
-own assumption — precisely so that recorded times are trustworthy. A line that is confidently wrong is
-worse than an absent one, because it is designed to be trusted. Every capture and record filed against it
-would carry a wrong hour, and nothing downstream could detect it: a wrong timestamp reads exactly like a
-right one.
-
-In this session nothing was written from it. The mismatch was noticed when the phone's clock was read for
-an unrelated reason, and after that every time written into a capture or record came from a live `date`
-reading in the turn that wrote it, which is what the current rules ask for anyway. So this project's
-records are sound; the defect is in the tool, for everyone using it.
-
-Eleven hours is close to a timezone offset, and this machine is on AEST — which is UTC+10, and eleven with
-daylight saving. That is a suggestion of where to look, not a diagnosis, and it should be checked rather
-than assumed.
-
-**Route: this is the method misbehaving rather than this project.** It goes to the Throughliner project as
-mail, not into this queue as work — this capture exists so the observation is not lost while it waits for
-someone to send it, and it should be deleted once the report has gone. Nothing has been sent: outbound mail
-needs Alex to see the exact text and say yes.
-
-Filed 2026-09-06, 21:59, by the look-back over the /next run's own conversation.
-Filed 2026-09-06 21:53, stamped by the queue tool.
-
-#### Last session advises processing [project-delete-later-premise-may-be-gone] next [forward-advisory]
-
-Replaces the previous advisory, which pointed at [edit-outliner-missing]; that item shipped on 2026-09-06
-and its note was spent.
-
-**Open on [project-delete-later-premise-may-be-gone], then [two-cleared-items-underspecified].** Together
-they cover the two items now sitting at the top of the cleared region, and both need answering before any
-build run can move.
-
-The condition, stated as a condition: a /next run started as the queue now stands reaches
-[project-delete-later] first, finds it names no files and does not say what changes inside any, and halts
-on it — building nothing past it. That happened on 2026-09-06 and the user dropped both items from the run
-to let the rest proceed. Nothing in the queue records that, so it happens again.
-
-**The overlap scan found a real overlap, and it is the sharper of the two problems.** Unprocessed now holds
-a finding that invalidates the sentence which cleared the top processed item. [project-delete-later] was
-lifted on the argument that its drag gesture "exists and has been driven on a real phone". On 2026-09-06
-Alex tried that gesture with her own thumb and the page navigated instead of the task dragging
-([drag-eaten-by-page-swipe]). What had been proven was vertical reordering within a list; what the item
-needs is delivery of a task onto a target, which is a different gesture and the one that fails. So the item
-is not merely underspecified — the reasoning that put it where it is has been overturned, and designing its
-file list before settling that would be designing for a feature that may not be reachable.
-
-Two other captures are worth knowing about while planning, though neither blocks the top of the queue.
-[cloud-schema-missing-grants] records that the cloud schema grants the signed-in role nothing, so the app's
-first real query would be refused; the grants were applied by hand to the live database during the session
-and exist in no file, which is the one gap between the repository and the working Supabase project.
-[runs-in-android-studio-decision] has had its blocker resolved — Gradle does run from Android Studio's
-terminal — and is now a live question about where sessions happen.
-Filed 2026-09-06 22:06, stamped by the queue tool.
+#### Free-choice roster slot — a repeating task that offers two names and waits for the user to pick [rotating-roster-free-choice]
+Blocked by: [rotating-roster-recurrence]
+
+Split out of [rotating-roster-recurrence] on 2026-09-12, with Alex's agreement, because it is a
+different feature wearing the same coat.
+
+What it is: one position in a repeating task's rotation that does not name a single subject. Instead it
+offers two — "either of these two, whichever suits" — and the user resolves it when the instance lands.
+Alex's own rotation has exactly one such position among its six.
+
+Why it is not part of the rotation itself. A rotation is deterministic: the app knows what comes next
+and can render it without asking anybody. A free-choice position cannot be rendered that way. It has to
+interrupt the user, which Taskflow has no surface for — there are no notifications in v1 (SPEC §No
+notifications in v1) — and it needs a settled answer for the case the user never picks, which the
+rotation has no equivalent of. Bundling the two would make the straightforward half wait on the
+awkward one.
+
+Held against [rotating-roster-recurrence] because there is no rotation for a position to sit inside
+until that ships, and because the shape of a position is decided there.
+
+What a design would have to settle, none of it decided here: where the choice is presented, given the
+app never interrupts; what the task shows while the choice is unresolved; and whether an unresolved
+instance blocks the rotation from advancing or is simply passed.
+
+Filed 2026-09-12 during planning, at the moment the split was agreed.
+Filed 2026-09-12 11:12, stamped by the queue tool.
 

@@ -1,4 +1,4 @@
-# PENDING — /next [supabase-apply-cloud-migrations]: the migrations applied, the isolation proved, and a missing-grants defect found by the test failing
+# 6d6267c — /next [supabase-apply-cloud-migrations]: the migrations applied, the isolation proved, and a missing-grants defect found by the test failing
 
 **Outcome: done.** Walked to its end on 2026-09-06, all nine steps. The four tables and sixteen policies now
 exist on the real Supabase project; one account cannot read another's rows; a session-less request is denied,

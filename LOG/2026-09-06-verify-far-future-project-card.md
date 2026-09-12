@@ -1,4 +1,4 @@
-# PENDING — /next [verify-far-future-project-card]: run against a real Project Alex wanted anyway, rather than a throwaway that could not be deleted
+# 6d6267c — /next [verify-far-future-project-card]: run against a real Project Alex wanted anyway, rather than a throwaway that could not be deleted
 
 **Outcome: done**, on 2026-09-06 between 12:28 and 12:47. Driven by Claude over adb, with Alex deciding the
 one thing that was hers to decide.

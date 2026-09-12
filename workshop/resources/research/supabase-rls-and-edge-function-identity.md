@@ -41,6 +41,43 @@ bypasses RLS altogether, which is what cron jobs and privileged maintenance use.
 worried about is genuinely available: the server can be built so that the
 database, not the function's own code, is what enforces whose data is whose.
 
+## How to actually test that the policies hold
+
+Added 2026-09-07, from what was found while applying the schema to the real
+project on 2026-09-06. This section is the practical half of the finding above:
+the policies were right, and the first two attempts to verify them could not
+have told a working policy from a broken one.
+
+**The SQL editor cannot test RLS on its own.** It connects as the `postgres`
+role, which carries the `bypassrls` attribute, so a `select` run there returns
+every row whatever the policies say. Reading two rows back is therefore not
+evidence of a leak, and reading one is not evidence of protection — the result
+is the same either way, which is the worst shape a security check can have.
+
+**Impersonate the role inside the transaction instead.** `auth.uid()` reads the
+JWT claim, so setting the claim makes the policies evaluate as they would for a
+real request:
+
+```
+set local role authenticated;
+set local request.jwt.claim.sub = '<the test user uuid>';
+select * from public.tasks;
+```
+
+For the no-identity case use `set local role anon;` with no claim set. Both are
+`set local`, so they last only for the transaction.
+
+**A `42501` is not a policy denial.** Table privileges and Row Level Security
+are two separate gates and Postgres checks the privilege first, so a missing
+`grant` raises `42501: permission denied` before any policy is consulted. A test
+that reads that as "the policy blocked me" records a pass it never earned. This
+is not hypothetical: the migrations as first written granted the `authenticated`
+role nothing, and the impersonated select above is what exposed it.
+
+**Order the fixture so the insert can succeed.** `tasks.project_id` is
+`not null` and references `public.projects`, so a project row has to exist for
+each test user before any task row can be inserted under them.
+
 ## Naming note
 
 Supabase renamed its keys. `sb_publishable_` replaces the old anon key and

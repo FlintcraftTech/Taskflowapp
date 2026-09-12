@@ -1,4 +1,4 @@
-# PENDING — Three device facts written into TOOLS.md, the first of them a warning that running the project's own tests wipes the user's data
+# 6d6267c — Three device facts written into TOOLS.md, the first of them a warning that running the project's own tests wipes the user's data
 
 Session date and time: 2026-09-06, 22:05. This session ran across a single day, in two halves separated by
 several hours.
