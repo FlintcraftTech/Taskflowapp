@@ -1,4 +1,4 @@
-# [HASH] — /next [nav-day-card-layer]: the day-detail card layer, opened from a search result and moving on its own axis
+# bbbef3c — /next [nav-day-card-layer]: the day-detail card layer, opened from a search result and moving on its own axis
 
 Written 2026-09-12 at 13:05, read from the clock. "Yesterday" below names a page in Taskflow, not a date.
 

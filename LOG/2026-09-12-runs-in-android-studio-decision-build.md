@@ -1,4 +1,4 @@
-# [HASH] — /next [runs-in-android-studio-decision]: three standing rules written into CLAUDE.md — compile handovers, an export before instrumented tests, and daily use before publishing
+# bbbef3c — /next [runs-in-android-studio-decision]: three standing rules written into CLAUDE.md — compile handovers, an export before instrumented tests, and daily use before publishing
 
 Written 2026-09-12 at 13:04, read from the clock.
 

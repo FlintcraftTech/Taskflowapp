@@ -1,4 +1,4 @@
-# [HASH] — /next close 2026-09-12: what this chat did outside its work items
+# bbbef3c — /next close 2026-09-12: what this chat did outside its work items
 
 Written 2026-09-12 at 13:14, read from the clock. The session's twelve work items have their own entries; this one carries what belongs to no item.
 

@@ -1,4 +1,4 @@
-# [HASH] — /next [strategy-edit-persistence-blocked]: a Strategy paragraph survives a relaunch and the share sheet opens, with one finding on text entry
+# bbbef3c — /next [strategy-edit-persistence-blocked]: a Strategy paragraph survives a relaunch and the share sheet opens, with one finding on text entry
 
 Written 2026-09-12 at 13:05, read from the clock.
 

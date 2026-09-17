@@ -78,9 +78,9 @@ Recurring tasks created in Taskflow appear on whichever Schedule slot each insta
 
 Recurring tasks are capped at **30 days into the future**: instances dated more than a month from today are not shown until the world catches up to within a month of them. A yearly birthday reminder, for example, is invisible until you're within a month of the next instance. Manually-dated one-off tasks are not capped — a task you've manually dated for next year appears in Later normally.
 
-**A recurring task may carry a roster** — an ordered list of names or subjects, written one per line in the edit dialogue. Where it has one, each instance shows the task's title with the next name from the list, and the list advances **when an instance is completed**, not when its date passes. So a week the user does not get to costs that occasion but not that person's turn: the same name is still up next time. A rotation nobody completes therefore stops advancing, which is the accepted cost of never skipping anyone. A task with no roster is unchanged.
+**A repeating task's subtasks may be single-pick.** Once a task has a repeat rule, its edit dialogue offers an option to turn its subtask list into a single-pick list. The subtasks then appear as a single-select choice rather than a row of checkboxes, and completing one of them completes **that occasion** of the parent, leaving the others untouched for next time. Which subtask was picked is recorded against that occasion. Taskflow decides nothing about which one comes up: there is no rotation and no notion of whose turn it is — the user picks whichever suits that occasion. A repeating task whose subtasks all genuinely need doing each time leaves the option off and behaves as any parent task does.
 
-The user needs this because a rotation held in the user's own head — four people to stay in touch with, evenly — is exactly the executive-function load this app exists to absorb, and because advancing on the calendar rather than on completion would quietly drop someone from the user's life because of one bad week (UX principle 4).
+The user needs this because a rotation held in the user's own head — four people to stay in touch with, evenly — is exactly the executive-function load this app exists to absorb, and because the app assigning turns would be making a decision about the user's own relationships that the user is far better placed to make on the day. Taskflow's part is to hold the list and record what was picked; the judgement of who is overdue a turn stays the user's.
 
 The user needs this because recurring tasks generate an indefinite tail of future instances. Showing all of them would flood Later; showing only the next would lose the rhythm the user actually wants to see (every week's "water plants," for example, sitting there as a checklist of the coming month). The 30-day cap is the compromise.
 
@@ -158,7 +158,7 @@ The user needs this because subtasks are sub-units of a parent task, not indepen
 
 ### Parent tasks expand/collapse instead of having a checkbox
 
-A parent task (one with subtasks) has an expand/collapse control where its checkmark would otherwise be, rather than a checkmark of its own. Expanding it shows the parent's subtasks indented beneath it on the current screen. A parent's completion rolls up from its children: it is complete only when all its subtasks are complete, so completing the last subtask completes the parent and sends it to the Completed tray (see below), and un-completing any subtask brings the parent back out of the tray.
+A parent task (one with subtasks) has an expand/collapse control where its checkmark would otherwise be, rather than a checkmark of its own. Expanding it shows the parent's subtasks indented beneath it on the current screen. A parent's completion rolls up from its children: it is complete only when all its subtasks are complete, so completing the last subtask completes the parent and sends it to the Completed tray (see below), and un-completing any subtask brings the parent back out of the tray. **A repeating parent whose subtasks are single-pick is the exception** — completing any one of them completes that occasion (see *Recurring tasks*).
 
 The user needs this because manually checking a parent while subtasks remain open creates an obvious state mismatch. Driving completion from the children up makes the parent's completion state derivable rather than user-entered.
 
@@ -195,7 +195,7 @@ The user needs this because seeing what they have already done provides a sense 
 
 The leftmost page on the navigation spine is a single search surface covering everything: active tasks and completed ones together. There is not a separate search box for each. Someone hunting for a task usually does not know or care whether they already finished it, and two boxes would make them guess which one to open.
 
-Below the search field, completed tasks are listed in completion order, most recent first, with a date header between each day's results. Typing narrows what shows below, and the date headers for the days that still have results stay above them, so a filtered list is still readable as a history rather than as a flat pile.
+Below the search field, completed tasks are listed in completion order, most recent first, with a date header between each day's results. **A completed occasion of a repeating task is listed here too, as its own row on the day it was completed** — so a repeating task appears once for each occasion completed rather than once in total, and where its subtasks are single-pick (see *Recurring tasks*) the row shows the subtask that was picked. Typing narrows what shows below, and the date headers for the days that still have results stay above them, so a filtered list is still readable as a history rather than as a flat pile.
 
 Search covers **all tasks, active and completed, across every Schedule slot and every Project, plus Project names**. It does not cover the Strategy doc. Scoping search to the current screen or the current Project would put back the "am I looking in the right place?" guess that one unified surface exists to remove; Project names come along because typing a Project's name and getting that Project is the same gesture as typing a task's. The Strategy doc is left out because it is prose rather than items, so its results cannot render as task rows, and it is a single document the user can simply open and read.
 
@@ -292,7 +292,7 @@ The user needs this because portability matters even with no external integratio
 
 ### Settings
 
-The Settings screen is reachable from the side menu's bottom section (alongside Help, Thanks, and Report a bug — see *Side menu*). Settings holds the user-configurable controls that don't live on a task or a screen.
+The Settings screen is reachable from the side menu's bottom section (alongside Help and Report a bug — see *Side menu*). Settings holds the user-configurable controls that don't live on a task or a screen.
 
 The user needs this because there is a small set of app-level controls (Day begins at, Date format, JSON export/import) that need a home, and Settings is where Android users expect to find them. The AI tier is not among them: turning AI on is reached from the side menu's own "Turn on AI" row (see *Side menu* and *Tier model — free and paid*), and it lives in one place only.
 
@@ -318,7 +318,7 @@ The user needs this because a calm surface is only calm if it matches the room t
 
 A side menu opens by **tapping the ☰ button in the top bar**, sliding in from the left as a drawer. Swipe-to-open is intentionally disabled — the ☰ is the one opener — so the gesture does not collide with the spine's horizontal-swipe navigation. The menu is a single navigation list that mirrors the spine from top to bottom: **Search**, **Yesterday**, **Today**, **Tomorrow**, **Soon**, **Later**, then a single calm row for the **Strategy doc**. Every page on the spine has a row, in spine order — Search most of all, since it is the page the user reaches for when they have lost something and swiping around hunting for it is the opposite of what they need. Tapping any entry opens that page. Projects are not listed in the menu — they live inside **Later** (see *Schedule view*), which is how the user reaches any Project.
 
-Pinned to the bottom of the drawer, separated from the navigation list, are the **app actions**: **Settings**, **Help**, **Thanks**, and **Report a bug**, plus a **"Turn on AI"** entry that re-triggers the AI choice flow on the free tier. The row names the destination and no more; making the case for the paid tier is the AI choice flow's job, on the screen the row opens.
+Pinned to the bottom of the drawer, separated from the navigation list, are the **app actions**: **Settings**, **Help**, and **Report a bug**, plus a **"Turn on AI"** entry that re-triggers the AI choice flow on the free tier. The row names the destination and no more; making the case for the paid tier is the AI choice flow's job, on the screen the row opens.
 
 **Report a bug gives the user an email address to write to, and nothing more** — no form to fill in, no account to create, no issue tracker. Taskflow's users are mostly non-technical people, and an email is the one reporting route that asks nothing of them they do not already have.
 

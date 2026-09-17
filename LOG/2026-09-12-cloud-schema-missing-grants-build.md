@@ -1,4 +1,4 @@
-# [HASH] — /next [cloud-schema-missing-grants]: 0003_grants.sql written, closing the gap between the repository and the live Supabase project
+# bbbef3c — /next [cloud-schema-missing-grants]: 0003_grants.sql written, closing the gap between the repository and the live Supabase project
 
 Written 2026-09-12 at 13:05, read from the clock.
 

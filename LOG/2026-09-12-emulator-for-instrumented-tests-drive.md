@@ -1,4 +1,4 @@
-# [HASH] — /next [emulator-for-instrumented-tests]: the AVD Pixel_6 created and booting, so instrumented tests stop running on Alex's phone
+# bbbef3c — /next [emulator-for-instrumented-tests]: the AVD Pixel_6 created and booting, so instrumented tests stop running on Alex's phone
 
 **Outcome: done.** Walked to its end in this session and confirmed by its own observable rather than by asking.
 

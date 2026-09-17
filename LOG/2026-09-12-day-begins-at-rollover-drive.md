@@ -1,4 +1,4 @@
-# [HASH] — /next [day-begins-at-rollover-still-unrun]: the setup found a slot-derivation defect, so the watch was never meaningful and the item stays open
+# bbbef3c — /next [day-begins-at-rollover-still-unrun]: the setup found a slot-derivation defect, so the watch was never meaningful and the item stays open
 
 **Outcome: halted mid-drive.** The setup steps were driven on Alex's say-so and turned up a defect that makes the watch meaningless — the test task landed on the Today page before the boundary it was meant to cross. Filed as [tomorrow-task-lands-on-today-under-custom-boundary]. The item stays in Processed with nothing resumed from; a later session presents it fresh once that defect is understood.
 

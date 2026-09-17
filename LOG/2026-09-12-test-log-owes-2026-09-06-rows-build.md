@@ -1,4 +1,4 @@
-# [HASH] — /next [test-log-owes-2026-09-06-rows]: the TEST-LOG rule widened to any source, and twenty-one owed rows backfilled
+# bbbef3c — /next [test-log-owes-2026-09-06-rows]: the TEST-LOG rule widened to any source, and twenty-one owed rows backfilled
 
 Written 2026-09-12 at 13:05, read from the clock.
 

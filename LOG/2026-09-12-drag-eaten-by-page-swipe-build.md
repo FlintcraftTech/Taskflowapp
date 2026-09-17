@@ -1,4 +1,4 @@
-# [HASH] — /next [drag-eaten-by-page-swipe]: the drag-target row's own footprint no longer turns the page, so bin, cut and promote are reachable
+# bbbef3c — /next [drag-eaten-by-page-swipe]: the drag-target row's own footprint no longer turns the page, so bin, cut and promote are reachable
 
 Written 2026-09-12 at 13:05, read from the clock.
 

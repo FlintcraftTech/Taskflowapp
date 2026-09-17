@@ -1,4 +1,4 @@
-# [HASH] — /next [rotating-roster-recurrence]: a recurring task can carry an ordered roster, and it advances on completion rather than on the calendar
+# bbbef3c — /next [rotating-roster-recurrence]: a recurring task can carry an ordered roster, and it advances on completion rather than on the calendar
 
 Written 2026-09-12 at 13:05, read from the clock.
 

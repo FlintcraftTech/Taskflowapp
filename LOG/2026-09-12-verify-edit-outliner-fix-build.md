@@ -1,4 +1,4 @@
-# [HASH] — /next [verify-edit-outliner-fix]: the subtask outliner verified on the phone, a clean pass with no findings
+# bbbef3c — /next [verify-edit-outliner-fix]: the subtask outliner verified on the phone, a clean pass with no findings
 
 Written 2026-09-12 at 13:05, read from the clock.
 

@@ -1,4 +1,4 @@
-# [HASH] — /next [strategy-share-silent-when-empty]: the Strategy empty state now says the doc can be shared once it holds something
+# bbbef3c — /next [strategy-share-silent-when-empty]: the Strategy empty state now says the doc can be shared once it holds something
 
 Written 2026-09-12 at 13:05, read from the clock.
 

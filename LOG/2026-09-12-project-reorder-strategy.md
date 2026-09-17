@@ -1,4 +1,4 @@
-# [HASH] — /next [project-reorder-strategy]: Project headings drag to reorder in the Strategy doc, and the shared drag primitive gained a handle slot to allow it
+# bbbef3c — /next [project-reorder-strategy]: Project headings drag to reorder in the Strategy doc, and the shared drag primitive gained a handle slot to allow it
 
 Written 2026-09-12 at 13:05, read from the clock.
 

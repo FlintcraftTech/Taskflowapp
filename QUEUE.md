@@ -10,6 +10,622 @@
 > item carrying a `Red flag · State: cleared/uncleared` marker. The line below marks
 > how far down is cleared to build; anything below it is decided but not ready yet.
 
+#### Let the compile rule cover a batch, and say what happens when it fails [compile-rule-vs-multi-item-runs]
+
+Rewrites the compile-handover rule in this project's CLAUDE.md so it describes what a multi-item run
+actually does, and so it covers the case it currently says nothing about.
+
+**The mismatch.** The rule written on 2026-09-12 by [runs-in-android-studio-decision] says that when a
+build's work needs compiling, the build stops, hands Alex the command to paste into Android Studio's
+terminal, and waits for the result before ticking the item. Read literally that is one hand-over per item.
+The same session's run then built four Kotlin items back to back and handed over **one** compile covering
+all four, ticking them only once it returned `BUILD SUCCESSFUL`. It recorded why in its build working file
+and left every one of them in the queue until then, so nothing was ticked on an unverified build and
+nothing could strand. The rule's purpose was met and its wording was not — and the next session reads the
+wording.
+
+**Settled with Alex on 2026-09-17, in favour of what the run did.** A run may cover consecutive code items
+with a single compile, provided not one of them is ticked or removed from the queue until it passes. Four
+identical hand-overs of the same command interrupt her four times to learn the same thing once. What the
+rule must still forbid is the reading it was written against: ticking code items unconfirmed and leaving
+the compile for later.
+
+**And the half the rule does not cover at all: what happens when the compile fails.** On a failure the run
+stops and nothing is ticked. It reads the error to find which item's work caused it; where that is clear
+it fixes it and hands the command over again; where it is not, the run halts and says so plainly —
+including that the working tree holds the changes from every item in the batch, because a failed compile
+does not undo them.
+
+**The accepted cost, recorded rather than left to be discovered.** Batching means a failure does not say
+which item broke it. That is the price of not interrupting Alex once per item, and the compiler's error
+names the file in most cases anyway.
+
+**Refused: a cap on how many items one compile may cover.** Any figure would be invented rather than
+derived, and the natural bound already exists — consecutive code items within one run.
+
+**Why this is queued rather than done at planning.** A planning session may write the queue, the spec, the
+log and the research folder, and not this project's CLAUDE.md. The precedent for changing it as a build is
+[runs-in-android-studio-decision], which is the item that wrote the rule in the first place.
+
+Files:
+- `CLAUDE.md` — the compile-handover paragraph under Project rules gains two things: that a run may cover
+  consecutive code items with one compile so long as none is ticked or removed from the queue until it
+  passes, and the failure path above. The three typed command lines it already carries are unchanged, and
+  so is the `JAVA_HOME` line and the note saying why that line is stated.
+
+Observation: `CLAUDE.md`'s compile rule states the batching permission with its no-tick condition, and
+states what happens on a failed compile including that the working tree still holds the batch's changes; a
+read of the paragraph finds the three typed command lines still present and unaltered. The check reaches
+the one file named above.
+
+Rests on: that a planning session's scope-lock excludes `CLAUDE.md`, read in the procedure on 2026-09-17;
+and on the 2026-09-12 run's own record of handing over one compile for four items, in LOG.
+
+Filed at the close of the 2026-09-12 /next run, at 13:14, read from the clock; settled with Alex on
+2026-09-17.
+Filed 2026-09-17 15:47, stamped by the queue tool.
+
+#### Record two environment facts in TOOLS.md — the local plugin marketplace, and the Gmail connector's reach [tools-md-environment-facts]
+
+Writes into TOOLS.md two things this project established on 2026-09-16 and 2026-09-17, so a later session
+reads them rather than rediscovering them at cost.
+
+**The plugin is installed from a local folder, not a public channel.** `known_marketplaces.json` on this
+machine records the `flintcraft` marketplace with source type `directory`, pointing at the `throughliner/`
+folder inside the No code method project. So the only version this install can reach is whatever that
+folder holds. A session-start notice announcing a newer version on a stable channel is comparing against
+something the install route does not read from, and the update commands correctly answer that there is
+nothing to do. The cost of not knowing this was two app restarts on 2026-09-16, taken on the expectation
+the notice set up. A session that has read this can say so before offering the update.
+
+**The Gmail connector reaches the everyday account only.** Established on 2026-09-16 by searching it for
+the D-U-N-S correspondence and finding no such thread: the connector is authenticated to Alex's ordinary
+account, not to the separate business account. That is why forwarding, rather than reconfiguring the
+connector, was the route taken in [duns-application-outcome]. Whether a second Google account can be added
+to a Claude connector was not looked up and remains unknown rather than ruled out.
+
+**Why this is a build rather than something written at planning.** A planning session may write the queue,
+the spec, the log and the research folder; TOOLS.md is not among them.
+
+Both facts are already reported to the method's own project, on 2026-09-16 and 2026-09-17 — this item is
+about Taskflow keeping them where its own sessions will read them, which is a different job from the
+plugin fixing anything.
+
+Files:
+- `TOOLS.md` — two entries: the local-marketplace fact with its consequence for update notices, and the
+  Gmail connector's reach with the date it was established.
+
+Observation: a read of `TOOLS.md` finds both facts, each naming the date it was established. The check
+reaches the one file named above. No compile.
+
+Rests on, read 2026-09-16 on this machine: `known_marketplaces.json`'s `flintcraft` entry with source type
+`directory`, and `claude plugin update throughliner@flintcraft` answering that the installed version is
+already the latest. And, the same day: a search of the connected Gmail account returning no D-U-N-S
+correspondence. Both are facts about this machine's setup and stop being true if it is reconfigured.
+
+Filed 2026-09-17 by the rescan, from two things this session learned rather than was told.
+Filed 2026-09-17 15:53, stamped by the queue tool.
+
+#### Remove the Thanks row from the side menu [remove-thanks-screen]
+
+Deletes the "Thanks" entry from the bottom of Taskflow's side menu, and the placeholder screen it opens.
+
+Why it exists, recovered by Alex on 2026-09-12 when nobody could say what the screen was for: the Thanks
+screen dates from an earlier plan to fund Taskflow through "buy me a coffee" style donations, which was
+replaced by the paid subscription tier. Its premise went with that change, and no record anywhere had
+kept the connection — SPEC listed the row and the archived original spec named it only in its own title.
+So the row survived as a menu entry with no stated purpose.
+
+SPEC §Side menu and §Settings were corrected in the same planning run on 2026-09-12 and no longer name
+Thanks. This item is what makes the app agree with them. Never announced to anyone — `INBOX/sent.md`
+carries no mention of it — so nothing said publicly needs correcting.
+
+**Refused: leaving the row in place.** It opens a placeholder, and SPEC no longer describes it, so it
+would be a menu entry with no product truth behind it — the shape of thing the next person to read the
+drawer would file as a defect.
+
+Files:
+- `app/src/main/java/com/example/taskflow/ui/navigation/AppDrawer.kt` — delete the `DrawerRow(text = "Thanks")`
+  from the app-actions block.
+- `app/src/main/java/com/example/taskflow/ui/navigation/Destination.kt` — delete the
+  `data object Thanks : Overlay` declaration, and drop Thanks from the KDoc comment listing which
+  destinations are still placeholders.
+- `app/src/main/java/com/example/taskflow/ui/common/PlaceholderScreen.kt` — its KDoc comment reads
+  "Help/Thanks/Report-a-bug 0022"; rewrite as "Help/Report-a-bug 0022".
+
+Observation: on a device, opening the side menu shows Settings, Help and Report a bug pinned at the
+bottom with no Thanks row, and nothing else in the drawer changes. The check reaches the three files
+named above. Needs a compile, so it carries the Android Studio hand-over the project rules describe.
+
+Rests on, read 2026-09-12 in the source: that `AppDrawer.kt` renders a drawer row labelled "Thanks"
+wired to `Overlay.Thanks`, that `Destination.kt` declares that `Overlay`, and that a grep of `app/src`
+for "Thanks" finds those two plus one comment in `PlaceholderScreen.kt` and nothing else.
+
+Filed 2026-09-12 during planning, at the moment the screen was dropped from SPEC.
+Filed 2026-09-12 21:06, stamped by the queue tool.
+
+#### Every dated task reads a day early when Day begins at is after midday [tomorrow-task-lands-on-today-under-custom-boundary]
+
+Stops the day-boundary adjustment being applied to stored task dates, which are already days rather than
+moments in time.
+
+**The mechanism, established by reading the source on 2026-09-17 — no device needed.** A task's date is
+stored as **noon** on the chosen day: `EditTaskViewModel.noonEpoch` and `ScheduleViewModel.noonEpoch` both
+write `date.atTime(12, 0)`. `SlotDeriver.logicalDate` then takes a stored moment and subtracts the
+day-begins-at hour before reading off its day. Applied to noon with a boundary of 13, that subtraction
+lands on the previous calendar day — so the stored date reads one day early. Applied to the shipped
+default of 4, noon minus four hours is still the same day and nothing looks wrong.
+
+**So the fault is general, and the reported symptom is one instance of it.** At any boundary later than
+midday, every dated task shifts a day early on every Schedule surface: Tomorrow's onto Today, Soon's onto
+Tomorrow, Later's onto Soon. Recurring tasks shift too, because `ScheduleViewModel.instancesOf` passes the
+task's stored date through the same adjustment as its anchor, so every generated instance moves with it.
+
+**The capture's diagnosis was the opposite of the truth, and the correction is recorded because it changes
+what to fix.** It supposed the Schedule pages were deriving their slot from the calendar date while the
+edit dialogue's date strip used the logical one, and named reading `SlotDeriver` as the next step. That
+read shows both surfaces behaving consistently: the strip and the pages use the same function, and the
+damage happens in the round trip through a noon anchor that is not far enough from an afternoon boundary
+to survive the subtraction.
+
+**What was unestablished in the capture and is now settled:** the fault is in neither the slot derivation
+nor the add path alone but in the interpretation of a stored date; and yes, the same disagreement reaches
+Soon and Later, and recurrence, for the same reason.
+
+**Refused: storing dates anchored at the day-begins-at hour instead of noon.** It removes the problem too,
+and it was rejected because every stored date would then have to be rewritten whenever the setting
+changed — turning a display question into a data migration, on the database holding Alex's real tasks.
+
+**Refused: widening the noon anchor to some later hour.** It would buy room rather than correctness, and
+would fail again at whatever boundary someone eventually picks.
+
+Files:
+- `app/src/main/java/com/example/taskflow/domain/SlotDeriver.kt` — a function giving the day a **stored
+  task date** represents, reading its calendar day with no boundary subtraction, since a stored date is
+  already a day; `slotForDate` and `isBeforeToday` use it for the task side while continuing to use
+  `logicalDate` for `nowMillis`. `logicalDate` itself is unchanged, because its other callers pass real
+  moments — the clock, and `completedAt` — where the subtraction is correct.
+- `app/src/main/java/com/example/taskflow/ui/schedule/ScheduleViewModel.kt` — `instancesOf` derives its
+  recurrence anchor from the task's stored date with the new function rather than `logicalDate`.
+- `app/src/test/java/com/example/taskflow/domain/SlotDeriverTest.kt` — cases at a boundary after midday:
+  a task dated tomorrow lands on Tomorrow rather than Today, one dated today lands on Today, and one dated
+  two days out lands on Soon; plus the existing default-boundary cases still passing.
+
+Reads but does not change: `app/src/main/java/com/example/taskflow/ui/edit/EditTaskViewModel.kt`, whose
+`noonEpoch` is the anchor being reasoned about and which is deliberately left as it is, per the refusal
+above.
+
+Nothing stored changes, so there is no migration and nothing on the phone is rewritten: existing dates are
+already noon-anchored, and reading them as their own calendar day is what makes them correct.
+
+Observation: the unit tests pass, including the new after-midday cases. On a device, with Day begins at
+set to an afternoon hour, a task added from the Tomorrow page appears on Tomorrow and not on Today, and
+the edit dialogue's date strip and the Schedule pages agree about which day is which. The check reaches
+the three files named above, `SlotDeriverTest.kt` among them.
+
+**It unblocks a cleared item.** [day-begins-at-rollover-still-unrun] cannot be driven until this ships:
+its setup puts a task on Tomorrow with an afternoon boundary, and that task currently appears on Today
+before the boundary arrives, leaving nothing to watch. This item is placed ahead of it in the cleared work
+for that reason — an ordering, written here and in that item, rather than a `Blocked by:` line that would
+hide the watch from the run.
+
+Rests on, all read in the source on 2026-09-17: that both `noonEpoch` functions store `atTime(12, 0)`;
+that `SlotDeriver.logicalDate` subtracts `dayStartHour` before taking the date; that `slotForDate` and
+`isBeforeToday` pass a stored task date through it; that `instancesOf` does the same with its anchor; and
+that the remaining callers pass the clock or `completedAt`, which are real moments.
+
+Found on 2026-09-12 at 12:37 while setting up the [day-begins-at-rollover-still-unrun] watch. Filed
+mid-run that day at 12:38, read from the clock; diagnosed and designed with Alex on 2026-09-17.
+Filed 2026-09-17 14:26, stamped by the queue tool.
+
+#### Subtasks in the edit dialogue have no affordance, so nobody finds them [subtask-affordance-in-edit-dialogue]
+
+**Lifted above the line on 2026-09-12.** [verify-edit-outliner-fix] ran on a device that day and came back
+clean on every claim: Enter opens an indented subtask, it survives a save and reopen, the parent renders
+with an expand control, and completing the child completes the parent. So the behaviour this item's hint
+would advertise is now behaviour somebody has watched work, which is the whole of what held it back.
+
+**Its blocker was repointed on 2026-09-12, from [edit-outliner-missing] to the check that verifies it.**
+That fix shipped on 2026-09-06 but compiles only — nobody has opened the app and tried it — so the
+concern that holds this item back is untouched: a hint advertising a feature that does not work is worse
+than the silence it replaces. The item left the queue on shipping, so this hold was pointing at nothing
+and would never have lifted. [verify-edit-outliner-fix] is the on-device check, and this lifts when it
+passes.
+
+**Its blocker was swapped on 2026-09-05.** It had waited on the [verify-run-2026-08-31] audit, which has
+now run — and which found that pressing Enter produces no subtask at all. So the concern that put this
+item below the line is not resolved but sharpened: the hint would advertise behaviour that genuinely does
+not work today. [edit-outliner-missing] is the item that makes it work, and this now waits on that
+instead. Everything below is unchanged and still stands; what the audit did settle is that the outliner
+itself exists, so the hint has something real to point at once the defect is fixed.
+
+Adds a visible hint that pressing Enter in the edit dialogue's first line creates a subtask beneath it.
+
+**Held at the 2026-09-04 close, by the rule against building on unverified work.** This item's whole
+content is a hint advertising that Enter adds a subtask — behaviour that shipped in
+[0010-outliner-typing-drag-target-icons] and has never been run on a device. If it does not work, the
+hint advertises a feature that is not there, which is worse than the silence it replaces. So it waits
+for the audit that checks it. Nothing else about the item is unready.
+
+captured by you, 2026-09-02: subtasks shipped in the 2026-08-31 run and are, as you said, not visibly
+there. Confirmed on 2026-09-03 — the first line is labelled "Task" and pressing Enter at the end of it
+opens an indented subtask line, but nothing on screen says so. An earlier draft of that field carried
+the hint "Press Enter to add a subtask" and it was dropped when the single text box became a
+line-per-field outliner, which is how the only affordance disappeared. A feature that is built and
+undiscoverable is close to not being built.
+
+**Build it after [notes-out-of-edit-dialogue]** — both change the same file, and removing the Notes box
+is what leaves the outliner as the only text area on the screen, which is half of what makes the
+subtask lines legible. An ordering preference written here rather than a blocker, so the item stays
+visible.
+
+**What the two items each do, since they were one capture and the division matters.** Removing Notes
+makes an existing subtask line unmistakable, because nothing else on the screen looks like it. It does
+nothing at all for a task that has no subtasks yet, where there is nothing to look at — and that is the
+case this item covers.
+
+Files:
+- `app/src/main/java/com/example/taskflow/ui/edit/EditTaskScreen.kt` — a hint on the outliner field,
+  shown while the task has no subtasks and hidden once it has one, saying that Enter adds a subtask.
+
+Observation: on a device, opening a task with no subtasks shows the hint; pressing Enter at the end of
+the title creates an indented child line and the hint disappears; opening a task that already has
+subtasks shows no hint. The check reaches the one file named above.
+
+Refused: leaving it to be discovered. It shipped invisible, and the person who wrote it is the only one
+who has ever found it.
+
+Rests on, read 2026-09-03: that `EditTaskScreen.kt` renders the outliner with its first line labelled
+"Task" and no hint text; and that Enter at the end of that line already creates a subtask, which is
+[0010-outliner-typing-drag-target-icons]'s shipped behaviour and is itself listed as unverified in
+[verify-run-2026-08-31].
+
+#### Single-pick subtasks on a repeating task, replacing the rotating roster [roster-as-subtasks]
+
+Gives a repeating task an option to turn its subtask list into a single-pick list: instead of ticking
+every subtask, you pick one, and that one completes that occasion of the parent. The app does no
+rotation of its own.
+
+**The design is Alex's, settled with her on 2026-09-16.** Her reasoning: the thing that rotates under a
+repeating task is a subtask, not a name — "call family" with a person under it is one example, not the
+shape — and the user should handle the rotation as they see fit rather than having the app decide whose
+turn it is. Evenness is something she judges by reading her own history, not something the app maintains.
+
+**This replaces the rotating roster that shipped on 2026-09-12** as [rotating-roster-recurrence], where
+the task carries a free-text list of labels and the app advances through it by counting completions.
+Under this design nothing advances, so that machinery has no job. **Refused: keeping both.** Two ways to
+express the same intention, one of which quietly overrides the user's own choice, is worse than either
+alone.
+
+**What comes out, and what deliberately stays.** The roster text box goes from the edit dialogue and the
+instance labelling that shows the next name goes with it — a field you meet every time you open a task is
+the cost that matters, and Alex is about to use this app daily for a month. The `roster` **column stays**
+on the task, unused, with its comment rewritten to say it is retired and why. **Refused: dropping the
+column now** — dropping a column under Room means rebuilding the table and copying every row, and that
+would run on the phone holding the only live copy of her real tasks. It can ride along with a later schema
+change that has its own reason to exist.
+
+**Where the pick is recorded.** Each repeating task already stores a plain comma-separated list of the
+dates its occasions were completed. That encoding widens so an entry may optionally carry the id of the
+subtask picked with it — `2026-09-11:47` beside a bare `2026-09-15`. A bare date keeps meaning exactly
+what is true of every occasion completed before this ships: done, with no pick recorded. **Refused: a
+separate table of completed occasions.** It is the tidier answer and the one to reach for if this were
+queried heavily, but it costs a schema version, a migration copying existing completions across, and a
+rewrite of every read site, to serve a query nothing performs yet. It can be promoted later with the data
+already captured.
+
+**The migration this adds is proved by [run-migration-test-on-emulator]**, which sits after this item and
+the two that follow it, and runs the whole instrumented suite on the emulator once — covering the 6 → 7
+case this item adds as well as the 5 → 6 case that has never been run. That is an ordering written in both
+items rather than a `Blocked by:` line.
+
+**There is still one schema version bump, and it is the safe kind.** The single-pick mode is a new flag on
+the task, which is an added column — a one-line `ALTER TABLE ADD COLUMN`, the same additive shape as the
+5 → 6 migration. That is a different operation from the column *drop* refused above, which is why one is
+taken and the other is not.
+
+**Reading the picks back is NOT this item.** Completed occasions of a repeating task surface only in the
+Completed tray at the bottom of Today, on the day they are completed, and the tray clears at the next
+day-begins-at rollover — read in the source on 2026-09-16. So nothing lists past occasions anywhere. This
+item makes the pick recordable; [recurring-completions-in-history] is what makes it readable back, and
+that is where Alex's searchable history lives. **That item sits immediately after this one and must be
+built after it**, since it displays picks this item records; both are Kotlin, so one run and one compile
+can take them in order. Written as an ordering rather than a `Blocked by:` line, which would hide it from
+the run that should build it.
+
+Files:
+- `app/src/main/java/com/example/taskflow/data/model/Task.kt` — a `pickOne` column defaulting to false;
+  `completedInstances` parsing widened to accept `date` or `date:childId`; `withInstanceCompletion`
+  extended to carry the picked subtask; an accessor giving the picked subtask for a completed date; the
+  `roster` comment rewritten as retired.
+- `app/src/main/java/com/example/taskflow/data/local/TaskflowDatabase.kt` — schema 6 → 7 with
+  `MIGRATION_6_7` adding the new column.
+- `app/src/main/java/com/example/taskflow/data/repository/TaskRepository.kt` — `setInstanceCompleted`
+  carries the picked subtask through.
+- `app/src/main/java/com/example/taskflow/ui/edit/EditTaskScreen.kt` — the roster text field removed; a
+  single-pick option added, shown only alongside a repeat rule.
+- `app/src/main/java/com/example/taskflow/ui/edit/EditTaskViewModel.kt` — roster form state dropped, the
+  single-pick flag added, and dropping the repeat rule drops single-pick with it as it already drops the
+  roster.
+- `app/src/main/java/com/example/taskflow/ui/schedule/ScheduleViewModel.kt` — the roster labelling removed
+  from `instancesOf`; a single-pick parent's children rendered as single-select, and picking one completing
+  that occasion rather than waiting for all of them.
+- `app/src/main/java/com/example/taskflow/ui/schedule/SlotPage.kt` and
+  `app/src/main/java/com/example/taskflow/ui/schedule/LaterPage.kt` — the single-select affordance in place
+  of a checkbox on those children.
+- `app/src/main/java/com/example/taskflow/data/transfer/TaskflowJson.kt` — the new flag carried in export
+  and import; `roster` left exactly as it is.
+- `app/src/androidTest/java/com/example/taskflow/MigrationTest.kt` — a 6 → 7 case.
+
+Observation: on a device, opening a repeating task that has subtasks shows a single-pick option, and a
+task with no repeat rule shows none; turning it on makes that task's subtasks render as single-select on
+Today; picking one sends that occasion to the Completed tray and leaves the others alone; the roster text
+box is gone from the dialogue and no instance shows a roster name; and the migration suite's 6 → 7 case
+passes. The check reaches the nine files named above, `MigrationTest.kt` among them. Needs a compile, so
+it carries the Android Studio hand-over the project rules describe.
+
+Refused: the app choosing whose turn it is. That was the shipped roster's whole behaviour, and Alex's
+decision on 2026-09-16 is that the user handles the rotation as they see fit.
+
+Rests on, all read in the source on 2026-09-16: that `Task.completedInstances` is a comma-separated list
+of dates parsed in `Task.kt`; that `TaskRepository.setInstanceCompleted` is the one writer of it; that
+`ScheduleViewModel.instancesOf` performs the roster labelling; that `EditTaskScreen.kt` renders the roster
+as a text field shown alongside a repeat rule; and that completed recurring occasions appear only in
+today's Completed tray. And, on the shipped roster itself: none of [rotating-roster-recurrence] has been
+watched running on a device, so this reworks behaviour nobody has yet seen — which is also why the roster
+limb of [verify-2026-09-12-code-on-device] has nothing left to prove.
+
+Filed 2026-09-16 during planning, designed with Alex in the same session.
+Filed 2026-09-16 10:32, stamped by the queue tool.
+
+#### Completed occasions of a repeating task appear in history as their own rows [recurring-completions-in-history]
+
+Makes a completed occasion of a repeating task show up on the surfaces that already list completed work,
+on the day it was completed, so past occasions can be read back instead of disappearing overnight.
+
+**The gap, read in the source on 2026-09-16.** A completed occasion appears in the Completed tray at the
+bottom of Today, and only on the day it was completed; the tray clears at the next day-begins-at rollover
+(SPEC §Completed task tray on Today). After that no screen shows the occasion happened. Search, the
+day-detail card and the Yesterday page all miss it, and all three for the same structural reason:
+`SearchViewModel`, `DayCardViewModel` and `YesterdayViewModel` each select tasks where `isCompleted` is
+true and `completedAt` is not null, then group by the logical date of `completedAt`. A recurring occasion
+is neither — the parent task is not complete, because it repeats, and the occasion is a date recorded in
+the parent's `completedInstances`. So none of the three is behaving wrongly; the shape of the data simply
+does not reach them.
+
+**Why it matters, in Alex's own terms.** Her design for single-pick subtasks deliberately puts no rotation
+logic in the app: she picks whichever subtask suits each occasion, and judges evenness by reading her own
+history back — searching the parent task's name and seeing each past occasion with the subtask she picked.
+[roster-as-subtasks] makes that pick recordable. Without this, the picks are written and never seen.
+
+**Refused: a surface of its own for repeating tasks.** It was the open question when this was split out,
+and reading the three surfaces settled it. SPEC §Search and completed history puts active and completed
+work in one box on the stated ground that two boxes make the user guess which to open; a third list for
+occasions would reintroduce exactly that guess for the one kind of task whose history Alex most wants to
+read.
+
+**Refused: fixing each of the three view models separately.** They ask the same question in three places,
+so three fixes would drift apart the first time one was touched.
+
+**Ordering, not a hold.** It sits immediately after [roster-as-subtasks] in the cleared work rather than
+being held against it: both are Kotlin, one compile covers both, so a single run can do them in order —
+and this item is useless on its own, since until that one ships there are no picks to show. Written as
+placement and this sentence rather than a `Blocked by:` line, which would hide the entry from the run
+that should build it.
+
+Files:
+- new `app/src/main/java/com/example/taskflow/ui/history/CompletedOccasions.kt` — the one shared
+  derivation: given the tasks, produce a history row per completed occasion, carrying the parent's title,
+  the occasion's date as its completion day, and the picked subtask's label where the task is single-pick
+  and a pick was recorded.
+- `app/src/main/java/com/example/taskflow/ui/history/SearchViewModel.kt` — fold those rows into the
+  completed list before grouping by day, so one row appears per occasion rather than one per task; and
+  extend the row model it defines to carry the picked subtask's label.
+- `app/src/main/java/com/example/taskflow/ui/history/DayCardViewModel.kt` — the same rows folded into the
+  day's list, so a day card shows the occasions completed that day.
+- `app/src/main/java/com/example/taskflow/ui/history/YesterdayViewModel.kt` — the same, for the Yesterday
+  page.
+- `app/src/main/java/com/example/taskflow/ui/history/SearchScreen.kt` and
+  `app/src/main/java/com/example/taskflow/ui/history/DayCardLayer.kt` — render the picked subtask beneath
+  the task's title where a row carries one.
+
+Reads but does not change: `app/src/main/java/com/example/taskflow/data/model/Task.kt`, for the recorded
+occasions and their picks, and `SlotDeriver.logicalDate`, which is how all three surfaces already decide
+which day a completion belongs to.
+
+Observation: on a device, complete an occasion of a repeating task, pass the day-begins-at rollover, then
+search that task's name — the occasion is listed under its own day rather than absent, with the picked
+subtask shown beneath the title; opening that day as a card shows it there too, and un-completing it from
+the card removes it. A second occasion on a different day produces a second row rather than replacing the
+first. The check reaches the six files named above.
+
+Rests on, read in the source on 2026-09-16: that `SearchViewModel`, `DayCardViewModel` and
+`YesterdayViewModel` each filter on `isCompleted` and a non-null `completedAt` and group by
+`SlotDeriver.logicalDate`; and that a recurring occasion is held as a date in the parent's
+`completedInstances` rather than as a row. And on [roster-as-subtasks] for the picked-subtask half, which
+records the pick this item displays.
+
+Filed 2026-09-16 during planning, split out of [roster-as-subtasks] at the moment the gap was found, and
+designed out with Alex on 2026-09-17.
+Filed 2026-09-17 13:04, stamped by the queue tool.
+
+#### Strategy paragraphs are typed through the database, so fast input loses characters [strategy-paragraph-input-loses-characters]
+
+Makes the Strategy page's paragraph box hold its own text while being typed into, instead of showing
+whatever the database last handed back.
+
+**The mechanism, read in the source on 2026-09-17.** `StrategyScreen.kt` renders each paragraph as an
+`OutlinedTextField` whose `value` is `section.description` — a value fed from the flow the database emits
+— and whose `onValueChange` calls `StrategyViewModel.setDescription`. That function launches a coroutine
+which reads the existing row and upserts it. So the field displays a value that is one asynchronous round
+trip behind the typing, and every keystroke starts an independent read-modify-write with no ordering
+between them. Two consequences follow directly: a keystroke arriving before the previous round trip
+returns is appended to the stale value, losing the character before it; and two overlapping coroutines can
+interleave so the later write carries the earlier read. That is a lost-update race, and it is the only
+text field in the app built this way — the edit dialogue's outliner holds its text locally and writes once
+on Save, which is why it cannot do this.
+
+**The capture's own reasoning was partly wrong, and the correction is recorded because it changes what the
+evidence proves.** It treated the *substituted* character — `l` arriving as `m` while typing `Stayclose`
+at a 0.35-second spacing — as the strong evidence, on the ground that silent dropping is a known
+`adb shell input text` behaviour recorded in TOOLS.md but substitution is not. That is backwards. A
+lost-update race drops and duplicates text; it does not transform one letter into a different letter. A
+keycode delivered one off from the intended one does exactly that, and the two letters are believed to sit
+on adjacent keycodes — unverified, and it does not bear on the fix. So the substitution is most likely an
+adb artifact, and what the code review establishes is the dropping.
+
+**Not established, and it stays unestablished after this build:** whether a person typing at human speed on
+this device would hit the race. Nobody has tried, and a 0.4-second spacing was observed to work, which is
+slower than most people type. The fix is taken anyway, on two grounds the item already carried: the race
+is real in the code whatever anyone has reproduced by thumb, and the field performs a database read and a
+write on every keypress for no benefit.
+
+**Refused: saving only when the box loses focus.** It is the simplest way to remove the race, and it would
+quietly undo something already proved — the [strategy-edit-persistence-blocked] audit on 2026-09-12
+confirmed that text in this box survives a force-stop and relaunch exactly as written, and it survives
+because of the per-keystroke write this item is removing. Saving on a pause as well as on focus loss keeps
+that durability within a second or so rather than trading it away.
+
+**The pause length is a tunable constant, not a design decision left open.** Take **500 ms** of no typing
+as the trigger. It was not derived from measurement — it is the common debounce figure for text input, and
+it is chosen so a force-stop loses at most that much. What would settle it properly is Alex using the box
+for real prose during [first-end-to-end-test] and saying whether saving feels late; it is revisable once
+seen.
+
+Files:
+- `app/src/main/java/com/example/taskflow/ui/strategy/StrategyScreen.kt` — the paragraph field holds its
+  text in local state, seeded from `section.description` and re-seeded when that changes for a reason
+  other than this field's own typing, so what the user typed is what the box shows immediately.
+- `app/src/main/java/com/example/taskflow/ui/strategy/StrategyViewModel.kt` — `setDescription` is called
+  after 500 ms of no typing and when the field loses focus, rather than on every keystroke; the pending
+  save for a paragraph replaces any earlier pending save for that same paragraph, so the writes cannot
+  overlap.
+
+Observation: on a device, typing a full sentence into a Project's paragraph at speed leaves exactly that
+sentence in the box, with no characters missing; leaving the box and returning shows the same sentence;
+and force-stopping the app more than a second after the last keystroke, then relaunching, still shows it.
+The check reaches the two files named above.
+
+Rests on, read 2026-09-17 in the source: that `StrategyScreen.kt` binds the field's `value` to
+`section.description` and its `onValueChange` to `setDescription`, and that `setDescription` launches a
+coroutine doing a repository read followed by an upsert. And, from the 2026-09-12 audit recorded in LOG:
+that text already in the box survives a force-stop and relaunch.
+
+From the [strategy-edit-persistence-blocked] audit on 2026-09-12. Filed mid-run that day at 12:33, read
+from the clock; reviewed and designed with Alex on 2026-09-17.
+Filed 2026-09-17 13:59, stamped by the queue tool.
+
+#### [audit] Run the whole instrumented suite on the emulator, covering both schema upgrades [run-migration-test-on-emulator]
+
+Runs Taskflow's instrumented tests against the emulator and reports what they say. Its point is the
+migration cases: the proof that a database carrying real tasks survives a schema upgrade, which is what
+the version-5 floor exists for.
+
+**Why it runs on the emulator and not the phone.** A connected instrumentation run installs the app, runs
+the tests, then uninstalls both — taking the Room database with it. The phone holds Alex's real tasks, and
+on AGP 9.2.1 no build setting prevents the uninstall; the CLAUDE.md rule requiring a JSON export first was
+the holding measure. The AVD `Pixel_6` was created on 2026-09-12 by [emulator-for-instrumented-tests] and
+boots, which removes the reason to hold back — running the suite there destroys nothing anyone wants.
+TOOLS.md records the AVD, and records that with both devices attached the target has to be named
+explicitly, since `adb` refuses an ambiguous command when two are connected.
+
+**Placed after [roster-as-subtasks], deliberately, and the reasoning is what changed this item on
+2026-09-17.** As filed it was about the 5 → 6 case that shipped with [rotating-roster-recurrence] on
+2026-09-12. But that upgrade has already happened to Alex's own data: the build installed on her phone
+that day carries schema 6, so her real database went through it untested, and it evidently survived —
+she has used the app since. Running the suite now would confirm that after the fact. Meanwhile
+[roster-as-subtasks] adds a schema 7 with its own upgrade step and its own test case, and that is the
+upgrade still ahead of her phone. One run after that lands proves both, and proves the one that can still
+cost her something. Written as placement plus this paragraph rather than a `Blocked by:` line, which would
+hide the item from the run that should reach it.
+
+**Re-flavoured `[audit]` on 2026-09-17.** It was filed as a build and changes no files: it runs a command
+and reports what came back, which is a review pass. Its output is a statement of which tests passed, plus
+a capture for any that did not.
+
+**It needs a Gradle run, which Claude's own shell cannot perform on this machine** — the loopback failure
+recorded in TOOLS.md. So this follows the project's standing compile rule: the run stops, hands Alex the
+three typed lines to paste into Android Studio's integrated terminal, and waits for the result before the
+item is ticked. The command is the instrumented suite rather than `assembleDebug`, and it names the
+emulator as its target.
+
+Worth running the whole `androidTest` suite rather than only the migration cases: it was last run in full
+on 2026-09-05 at schema version 5, and the roster column touches `Task`, which most of the DAO tests
+exercise. Two schema versions have landed since that last full run.
+
+Report: which tests passed and which failed, with both migration cases named individually — 5 → 6 and
+6 → 7. A failure is a finding and goes back as a capture rather than being fixed here. Record the outcomes
+in TEST-LOG.md as the project rules require, whichever way they go.
+
+Rests on: that the AVD `Pixel_6` exists and boots, recorded in TOOLS.md on 2026-09-12; that Claude's shell
+cannot run `gradlew` here, recorded in TOOLS.md; that a connected instrumented run uninstalls the app and
+its database on AGP 9.2.1, recorded in TOOLS.md; and that [roster-as-subtasks] will add the 6 → 7 case
+this item expects to find — if that item ships without it, this one reports the absence rather than
+inventing it.
+
+Filed at the close of the 2026-09-12 /next run, at 13:14, read from the clock; reshaped with Alex on
+2026-09-17.
+Filed 2026-09-17 15:34, stamped by the queue tool.
+
+#### [audit] Watch three of the 2026-09-12 code changes actually run on a device [verify-2026-09-12-code-on-device]
+
+Drives Alex's phone over adb and checks three changes that were built on 2026-09-12 and compiled, and
+that nobody has yet seen working: dragging a Project heading to reorder it in the Strategy doc
+[project-reorder-strategy], reaching the drag targets without the page turning underneath
+[drag-eaten-by-page-swipe], and the day-detail card opened from a search result [nav-day-card-layer].
+Each item's own record ticks it `UNCONFIRMED` and names what is unrun.
+
+Filed because nothing else was tracking those checks — the same shape of problem [verify-edit-outliner-fix]
+existed to fix, where work shipped, compiled, and then sat unverified with no item naming the
+verification. Three held items are waiting behind two of these three: [project-delete-later] and
+[bin-drag-target-check] behind the drag-target fix, [share-a-day] behind the card layer. None can honestly
+be released on a compile alone, which is what makes this the item that unblocks the most.
+
+**Cut from four checks to three on 2026-09-16, with Alex.** The fourth was the rotating roster advancing
+on completion, shipped as [rotating-roster-recurrence]. She replaced that design in the same session:
+[roster-as-subtasks] removes the rotation entirely in favour of single-pick subtasks the user chooses
+herself, and SPEC §Recurring tasks was rewritten to match. **What that overturns** is this item's own
+reasoning that all four deserved one sitting — proving that a roster advances correctly is phone time
+spent on behaviour already on its way out. The other three are untouched by that decision.
+
+Claude drives every step over adb, as it drove the two audits on 2026-09-12. What is needed from Alex is
+the phone unlocked and connected; it re-locks after a few minutes (TOOLS.md), so possibly more than once.
+The build installed on the phone on 2026-09-12 already carries all three changes, so no fresh install is
+needed unless the code moves on first.
+
+Splitting this into separate items was considered and refused: they are one sitting with one phone, and
+separate items would mean separate connect-and-unlock cycles for checks that take minutes each.
+
+Steps:
+
+1. Open the Strategy doc and drag a Project heading to a different position. Look for: the heading moving
+   under the drag, and the sections resettling in the new order.
+2. Close Taskflow completely, reopen it and return to the Strategy doc. Look for: the new order still
+   there.
+3. Swipe to Later. Look for: the Project cards in the Strategy doc's order, with Unassigned still pinned
+   at the bottom.
+4. On Today, press and hold a task and drag it upward into the row of target icons. Look for: the page
+   staying exactly where it is, and the icon under the finger highlighting.
+5. Still holding, move the task sideways below the icon row. Look for: the page turning, the way it does
+   for an ordinary drag-to-reschedule.
+6. Open Search and tap a completed task in the results. Look for: that day opening as a card in front of
+   the page.
+7. Swipe left and right on the card. Look for: moving between days that hold completions, and days with
+   nothing completed being skipped rather than shown empty.
+8. Tap a task on the card, edit it, then use the back gesture. Look for: the edit taking, and back closing
+   the card and returning to Search.
+
+Report: which of the three changes behaved as its own item's Observation line describes, and which did
+not. A mismatch is a finding and goes back as a capture rather than being fixed here. Record the outcomes
+in TEST-LOG.md as the project rules require, whichever way each goes.
+
+Rests on, read 2026-09-12 in each item's own record: that all three changes are in the build installed on
+the phone, and that each is ticked `UNCONFIRMED`. And, on the dropped fourth check, the decision recorded
+in [roster-as-subtasks] on 2026-09-16.
+
+Filed at the close of the 2026-09-12 /next run, at 13:14, read from the clock.
+Filed 2026-09-16 10:35, stamped by the queue tool.
+
 #### [user] Watch a Tomorrow task roll into Today at the day boundary [day-begins-at-rollover-still-unrun]
 
 Watching a Tomorrow task cross the day boundary onto Today, and checking it arrives unlabelled and
@@ -34,6 +650,15 @@ the setting, adding the task, reading Today's order back. If a session is open w
 do those and keep only the looking for yourself. Not split into its own item because the setup and the
 watch are one sitting: separating them would mean two sessions coordinated minutes apart for the sake of
 five taps.
+
+**Do not drive this until [tomorrow-task-lands-on-today-under-custom-boundary] has shipped, and it sits
+immediately ahead of this item for that reason.** A drive on 2026-09-12 halted at step 4: with the
+boundary set to an afternoon hour, the test task added from the Tomorrow page appeared on the Today page
+straight away, so there was nothing left to cross the boundary. That was diagnosed on 2026-09-17 as a
+general fault — a stored task date is noon-anchored and the day-boundary adjustment is applied to it, so
+at any boundary after midday every dated task reads a day early. Steps 4 to 7 below cannot mean anything
+until that is fixed. Written as an ordering rather than a `Blocked by:` line so this item stays visible to
+the run that will reach both.
 
 Walkthrough:
 
@@ -71,6 +696,129 @@ and that a task added from Tomorrow is dated tomorrow (SPEC §Add a new task). A
 SPEC: that the Completed tray clears at the day-begins-at rollover.
 
 Filed 2026-09-06, 11:37, mid-run, read from the device clock.
+
+#### [user] First end-to-end test of Taskflow on a device [first-end-to-end-test]
+
+**Lifted above the line on 2026-09-12.** [verify-edit-outliner-fix] ran on a device that day and came back
+clean: Enter opens an indented subtask, it survives a save and reopen, and completing the child completes
+the parent. Alex's condition was that subtasks *work*, and that is now a watched fact rather than a
+compile, so the condition is met.
+
+**Its blocker was repointed on 2026-09-12, from [edit-outliner-missing] to the check that verifies it.**
+Alex's condition was that subtasks *work*, and the fix shipped on 2026-09-06 compiles without anyone
+having opened the app and tried it — so shipping alone does not meet the condition she set. The item
+also left the queue when it shipped, leaving this hold pointing at nothing. [verify-edit-outliner-fix]
+is the on-device check, and this lifts when it passes. Raised on 2026-09-12 by Alex asking whether the
+app is yet safe to use for real, which is the question this item exists to answer.
+
+**Held below the line on 2026-09-05, on your own condition** — given when you deferred this item during a
+/next run: not until subtasks exist. The 2026-09-05 device audit had just established that no subtask can
+be created anywhere in the app, and this test exists to find out how the app feels in a normal day's use.
+A day of real tasks with no way to break one into steps would fill the notes with the absence of a feature
+already known and already filed, which is the outcome the "run it after the cleared builds ship" paragraph
+below was written to avoid. [edit-outliner-missing] is the item that fixes it; this lifts when that ships.
+
+That paragraph called the ordering a preference rather than a blocker. Your condition supersedes it: this
+is now a blocker, on the same reasoning, hardened by what the audit found.
+
+Filed in planning on 2026-08-25, doing what [post-first-test-polish-review] asked for: that item waits on a real-world event rather than on a build, so the event becomes its own line and the review is held against it.
+
+This is the first time the app is used as an app rather than checked feature by feature. What it produces is a set of notes, and those notes are the input to [post-first-test-polish-review], which decides which of them earn a SPEC entry and which fold into existing work.
+
+Claude can install a build and drive taps over adb, but noticing that something feels wrong is the whole point of this and needs the user's own eyes, which is why it is a `[user]` line rather than a build.
+
+**Run it after the currently cleared builds ship.** Run today and the notes fill with "there is no date picker", which is queued work rather than polish; run it after the cleared run and the notes are about how the thing actually feels. That is an ordering preference, not a blocker — nothing stops it being run earlier if the user wants to.
+
+**A restore point comes first, added on 2026-09-05 on your own question** — whether you can count on tasks
+staying in the app. What is established: `MigrationTest` passed for the first time on 2026-09-05, so
+[durable-local-data]'s version-5 floor is a demonstrated fact rather than a claim; JSON export and import
+round-tripped on the device the same day, first execution ever; and when the app was uninstalled that
+evening, Android Auto Backup restored the data by itself. What is not established, and should not be read
+into that: nothing proves a future migration will be written correctly, reinstalls were never in the
+scope that was tested, Auto Backup's success was unplanned rather than a designed recovery path, and
+there is no cloud sync, so the phone holds the only live copy. The export is three taps and it is yours
+rather than the platform's, which is why it leads.
+
+Walkthrough:
+1. Open Settings and take a JSON export, then move the file somewhere off the phone. Look for: the export
+   file where you put it, not just a success message.
+2. Install the current build on your device (ask a session to build and install it if it isn't already there).
+3. Use the app for a normal day's worth of tasks — capture what you actually need to do, not test data.
+4. Capture something from each of Today, Tomorrow, Soon and Later, so every add path gets used at least once.
+5. File at least one task into a Project of your own, and complete at least one task so it reaches the Completed tray on Today.
+6. Note anything that felt slow, confusing, ugly or surprising — one line each, no need to diagnose it. Roughness you would normally push past is exactly what to write down.
+7. Bring the notes to a planning session and say the test has been done.
+
+#### [user] Apply 0003_grants.sql to the live Supabase project and prove a signed-in user can read their own rows [supabase-apply-0003-grants]
+
+Runs one SQL file against Taskflow's live cloud database, then checks that a signed-in user can actually
+read their own rows — which is the thing the whole paid tier rests on and which nothing has yet
+demonstrated.
+
+`supabase/migrations/0003_grants.sql` was written on 2026-09-12 by the build of
+[cloud-schema-missing-grants]. The file exists; nothing has run it against the live project. The grants it
+contains are already on the live database, applied by hand during the 2026-09-06 drive, so running the
+file proves the repository and the project agree rather than changing anything. `grant` is idempotent, so
+running it twice is safe and a clean second run is itself the evidence.
+
+**It is `[user]` work, and the capability check on 2026-09-17 found no way round that.** There is no
+Supabase command-line tool installed on this machine, no `psql`, no link between this folder and the live
+project, and no Supabase access recorded in `TOOLS.md`. Every route would need Alex's credentials, which
+Claude does not handle. This is genuine incapability rather than a rule, so there is no say-so that would
+move it.
+
+**Two facts from `workshop/resources/research/supabase-rls-and-edge-function-identity.md` are written into
+the steps below rather than left to be fetched**, because a walkthrough that sends the reader off to
+assemble SQL is three jobs wearing one step's clothes. First: the SQL editor connects as an administrator
+that bypasses row protection entirely, so an ordinary query there returns every row whatever the policies
+say — it can tell a working policy from a broken one no better than a coin. Second: `42501: permission
+denied` means the **grants** are missing, not that a policy denied the read; Postgres checks the privilege
+gate before it consults any policy, and reading a `42501` as a policy working records a pass that was
+never earned. That is not hypothetical — it is how the missing grants were found on 2026-09-06.
+
+**The SQL below is the form that finding verified on a real run**, rather than a tidier one nobody has
+executed.
+
+Walkthrough:
+
+1. Open the Taskflow project in the Supabase dashboard and go to the SQL editor. Look for: a blank query
+   pane with the project's name in the header.
+2. Open `supabase/migrations/0003_grants.sql`, paste its whole contents into the pane and run it. Look
+   for: success, and no error.
+3. Run exactly the same thing a second time without changing anything. Look for: success again — that is
+   the step's whole purpose, since a second clean run is what proves the file is safe to re-apply.
+4. In a new query, get a real account's identifier by running `select id from auth.users limit 1;`. Look
+   for: one identifier. **If it returns nothing, the project has no accounts yet** — stop here, say so,
+   and the rest waits until someone has signed up.
+5. In a new query, paste the block below, replacing the placeholder with the identifier from step 4, and
+   run all four lines together. Look for: rows belonging to that account, and specifically **not**
+   `ERROR: 42501: permission denied for table tasks`.
+
+   ```
+   set local role authenticated;
+   set local request.jwt.claim.sub = 'PASTE-THE-IDENTIFIER-HERE';
+   select * from public.tasks;
+   ```
+
+6. Run the same block three more times, changing only the last line to select from `public.projects`, then
+   `public.strategy_entries`, then `public.life_areas`. Look for: rows rather than a `42501` on each.
+7. Tell a planning session what each step returned, including any `42501` and which table it named.
+
+Observable: a select as the `authenticated` role against each of the four tables returns rows rather than
+`42501`. Where step 4 found no accounts, the observable is instead that finding, reported — which is a
+real outcome and not a failure to complete the item.
+
+Rests on, read 2026-09-17: that no Supabase CLI or `psql` is installed and nothing links this folder to
+the live project. And, recorded in `workshop/resources/research/supabase-rls-and-edge-function-identity.md`
+from a real run on 2026-09-06: that the SQL editor's role bypasses row protection, that the impersonation
+block above is what makes policies evaluate as they would for a real request, and that `42501` is a
+privilege failure rather than a policy denial. That file's own frame assessment marks this subject as
+amended on a cycle.
+
+Filed mid-run on 2026-09-12 at 12:09, read from the clock, by the build of [cloud-schema-missing-grants] —
+that item's own observation names a live-database check, and no item was tracking it. Walkthrough rewritten
+on 2026-09-17 to carry the SQL rather than point at it.
+Filed 2026-09-17 13:07, stamped by the queue tool.
 
 --- Cleared to run above this line ---
 
@@ -184,64 +932,6 @@ Rests on, each read 2026-09-03: that `StrategyScreen.kt` shares text through `AC
 `createChooser`; that no `FileProvider` is declared in the manifest today; and the format finding
 above, filed 2026-08-21.
 
-#### Subtasks in the edit dialogue have no affordance, so nobody finds them [subtask-affordance-in-edit-dialogue]
-Blocked by: [verify-edit-outliner-fix]
-
-**Its blocker was repointed on 2026-09-12, from [edit-outliner-missing] to the check that verifies it.**
-That fix shipped on 2026-09-06 but compiles only — nobody has opened the app and tried it — so the
-concern that holds this item back is untouched: a hint advertising a feature that does not work is worse
-than the silence it replaces. The item left the queue on shipping, so this hold was pointing at nothing
-and would never have lifted. [verify-edit-outliner-fix] is the on-device check, and this lifts when it
-passes.
-
-**Its blocker was swapped on 2026-09-05.** It had waited on the [verify-run-2026-08-31] audit, which has
-now run — and which found that pressing Enter produces no subtask at all. So the concern that put this
-item below the line is not resolved but sharpened: the hint would advertise behaviour that genuinely does
-not work today. [edit-outliner-missing] is the item that makes it work, and this now waits on that
-instead. Everything below is unchanged and still stands; what the audit did settle is that the outliner
-itself exists, so the hint has something real to point at once the defect is fixed.
-
-Adds a visible hint that pressing Enter in the edit dialogue's first line creates a subtask beneath it.
-
-**Held at the 2026-09-04 close, by the rule against building on unverified work.** This item's whole
-content is a hint advertising that Enter adds a subtask — behaviour that shipped in
-[0010-outliner-typing-drag-target-icons] and has never been run on a device. If it does not work, the
-hint advertises a feature that is not there, which is worse than the silence it replaces. So it waits
-for the audit that checks it. Nothing else about the item is unready.
-
-captured by you, 2026-09-02: subtasks shipped in the 2026-08-31 run and are, as you said, not visibly
-there. Confirmed on 2026-09-03 — the first line is labelled "Task" and pressing Enter at the end of it
-opens an indented subtask line, but nothing on screen says so. An earlier draft of that field carried
-the hint "Press Enter to add a subtask" and it was dropped when the single text box became a
-line-per-field outliner, which is how the only affordance disappeared. A feature that is built and
-undiscoverable is close to not being built.
-
-**Build it after [notes-out-of-edit-dialogue]** — both change the same file, and removing the Notes box
-is what leaves the outliner as the only text area on the screen, which is half of what makes the
-subtask lines legible. An ordering preference written here rather than a blocker, so the item stays
-visible.
-
-**What the two items each do, since they were one capture and the division matters.** Removing Notes
-makes an existing subtask line unmistakable, because nothing else on the screen looks like it. It does
-nothing at all for a task that has no subtasks yet, where there is nothing to look at — and that is the
-case this item covers.
-
-Files:
-- `app/src/main/java/com/example/taskflow/ui/edit/EditTaskScreen.kt` — a hint on the outliner field,
-  shown while the task has no subtasks and hidden once it has one, saying that Enter adds a subtask.
-
-Observation: on a device, opening a task with no subtasks shows the hint; pressing Enter at the end of
-the title creates an indented child line and the hint disappears; opening a task that already has
-subtasks shows no hint. The check reaches the one file named above.
-
-Refused: leaving it to be discovered. It shipped invisible, and the person who wrote it is the only one
-who has ever found it.
-
-Rests on, read 2026-09-03: that `EditTaskScreen.kt` renders the outliner with its first line labelled
-"Task" and no hint text; and that Enter at the end of that line already creates a subtask, which is
-[0010-outliner-typing-drag-target-icons]'s shipped behaviour and is itself listed as unverified in
-[verify-run-2026-08-31].
-
 #### [user] Create the Google Play subscription product for the paid tier [play-console-subscription-product]
 Blocked by: [business-registration-for-play-account]
 
@@ -275,9 +965,35 @@ repository is public, and the ID is an account identifier of no use to anyone re
 
 The consequence is that this item now waits on the business registration rather than on a choice. Held
 against [business-registration-for-play-account], which stands for the Taskflow-side dependency; the
-registration work itself belongs to the flintcraft.tech project and is not duplicated here. Note the
-**D-U-N-S number can take up to 30 days** and is free — it is the long pole, and requesting it early is
-what stops this step waiting on paperwork once everything else is ready.
+registration work itself belongs to the flintcraft.tech project and is not duplicated here. **The D-U-N-S number is no longer the long pole, established on 2026-09-16 by reading the provider's
+reply.** One was issued on 2026-05-17 and the provider closed the case, and the further wait before the
+number reaches Google has also passed. So step 1 below is already done — but not usefully, and the reason
+is the standing condition on this whole item.
+
+**Standing condition, and it governs every route this item could take: the Play account is not opened on
+any identity whose published address is Alex's home, or the former address her existing registration
+carries.** The payments profile's legal name and address are printed on every subscriber's receipt, which
+is the entire reason an organization account was chosen over a personal one on 2026-09-03. The D-U-N-S
+already issued was obtained as a **sole trader**, and a sole trader is not a separate legal identity: its
+registered name is her own name and its registered address is whatever the registration carries. That
+address is a former one she no longer occupies and is not free to publish, so it fails on its own terms —
+before Google's policy on sole traders is even reached, and proof of physical address could not be
+supplied for it either.
+
+**What that means for this item.** The existing D-U-N-S number is not usable as it stands. Opening the
+account waits on [business-registration-for-play-account] producing an identity whose published name and
+address Alex is content to have on every receipt — a registered company, or a genuine business address
+that is not a mail-forwarding service, which Google does not accept. Whether a fresh D-U-N-S would then be
+needed against that identity is a read to do at the time, not now.
+
+**Refused, and these are the two that look reasonable: using the sole-trader D-U-N-S because it already
+exists**, which publishes exactly what the account type was chosen to avoid; **and treating "does Google
+accept a sole trader as an organization?" as the open question**, which it is not — a yes to it would not
+change what gets printed.
+
+Red flag · State: cleared — designed out on 2026-09-16 by writing the condition above into this item,
+rather than accepted. It is cleared here rather than carried on a separate entry because this item's own
+walkthrough is what would breach it.
 
 Walkthrough:
 
@@ -392,10 +1108,20 @@ Changes: Google Play subscription wiring for the paid tier, a 30-day paid-tier t
 Acceptance: on a test account — starting the trial unlocks the paid surfaces; cancelling or letting it lapse returns the app to free behaviour with cloud sync and MCP disabled.
 --- End build block ---
 
-#### Help, Thanks and Report-a-bug screen content [0022-help-thanks-report-a-bug-content]
+#### Help and Report-a-bug screen content [0022-help-thanks-report-a-bug-content]
 Blocked by: [help-thanks-report-content]
 
-Held below the line on 2026-09-03, with your agreement, for the reason the item's own text already gave: the words for all three screens come from [help-thanks-report-content], which is still an unprocessed capture. Nothing else about it is unready.
+**The Thanks screen was dropped from this item on 2026-09-12**, overturning the three-screen scope this
+item has carried since it was filed. Alex recovered what nobody had written down: the Thanks screen came
+from an earlier plan to fund Taskflow through "buy me a coffee" style donations, replaced since by the
+paid subscription tier, so its premise went with that change. SPEC §Side menu and §Settings were
+corrected in the same planning run and no longer name it, and [remove-thanks-screen] takes the row out
+of the app. What that overturns: the reasoning that had the Thanks paragraph's wording as one of this
+item's three owed pieces, and the assumption — never examined until then — that a screen named in SPEC
+must have a purpose behind it. The slug keeps the word "thanks" because slugs are stable through a
+rename.
+
+Held below the line on 2026-09-03, with your agreement, for the reason the item's own text already gave: the words for the screens come from [help-thanks-report-content], which is still an unprocessed capture. Nothing else about it is unready.
 
 Bottom-of-drawer screen content including help and custom instructions. Full original spec: `archive/backlog-specs/0022-help-thanks-report-a-bug-content.md`.
 
@@ -424,12 +1150,12 @@ it, and Taskflow's users are mostly non-technical people with no Claude in the l
 Written without naming the behaviour as a category, which SPEC §Tasks dated before today requires:
 the app has no "overdue" label anywhere, and the help text must not invent one.
 
-Help's other two topics — Claude setup, and the suggested custom-instruction text — and the Thanks
-paragraph are still to come from [help-thanks-report-content].
+Help's other two topics — Claude setup, and the suggested custom-instruction text — are still to come
+from [help-thanks-report-content].
 
 --- Build block ---
-Changes: fill the three remaining bottom-of-drawer screens — Help, Thanks and Report a bug — with real content. Help covers MCP setup, the production version of the suggested custom-instruction text, and the "tasks dated before today stay on Today" behaviour described without naming the category. The words themselves come from [help-thanks-report-content], which waits on [custom-instruction-production-text] and the MCP setup design. Full original spec: `archive/backlog-specs/0022-help-thanks-report-a-bug-content.md`.
-Acceptance: on a device — each of the three screens opens with real content rather than a placeholder, and Help covers all three topics.
+Changes: fill the two remaining bottom-of-drawer screens — Help and Report a bug — with real content. Help covers MCP setup, the production version of the suggested custom-instruction text, and the "tasks dated before today stay on Today" behaviour described without naming the category. The words themselves come from [help-thanks-report-content], which waits on [custom-instruction-production-text] and the MCP setup design. Full original spec: `archive/backlog-specs/0022-help-thanks-report-a-bug-content.md`.
+Acceptance: on a device — each of the two screens opens with real content rather than a placeholder, Help covers all three topics, and there is no Thanks row in the drawer.
 --- End build block ---
 
 #### Confirm what Play Billing exposes for subscription pause [subscription-pause-play-billing]
@@ -480,54 +1206,6 @@ Walkthrough, once the script and the Claude integration exist:
 4. Hand the clips back to a session to assemble with `ffmpeg` in script order.
 5. Watch the result once through as a first-time user would. The question to answer is whether someone who has never used Claude would understand what they are being offered.
 6. Say whether it ships or what needs re-shooting.
-
-#### [user] First end-to-end test of Taskflow on a device [first-end-to-end-test]
-Blocked by: [verify-edit-outliner-fix]
-
-**Its blocker was repointed on 2026-09-12, from [edit-outliner-missing] to the check that verifies it.**
-Alex's condition was that subtasks *work*, and the fix shipped on 2026-09-06 compiles without anyone
-having opened the app and tried it — so shipping alone does not meet the condition she set. The item
-also left the queue when it shipped, leaving this hold pointing at nothing. [verify-edit-outliner-fix]
-is the on-device check, and this lifts when it passes. Raised on 2026-09-12 by Alex asking whether the
-app is yet safe to use for real, which is the question this item exists to answer.
-
-**Held below the line on 2026-09-05, on your own condition** — given when you deferred this item during a
-/next run: not until subtasks exist. The 2026-09-05 device audit had just established that no subtask can
-be created anywhere in the app, and this test exists to find out how the app feels in a normal day's use.
-A day of real tasks with no way to break one into steps would fill the notes with the absence of a feature
-already known and already filed, which is the outcome the "run it after the cleared builds ship" paragraph
-below was written to avoid. [edit-outliner-missing] is the item that fixes it; this lifts when that ships.
-
-That paragraph called the ordering a preference rather than a blocker. Your condition supersedes it: this
-is now a blocker, on the same reasoning, hardened by what the audit found.
-
-Filed in planning on 2026-08-25, doing what [post-first-test-polish-review] asked for: that item waits on a real-world event rather than on a build, so the event becomes its own line and the review is held against it.
-
-This is the first time the app is used as an app rather than checked feature by feature. What it produces is a set of notes, and those notes are the input to [post-first-test-polish-review], which decides which of them earn a SPEC entry and which fold into existing work.
-
-Claude can install a build and drive taps over adb, but noticing that something feels wrong is the whole point of this and needs the user's own eyes, which is why it is a `[user]` line rather than a build.
-
-**Run it after the currently cleared builds ship.** Run today and the notes fill with "there is no date picker", which is queued work rather than polish; run it after the cleared run and the notes are about how the thing actually feels. That is an ordering preference, not a blocker — nothing stops it being run earlier if the user wants to.
-
-**A restore point comes first, added on 2026-09-05 on your own question** — whether you can count on tasks
-staying in the app. What is established: `MigrationTest` passed for the first time on 2026-09-05, so
-[durable-local-data]'s version-5 floor is a demonstrated fact rather than a claim; JSON export and import
-round-tripped on the device the same day, first execution ever; and when the app was uninstalled that
-evening, Android Auto Backup restored the data by itself. What is not established, and should not be read
-into that: nothing proves a future migration will be written correctly, reinstalls were never in the
-scope that was tested, Auto Backup's success was unplanned rather than a designed recovery path, and
-there is no cloud sync, so the phone holds the only live copy. The export is three taps and it is yours
-rather than the platform's, which is why it leads.
-
-Walkthrough:
-1. Open Settings and take a JSON export, then move the file somewhere off the phone. Look for: the export
-   file where you put it, not just a success message.
-2. Install the current build on your device (ask a session to build and install it if it isn't already there).
-3. Use the app for a normal day's worth of tasks — capture what you actually need to do, not test data.
-4. Capture something from each of Today, Tomorrow, Soon and Later, so every add path gets used at least once.
-5. File at least one task into a Project of your own, and complete at least one task so it reaches the Completed tray on Today.
-6. Note anything that felt slow, confusing, ugly or surprising — one line each, no need to diagnose it. Roughness you would normally push past is exactly what to write down.
-7. Bring the notes to a planning session and say the test has been done.
 
 #### [audit] Check the Yesterday page draws a real list, not just its empty state [yesterday-page-with-content-untested]
 Blocked by: [first-end-to-end-test]
@@ -587,24 +1265,38 @@ Flavored `[audit]` because it reads and reports rather than editing: it takes th
 > Processed) or drop it. Each is filed as its own `#### ` heading, so the list shows
 > up in an editor's outline.
 
-#### Help's Claude topics, and what the Thanks screen says [help-thanks-report-content]
-Blocked by: [0019-ai-choice-flow-and-mcp-setup], [0020-remote-mcp-server]
+#### Help's two Claude topics — setting Claude up, and the custom-instruction text [help-thanks-report-content]
+Blocked by: [0019-ai-choice-flow-and-mcp-setup], [0020-remote-mcp-server] until built
+
+**The hold was changed on 2026-09-16 to wait for the Claude work to ship rather than to be agreed**, at
+the fourth time of setting this entry aside for the same reason. Until then a hold naming an entry that
+had reached Processed counted as satisfied, so this one was released and re-offered every planning
+session however often it was deferred — a defect this project reported to the method's own project on
+2026-09-12. The installed version answers it: a hold may end `until built`, which passes the entry over
+until every named entry has a build record. This is the first item here to use it. Nothing else about the
+entry changes, and it returns by itself the day the MCP server ships.
 
 What is left of the words for the bottom-of-drawer screens that
 [0022-help-thanks-report-a-bug-content] builds, after the writable parts were folded into that item on
-2026-09-12. Three things remain, and they are stuck for two different reasons.
+2026-09-12. Two things remain, and both are stuck for the same reason.
 
-**Two wait on the Claude work.** Help must explain how to set Claude up, and must carry the production
+**Both wait on the Claude work.** Help must explain how to set Claude up, and must carry the production
 version of the suggested custom-instruction text — the wording a user pastes into their own Claude
 preferences. Neither can be written before [0019-ai-choice-flow-and-mcp-setup] and
 [0020-remote-mcp-server] define the path. The custom-instruction drafting was folded in here on
 2026-08-25 from [custom-instruction-production-text], which kept only the live test; that test reads
 the draft this item produces and reports back what to change.
 
-**One waits on a decision, not a dependency: what the Thanks screen actually says.** Nobody has settled
-who or what the app is thanking. Recorded as a distinct blocker on 2026-09-12, because it had been
-travelling with the two above as though it were waiting on the same thing — it is one question for
-Alex, answerable at any time.
+**The third thing this entry owed is gone: there is no Thanks screen.** It had been recorded as a
+distinct blocker — nobody had ever settled what that screen says — and when it was put to Alex on
+2026-09-12 she recovered the reason nobody could answer it: the screen came from an earlier plan to
+fund Taskflow through "buy me a coffee" style donations, replaced since by the paid subscription tier.
+The screen's premise went with that change. SPEC §Side menu and §Settings were corrected in the same
+run, [remove-thanks-screen] takes the row out of the app, and the wording this entry owed for it is no
+longer owed by anybody. **What that overturns:** the assumption that the question was merely
+undecided, when it was in fact a leftover of a superseded payment model — and separating it out as its
+own blocker, which was right on the evidence then available and stopped it being deferred a fourth
+time with the Claude topics.
 
 **Why this was set aside three times** — 2026-08-25, 2026-08-31, 2026-09-03 — and why that is no longer
 the whole story. The reason each time was the two Claude topics, and it still holds. What also happened
@@ -676,6 +1368,34 @@ named on that registration, and an organization phone number and website. The D-
 but can take **up to 30 days**, so it is the long pole and worth requesting as soon as the business
 registration itself supports it — well before anyone wants to open the Play account.
 
+**The D-U-N-S wait described above is already served, established on 2026-09-16.** A number was issued on
+2026-05-17 and the provider closed the case; the further 14-to-30-day wait its reply describes has also
+long passed. So the paragraph above is right about the requirement and wrong about the timing: nothing is
+waiting on a D-U-N-S number.
+
+**What this item has to produce is therefore sharper than "far enough along".** The existing number was
+issued to a **sole trader**, whose registered name is Alex's own and whose registered address is a former
+one she no longer occupies and is not free to publish — so it cannot be used, for reasons that do not
+depend on Google's policy at all. [play-console-subscription-product] now carries the standing condition
+in full: the Play account is not opened on any identity whose published address is her home or that former
+one. What this item must deliver is an identity whose published name and address she is content to have
+printed on every subscriber's receipt — a registered company, or a genuine business address that is not a
+mail-forwarding service, which Google does not accept.
+
+**The date was re-raised on 2026-09-17 and deliberately kept.** With the dependency chain below now
+understood, three months was proposed instead — long enough that the entry would return when there was
+plausibly something to say. Alex kept mid-October. Recorded so a later session does not put the same
+question to her a third time.
+
+**And it is blocked further back than this queue can see.** The registration waits on changing its
+registered address, which waits in turn on an identity-verification step being handled in the
+flintcraft.tech project — with no date this project controls, and none this project should invent. Alex's
+own condition, given on 2026-09-16: she will not register until she has confirmation that no mail reaches
+the former address.
+
+The D-U-N-S number itself, and the details on the application, are deliberately not written into this
+queue, which is public.
+
 Observable: nothing in this repository changes when this is done, so completion is not checkable from
 here — a later session asks rather than checks. Stated plainly so nobody builds a check that cannot
 work.
@@ -684,142 +1404,31 @@ Filed 2026-09-03 during planning, at the moment the account-type choice was sett
 held that choice was deleted in the same move, its facts folded into
 [play-console-subscription-product], which is where they are used.
 
-#### Free-choice roster slot — a repeating task that offers two names and waits for the user to pick [rotating-roster-free-choice]
-Blocked by: [rotating-roster-recurrence]
+#### Revisit how Taskflow is paid for, before anything is published [payment-model-revisit]
+Blocked by: [business-registration-for-play-account]
 
-Split out of [rotating-roster-recurrence] on 2026-09-12, with Alex's agreement, because it is a
-different feature wearing the same coat.
+captured by you, 2026-09-12, at the moment the Thanks screen was dropped.
 
-What it is: one position in a repeating task's rotation that does not name a single subject. Instead it
-offers two — "either of these two, whichever suits" — and the user resolves it when the instance lands.
-Alex's own rotation has exactly one such position among its six.
+Taskflow has had at least two payment models. The Thanks screen was a leftover of the first — funding
+through "buy me a coffee" style donations — which was replaced by the paid subscription tier now
+described in SPEC §Tier model, sold as a Google Play subscription with a 30-day trial. Nothing in the
+record shows that swap ever being weighed as a decision; the donation model simply stopped being
+mentioned, and the only trace it left was a screen nobody could explain. Alex's point: the current model
+deserves an actual discussion rather than inheriting the same silence.
 
-Why it is not part of the rotation itself. A rotation is deterministic: the app knows what comes next
-and can render it without asking anybody. A free-choice position cannot be rendered that way. It has to
-interrupt the user, which Taskflow has no surface for — there are no notifications in v1 (SPEC §No
-notifications in v1) — and it needs a settled answer for the case the user never picks, which the
-rotation has no equivalent of. Bundling the two would make the straightforward half wait on the
-awkward one.
+What the discussion would cover, none of it decided here: whether a subscription is the right shape for
+an app whose free tier is deliberately complete, what the price is, whether a one-off purchase or a
+donation route sits alongside it, and what any of that does to the free/paid line the onboarding flow
+asks the user to choose between.
 
-Held against [rotating-roster-recurrence] because there is no rotation for a position to sit inside
-until that ships, and because the shape of a position is decided there.
+**Held against [business-registration-for-play-account]**, which is the item the whole publishing chain
+waits on and is itself dated to 2026-10-12. That is deliberate: the payment model only has to be settled
+before Taskflow is sold to anyone, and Alex's standing instruction is that the queue is worked for daily
+use until she has had her month of real use. Two nearer-looking candidates were considered and rejected —
+[0017-tier-model-and-subscription-handling] and [play-console-subscription-product] both sit in
+Processed, and a `Blocked by:` naming an entry already in Processed counts as resolved, so either would
+release this capture on the next planning run and hold nothing at all.
 
-What a design would have to settle, none of it decided here: where the choice is presented, given the
-app never interrupts; what the task shows while the choice is unresolved; and whether an unresolved
-instance blocks the rotation from advancing or is simply passed.
-
-Filed 2026-09-12 during planning, at the moment the split was agreed.
-Filed 2026-09-12 11:12, stamped by the queue tool.
-
-#### [user] Apply 0003_grants.sql to the live Supabase project and check a signed-in user can read their rows [supabase-apply-0003-grants]
-
-`supabase/migrations/0003_grants.sql` was written on 2026-09-12 by the build of [cloud-schema-missing-grants]. The file exists; nothing has run it against the live project. The grants themselves are already on the live database, applied by hand during the 2026-09-06 drive, so running the file proves the repository and the project agree rather than changing anything.
-
-It is `[user]` work because touching the live database is Alex's to authorise and her Supabase account to sign into, exactly as the 2026-09-06 drive was. Claude can draft and read, not press the button on a production database.
-
-Walkthrough:
-
-1. Open the Taskflow project in the Supabase dashboard and go to the SQL editor. Look for: a blank query pane with the project's name in the header.
-2. Paste the whole contents of `supabase/migrations/0003_grants.sql` and run it. Look for: success, and no error.
-3. Run it a second time without changing anything. Look for: success again — `grant` is idempotent, so a second run proving clean is the point of this step.
-4. In a new query, impersonate a signed-in user: `set local role authenticated`, with a test user's id set as the JWT claim, then select from `public.tasks`. The method is written up in `workshop/resources/research/supabase-rls-and-edge-function-identity.md`. Look for: that user's rows returned, rather than `ERROR: 42501: permission denied for table tasks`.
-5. Repeat step 4's select against `public.projects`, `public.strategy_entries` and `public.life_areas`. Look for: rows rather than `42501` on each.
-6. Tell a planning session what each step returned.
-
-Observable: a select as the `authenticated` role against each of the four tables returns rows instead of `42501`.
-
-Filed mid-run on 2026-09-12 at 12:09, read from the clock, by the build of [cloud-schema-missing-grants] — that item's own observation names a live-database check, and no item was tracking it.
-Filed 2026-09-12 12:09, stamped by the queue tool.
-
-#### Characters typed into a Strategy paragraph arrive wrong or not at all under fast input [strategy-paragraph-input-loses-characters]
-
-From the [strategy-edit-persistence-blocked] audit on 2026-09-12, not yet reviewed.
-
-Typing into a Project's paragraph on the Strategy page over adb produced text that did not match what was sent. Sending the whole sentence "Keeping in touch evenly matters here." in one `input text` left four characters in the box: `ngKe`. Retyping character by character with a 0.4-second gap landed all six letters of `Family` correctly. A third attempt at a 0.35-second gap sent `Stayclose` and produced `Staycmose` — the `l` arrived as `m`, which is a corrupted character rather than a dropped one.
-
-**Why it matters, and why it is not obviously an adb artifact.** TOOLS.md already records that `adb shell input text` can fail silently into a dialogue field, so dropping is a known driver behaviour and the first observation alone would prove nothing. A *substituted* character at a spacing that otherwise worked is different: it is not what a dropped keystroke looks like. And this field is architecturally unlike the others — the edit dialogue's outliner holds its text in a local form and writes once on Save, while this paragraph calls `StrategyViewModel.setDescription` on every keystroke, which does a repository read, an upsert, and a flow emission that recomposes the field. A value racing its own round trip would corrupt and drop characters in exactly this shape.
-
-**Not established:** whether a person typing at human speed on this device hits it. Nobody has tried. If the mechanism above is right, a slower or busier device would make it likelier, and the person this app is for is composing real prose into this box rather than four-letter test strings.
-
-Cheapest next step is reading `StrategyScreen.kt` and `StrategyViewModel.kt` for the round-trip, before any device work: if the field is state-hoisted through the database on every keystroke, that is worth fixing whether or not anyone has reproduced it by thumb.
-
-What the audit did confirm, so this is not a blanket doubt about the page: text already in the box survived a force-stop and relaunch exactly as written, the share sheet opened on Android's own chooser, and clearing the box left it empty.
-
-Filed mid-run on 2026-09-12 at 12:33, read from the clock.
-Filed 2026-09-12 12:33, stamped by the queue tool.
-
-#### Tasks added from the Tomorrow page land on Today when Day begins at is not the default [tomorrow-task-lands-on-today-under-custom-boundary]
-
-Found on 2026-09-12 at 12:37 while setting up the [day-begins-at-rollover-still-unrun] watch, before the boundary being watched for had arrived.
-
-With Day begins at set to 1:00 PM and the device clock reading 12:37 PM, the app's own logical day was still 11 September — the edit dialogue's date strip labelled the 11th as "Today". A task added from the Tomorrow page took the date 12 September, which is correct. It then appeared on the **Today** page, not the Tomorrow page, and with no date label.
-
-So two surfaces reading the same row disagree. The date strip derives "today" from the day-begins-at boundary and says the 11th. The Schedule pages place a task dated the 12th on Today, which only follows if their slot derivation is using the calendar date rather than the logical one.
-
-**Why it matters beyond the test.** SPEC §Add a new task says a task added from Tomorrow lands on that screen, and SPEC §Data model derives a dated task's slot from its date. Both are broken here, and the breakage is invisible at the shipped default of 4:00 AM — between 4:00 AM and midnight the logical date and the calendar date agree, so nothing looks wrong. It bites exactly the person Day begins at exists for: someone whose day turns in the small hours, for whom the two dates differ every night. It would also make anything added late at night land on the wrong page.
-
-**Not established:** whether the fault is in the slot derivation, in what the add path writes, or in both, and whether the same disagreement shows on Soon and Later. Nobody has read `SlotDeriver` against this case yet. The cheapest next step is reading `SlotDeriver.slotForDate` and `logicalDate` together and checking which of them the Schedule pages actually pass the boundary hour to.
-
-**It also stops the check that found it.** [day-begins-at-rollover-still-unrun] wants to watch a task cross from Tomorrow onto Today at the boundary. With the test task already sitting on Today before the boundary, there is nothing to watch, so that item cannot be driven until this is understood.
-
-Filed mid-run on 2026-09-12 at 12:38, read from the clock.
-Filed 2026-09-12 12:38, stamped by the queue tool.
-
-#### [audit] Verify on a device the four code changes shipped on 2026-09-12, none of which has been seen working [verify-2026-09-12-code-on-device]
-
-Four builds shipped on 2026-09-12 and compiled, and not one of them has been observed on a device: dragging a Project heading to reorder in the Strategy doc [project-reorder-strategy], reaching the bin and cut targets without the page turning [drag-eaten-by-page-swipe], the day-detail card layer opened from a search result [nav-day-card-layer], and a rotating roster advancing on completion [rotating-roster-recurrence]. Each item's own record ticks it `UNCONFIRMED` and names what is unrun.
-
-Filed because nothing else was tracking those checks. That is the exact shape of the problem [verify-edit-outliner-fix] existed to fix — work that shipped, compiled, and then sat unverified with no item naming the verification, so it was invisible until someone happened to notice. Two of the four also have held items waiting behind them ([project-delete-later] and [bin-drag-target-check] behind the drag fix, [share-a-day] behind the card layer), and those cannot honestly be judged ready to lift on a compile alone.
-
-Claude can drive all of it over adb, as it drove the two audits on 2026-09-12. What is needed from Alex is the phone unlocked and connected, and the phone re-locks after a few minutes (TOOLS.md), so possibly more than once. The build installed on the phone on 2026-09-12 already carries all four changes, so no fresh install is needed unless the code moves on first.
-
-The four observations to make, each from its own item's Observation line: a Project heading drags to a new position and the order survives a relaunch, with the Later cards following it and Unassigned still pinned to the bottom; a task dragged up into the icon row leaves the page where it is and highlights the icon under the finger, while sideways below the row still reschedules; a search result opens that day as a card, swiping moves between days that hold completions and skips those that do not, back closes it, and a task can be edited from it; a weekly task carrying several names shows the first on its nearest upcoming instance and the second on the one after, and completing the nearest moves the list on while letting an occurrence pass does not.
-
-Splitting this into four items was considered and rejected: they are one sitting with one phone, and four items would mean four separate connect-and-unlock cycles for checks that take minutes each.
-
-Filed at the close of the 2026-09-12 /next run, at 13:14, read from the clock.
-Filed 2026-09-12 13:15, stamped by the queue tool.
-
-#### Run MigrationTest's 5 → 6 case on the emulator, now that there is one [run-migration-test-on-emulator]
-
-`MigrationTest` gained a 5 → 6 case when [rotating-roster-recurrence] shipped on 2026-09-12, and it has never been run. It is the proof that a phone carrying real tasks survives the schema bump that adds the roster column — the thing the version-5 floor exists for.
-
-It was not run during that build for a stated reason: a connected instrumentation run installs the app, runs the tests and then uninstalls both, taking the Room database with it, and the phone holds Alex's real tasks. The CLAUDE.md rule requiring a JSON export first was the holding measure.
-
-**That reason is now gone.** The AVD `Pixel_6` was created on 2026-09-12 by [emulator-for-instrumented-tests] and boots; TOOLS.md records it. Running the suite against the emulator destroys nothing anyone wants. With both devices attached, the target has to be named explicitly — `adb` refuses an ambiguous command when two are connected — and TOOLS.md carries that too.
-
-Worth running the whole `androidTest` suite rather than the one case: it was last run in full on 2026-09-05 at schema version 5, and the roster column touches `Task`, which most of the DAO tests exercise.
-
-Filed at the close of the 2026-09-12 /next run, at 13:14, read from the clock.
-Filed 2026-09-12 13:15, stamped by the queue tool.
-
-#### Reconcile the compile-handover rule with what a multi-item run actually does [compile-rule-vs-multi-item-runs]
-
-The CLAUDE.md rule written on 2026-09-12 by [runs-in-android-studio-decision] says that when a build's work needs compiling, the build stops, hands Alex the command, and waits for the result before ticking the item. Read literally, that is one handover per item.
-
-The same session's run then built four Kotlin items back to back and handed over **one** compile covering all four, ticking them only once it returned `BUILD SUCCESSFUL`. The alternative was four separate handovers of an identical command, each interrupting Alex, for work that a single compile checks just as well.
-
-The run recorded why it did that in its build working file and left the items in the queue until the compile passed, so nothing was ticked on an unverified build and nothing could strand. In other words the rule's *purpose* — no code item ships ticked-unconfirmed when a compile could have confirmed it — was met, while its literal wording was not followed.
-
-Worth settling, because the next session reads the rule rather than this reasoning. Roughly: a run may batch one compile across consecutive code items, provided none of them is ticked or removed from the queue until it passes. What is not wanted is the reading where a run ticks code items unconfirmed and leaves the compile for later, which is what the rule was written to stop.
-
-Also worth deciding in the same breath: whether the rule should say what to do when the compile **fails** mid-run, which it currently does not.
-
-Filed at the close of the 2026-09-12 /next run, at 13:14, read from the clock.
-Filed 2026-09-12 13:15, stamped by the queue tool.
-
-#### Last session advises processing [verify-2026-09-12-code-on-device] next [forward-advisory]
-
-Replaces the spent advisory that pointed at [verify-edit-outliner-fix], which was built on 2026-09-12 and passed.
-
-Open on [verify-2026-09-12-code-on-device]. Four code changes shipped on 2026-09-12 and none has been seen working on a device, and three held items are waiting behind two of them — [project-delete-later] and [bin-drag-target-check] behind the drag-target fix, [share-a-day] behind the day-card layer. Until that verification runs, lifting any of the three means judging a blocker shipped on a compile alone.
-
-**Five other captures were filed on 2026-09-12 and are worth reading in the same sitting**, because two of them bear on the same work: [tomorrow-task-lands-on-today-under-custom-boundary] (a task added from the Tomorrow page appears on the Today page when Day begins at is not the default — found while driving the rollover watch, and the reason that watch could not run), [strategy-paragraph-input-loses-characters] (text entered into a Strategy paragraph arrived wrong under fast input, mechanism unestablished), [run-migration-test-on-emulator], [compile-rule-vs-multi-item-runs], and [supabase-apply-0003-grants].
-
-**The overlap that matters:** [tomorrow-task-lands-on-today-under-custom-boundary] touches the same Schedule slot derivation that [verify-2026-09-12-code-on-device] will exercise on the drag-target and card-layer checks. Sorting it first would mean the device pass can watch for it rather than meeting it by surprise.
-
-**The state a /next run would find:** the cleared region holds one item, [day-begins-at-rollover-still-unrun], and it is the item the defect above stopped. A run would present it and get no further, so there is nothing buildable above the line until planning has moved something there.
-
-Filed at the close of the 2026-09-12 /next run, at 13:14, read from the clock.
-Filed 2026-09-12 13:15, stamped by the queue tool.
+Filed 2026-09-12 during planning, on Alex's instruction.
+Filed 2026-09-12 21:06, stamped by the queue tool.
 
